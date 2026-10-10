@@ -90,25 +90,3 @@ export function findProduct(slug: string, id: string): (StoreEntry & { product: 
 }
 
 export type OrderStatus = "new" | "confirmed" | "preparing" | "ready" | "out" | "delivered" | "cancelled";
-export type DemoOrderItem = { name: string; qty: number; unit_cents: number; addons: string[] };
-export type DemoOrder = {
-  code: string; status: OrderStatus; type: "delivery" | "pickup";
-  customer: string; phoneMasked: string; neighborhood: string;
-  paymentLabel: string; changeLabel: string | null;
-  subtotal_cents: number; fee_cents: number; promisedInMin: number;
-  items: DemoOrderItem[];
-};
-
-// pedido demo p/ preview do tracking (fase backend: GET /api/orders/track/[token])
-export function demoOrder(): DemoOrder {
-  return {
-    code: "K7M2", status: "preparing", type: "delivery",
-    customer: "Maria", phoneMasked: "••••• ••21", neighborhood: "Centro",
-    paymentLabel: "Dinheiro", changeLabel: "troco p/ R$ 150,00",
-    subtotal_cents: 11180, fee_cents: 500, promisedInMin: 25,
-    items: [
-      { name: "Margherita G", qty: 2, unit_cents: 4990, addons: ["Bacon crocante"] },
-      { name: "Coca-Cola 350ml", qty: 1, unit_cents: 690, addons: [] },
-    ],
-  };
-}

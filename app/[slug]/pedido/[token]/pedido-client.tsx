@@ -1,60 +1,105 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { brl, type DemoOrder, type OrderStatus, type Store } from "../../menu-data";
+import { brl, type Store } from "../../menu-data";
+import { type OrderStatus } from "@/components/ui/status-badge";
+import { STATUS_LABEL } from "@/lib/order-status";
+import { waLink } from "@/lib/wa";
 
-const FLOW: { id: OrderStatus; label: string }[] = [
-  { id: "new", label: "Novo" },
-  { id: "confirmed", label: "Confirmado" },
-  { id: "preparing", label: "Em preparo" },
-  { id: "out", label: "Saiu p/ entrega" },
-  { id: "delivered", label: "Entregue" },
-];
-const STATUS_LABEL: Record<OrderStatus, string> = {
-  new: "Aguardando a loja",
-  confirmed: "Confirmado",
-  preparing: "Em preparo",
-  ready: "Pronto p/ retirada",
-  out: "Saiu p/ entrega",
-  delivered: "Entregue",
-  cancelled: "Cancelado",
+// Espelho do corpo GET /api/orders/track/[token] (D4)
+type TrackOrder = {
+  code: string; status: OrderStatus; type: "delivery" | "pickup";
+  customer_name: string; phone_masked: string; neighborhood: string | null; notes: string | null;
+  items: { name: string; qty: number; unit_price_cents: number; addons: { name: string; price_cents: number }[]; notes: string | null }[];
+  subtotal_cents: number; delivery_fee_cents: number; total_cents: number;
+  payment_method: string; change_for_cents: number | null;
+  promised_at: string; created_at: string;
+  canCancel: boolean; cancellation_reason: string | null;
 };
+
+const FLOW: OrderStatus[] = ["new", "confirmed", "preparing", "out", "delivered"];
+const PAY: Record<string, string> = { cash: "Dinheiro", pix: "Pix", card_machine: "Maquininha" };
 // preview: ?s=new|confirmed|preparing|out|delivered|cancelled troca o estado
 const PREVIEW = ["new", "confirmed", "preparing", "out", "delivered", "cancelled"] as const;
+const hhmm = (iso: string) =>
+  new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Manaus" }).format(new Date(iso));
 
-export default function PedidoClient({ store, token, order }: {
-  store: Store; token: string; order: DemoOrder;
-}) {
-  const [status, setStatus] = useState<OrderStatus>(order.status);
+export default function PedidoClient({ store, token }: { store: Store; token: string }) {
+  const [order, setOrder] = useState<TrackOrder | null>(null);
+  const [missing, setMissing] = useState(false);
+  const [preview, setPreview] = useState<OrderStatus | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [reasonError, setReasonError] = useState("");
 
-  useEffect(() => {
-    const s = new URLSearchParams(window.location.search).get("s");
-    if (s && (PREVIEW as readonly string[]).includes(s)) setStatus(s as OrderStatus);
-  }, []);
-
-  useEffect(() => {
-    // fase backend: polling do GET /api/orders/track/[token] a cada 15s
-    const t = setInterval(() => {}, 15000);
-    return () => clearInterval(t);
+  const load = useCallback(async () => {
+    const r = await fetch(`/api/orders/track/${token}`, { cache: "no-store" });
+    if (r.status === 404) { setMissing(true); return; }
+    if (r.ok) setOrder(await r.json());
   }, [token]);
 
-  const stepIndex = FLOW.findIndex((f) => f.id === status);
-  const canCancel = status === "new" || status === "confirmed"; // spec: cliente cancela em new/confirmed
-  const total = order.subtotal_cents + order.fee_cents;
-  const waHref = `https://wa.me/${store.whatsapp}?text=${encodeURIComponent(`Olá! Fiz o pedido #${order.code} pelo Kero.`)}`;
+  useEffect(() => {
+    const s = new URLSearchParams(window.location.search).get("s");
+    if (s && (PREVIEW as readonly string[]).includes(s)) setPreview(s as OrderStatus);
+    load();
+    const t = setInterval(load, 15000);
+    return () => clearInterval(t);
+  }, [load]);
 
-  const confirmCancel = () => {
+  if (missing) {
+    return (
+      <div className="min-h-screen bg-[#f4f1ec]">
+        <div className="h-1 bg-gradient-to-r from-red-700 via-red-500 to-orange-400" />
+        <main className="max-w-3xl mx-auto px-4 py-16 text-center">
+          <p className="font-display font-extrabold text-2xl tracking-tight">Pedido não encontrado.</p>
+          <p className="text-sm text-stone-500 mt-1">Confira o link ou volte à vitrine.</p>
+          <Link href={`/${store.slug}`} className="inline-block mt-5 bg-stone-900 text-white font-bold rounded-2xl px-6 py-3 text-sm">
+            Voltar à vitrine
+          </Link>
+        </main>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="min-h-screen bg-[#f4f1ec]">
+        <div className="h-1 bg-gradient-to-r from-red-700 via-red-500 to-orange-400" />
+        <main className="max-w-3xl mx-auto px-4 pb-16">
+          <section className="mt-4 bg-stone-900 text-white rounded-3xl p-6 animate-pulse">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-amber-300">localizando pedido…</p>
+            <p className="font-display font-extrabold text-2xl mt-1">Buscando seu pedido…</p>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  const status = preview ?? order.status;
+  const canCancel = preview ? status === "new" || status === "confirmed" : order.canCancel;
+  const stepIndex = Math.max(0, FLOW.indexOf(status === "ready" ? "preparing" : status));
+  const changeLabel = order.change_for_cents != null ? `troco p/ ${brl(order.change_for_cents)}` : null;
+  const waHref = waLink(store.whatsapp, `Olá! Sobre meu pedido #${order.code}`);
+  const mins = Math.max(1, Math.round((new Date(order.promised_at).getTime() - new Date(order.created_at).getTime()) / 60000));
+  const late = status !== "delivered" && status !== "cancelled" && new Date(order.promised_at).getTime() < Date.now();
+
+  const confirmCancel = async () => {
     if (reason.trim().length < 3) {
       setReasonError("Conte o motivo com pelo menos 3 letras.");
       return;
     }
-    // fase backend: POST /api/orders/track/[token]/cancel (set_order_status … 'customer')
-    setStatus("cancelled");
+    const r = await fetch(`/api/orders/track/${token}`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason: reason.trim() }),
+    });
+    if (!r.ok) {
+      const b = await r.json().catch(() => null);
+      alert(b?.error?.message ?? "Não foi possível cancelar. Tente de novo.");
+      return;
+    }
     setCancelOpen(false);
+    setReason("");
+    await load();
   };
 
   return (
@@ -92,13 +137,24 @@ export default function PedidoClient({ store, token, order }: {
                 {status === "cancelled" ? "Pedido cancelado" : STATUS_LABEL[status]}
               </p>
               {status !== "cancelled" && status !== "delivered" && (
-                <p className="text-sm text-stone-300 mt-1 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 live-dot" />
-                  chega em ~{order.promisedInMin} min
-                </p>
+                <>
+                  <p className="text-sm text-stone-300 mt-1">chega ~{hhmm(order.promised_at)}</p>
+                  {status !== "out" && (
+                    <p className="text-sm text-stone-300 mt-0.5 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 live-dot" />
+                      ~{mins} min
+                    </p>
+                  )}
+                </>
               )}
+              {late && <p className="text-sm mt-1 font-bold text-red-400">Passou do horário previsto.</p>}
               {status === "delivered" && <p className="text-sm text-stone-300 mt-1">Bom apetite! Obrigado por pedir com a gente.</p>}
-              {status === "cancelled" && <p className="text-sm text-stone-300 mt-1">Sem cobrança — pagamento é só na entrega.</p>}
+              {status === "cancelled" && (
+                <>
+                  <p className="text-sm text-stone-300 mt-1">Sem cobrança — pagamento é só na entrega.</p>
+                  {order.cancellation_reason && <p className="text-sm text-stone-400 mt-0.5">Motivo: {order.cancellation_reason}</p>}
+                </>
+              )}
             </div>
             <span className="text-5xl anim-drift select-none">{status === "cancelled" ? "🧾" : status === "delivered" ? "🎉" : "🛵"}</span>
           </div>
@@ -107,12 +163,12 @@ export default function PedidoClient({ store, token, order }: {
             <div className="mt-4">
               <div className="flex gap-1.5">
                 {FLOW.map((f, i) => (
-                  <div key={f.id} className={`flex-1 h-2 rounded-full transition-all ${i <= stepIndex ? "bg-gradient-to-r from-amber-300 to-orange-400" : "bg-white/15"}`} />
+                  <div key={f} className={`flex-1 h-2 rounded-full transition-all ${i <= stepIndex ? "bg-gradient-to-r from-amber-300 to-orange-400" : "bg-white/15"}`} />
                 ))}
               </div>
               <div className="flex justify-between mt-1.5 text-[10px] font-bold uppercase tracking-wide text-stone-400">
                 {FLOW.map((f, i) => (
-                  <span key={f.id} className={i <= stepIndex ? "text-amber-200" : ""}>{f.label}</span>
+                  <span key={f} className={i <= stepIndex ? "text-amber-200" : ""}>{STATUS_LABEL[f]}</span>
                 ))}
               </div>
             </div>
@@ -123,16 +179,16 @@ export default function PedidoClient({ store, token, order }: {
         {/* detalhes + itens */}
         <section className="mt-4 bg-white border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise" style={{ animationDelay: "120ms" }}>
           <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
-            <p><span className="text-stone-400">Quem recebe:</span> <b>{order.customer}</b> <span className="text-stone-400">{order.phoneMasked}</span></p>
-            <p><span className="text-stone-400">{order.type === "delivery" ? "Entrega em:" : "Retirada ·"}</span> <b>{order.type === "delivery" ? order.neighborhood : store.name}</b></p>
-            <p><span className="text-stone-400">Pagamento:</span> <b>{order.paymentLabel}</b>{order.changeLabel && <span className="text-stone-500"> ({order.changeLabel})</span>}</p>
-            <p><span className="text-stone-400">Total:</span> <b className="tabular-nums">{brl(total)}</b></p>
+            <p><span className="text-stone-400">Quem recebe:</span> <b>{order.customer_name}</b> <span className="text-stone-400">{order.phone_masked}</span></p>
+            <p><span className="text-stone-400">{order.type === "delivery" ? "Entrega em:" : "Retirada ·"}</span> <b>{order.type === "delivery" ? (order.neighborhood ?? "—") : store.name}</b></p>
+            <p><span className="text-stone-400">Pagamento:</span> <b>{PAY[order.payment_method] ?? order.payment_method}</b>{changeLabel && <span className="text-stone-500"> ({changeLabel})</span>}</p>
+            <p><span className="text-stone-400">Total:</span> <b className="tabular-nums">{brl(order.total_cents)}</b></p>
           </div>
           <ul className="mt-3 divide-y divide-dashed border-t border-dashed">
-            {order.items.map((it) => (
-              <li key={it.name} className="py-2.5 flex justify-between gap-2 text-sm">
-                <span>{it.qty}× {it.name}{it.addons.length > 0 && <span className="text-stone-400"> (+ {it.addons.join(", ")})</span>}</span>
-                <span className="font-bold tabular-nums shrink-0">{brl(it.unit_cents * it.qty)}</span>
+            {order.items.map((it, i) => (
+              <li key={`${it.name}-${i}`} className="py-2.5 flex justify-between gap-2 text-sm">
+                <span>{it.qty}× {it.name}{it.addons.length > 0 && <span className="text-stone-400"> (+ {it.addons.map((a) => a.name).join(", ")})</span>}</span>
+                <span className="font-bold tabular-nums shrink-0">{brl(it.unit_price_cents * it.qty)}</span>
               </li>
             ))}
           </ul>
