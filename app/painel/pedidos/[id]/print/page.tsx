@@ -1,0 +1,88 @@
+"use client";
+
+import Link from "next/link";
+import { notFound, useParams } from "next/navigation";
+import { ITEM_SETS, STORE_NAME, TODAY_ORDERS } from "../../../mock";
+
+const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+export default function CupomPrint() {
+  const id = useParams().id as string;
+  const order = TODAY_ORDERS.find((o) => o.id === id);
+  if (!order) notFound();
+
+  const items = ITEM_SETS[Number(order.id) % ITEM_SETS.length];
+  const subtotal = items.reduce((s, it) => s + it.unit * it.qty, 0);
+  const fee = order.type === "delivery" ? 500 : 0;
+
+  return (
+    <>
+      <style>{`@page { size: 80mm auto; margin: 0; }
+        @media print {
+          body { background: #fff; }
+          .no-print { display: none !important; }
+          .cupom { width: 80mm !important; box-shadow: none !important; border: none !important; margin: 0 !important; }
+        }`}</style>
+      <div className="min-h-screen bg-stone-200 py-8 flex flex-col items-center gap-4">
+        <div className="no-print flex gap-2">
+          <Link href={`/painel/pedidos/${order.id}`}
+            className="bg-white border font-bold rounded-xl px-5 py-2.5 text-sm hover:border-stone-400 transition-colors">
+            ← Voltar
+          </Link>
+          <button onClick={() => window.print()}
+            className="bg-stone-900 text-white font-bold rounded-xl px-5 py-2.5 text-sm hover:bg-stone-700 transition-colors">
+            🖨 Imprimir
+          </button>
+        </div>
+        {/* cupom 80mm — spec: bobina, A4 só relatório */}
+        <article className="cupom w-[80mm] bg-white shadow-xl font-mono text-[12px] leading-snug p-3">
+          <div className="text-center">
+            <p className="font-bold text-base tracking-wide">{STORE_NAME.toUpperCase()}</p>
+            <p>Rua X, 123 — Centro</p>
+            <p className="font-bold">(11) 99999-8888</p>
+          </div>
+          <p className="font-bold my-1">================================</p>
+          <p className="text-center font-bold text-[28px] tracking-[0.2em]">#{order.code}</p>
+          <p className="text-center font-bold text-sm">
+            *** {order.type === "delivery" ? "ENTREGA" : "RETIRADA"} ***
+          </p>
+          <p className="text-center">recebido há {order.minutesAgo} min · {order.payment}</p>
+          <p className="font-bold my-1">================================</p>
+          <p className="font-bold text-sm">{order.customer.toUpperCase()}</p>
+          <p>(11) 98765-4321</p>
+          {order.type === "delivery" && (
+            <p className="font-bold">→ Rua das Flores, 123 — Centro<br />→ CEP 01234-567</p>
+          )}
+          <p className="font-bold my-1">--------------------------------</p>
+          <ul>
+            {items.map((it) => (
+              <li key={it.name} className="mb-1.5">
+                <p className="flex justify-between gap-1 font-bold text-[13px]">
+                  <span>{it.qty}× {it.name.toUpperCase()}</span>
+                  <span>{brl(it.unit * it.qty).replace("R$", "")}</span>
+                </p>
+                {it.addons.map((a) => (
+                  <p key={a} className="pl-3">+ {a}</p>
+                ))}
+                {it.notes && <p className="pl-3 font-bold">*** OBS: {it.notes} ***</p>}
+              </li>
+            ))}
+          </ul>
+          <p className="font-bold my-1">--------------------------------</p>
+          <p className="flex justify-between"><span>Subtotal</span><span>{brl(subtotal).replace("R$", "")}</span></p>
+          <p className="flex justify-between"><span>Entrega</span><span>{order.type === "delivery" ? brl(fee).replace("R$", "") : "0,00"}</span></p>
+          <p className="font-bold my-1">================================</p>
+          <p className="flex justify-between font-bold text-lg"><span>TOTAL R$</span><span>{brl(subtotal + fee).replace("R$", "")}</span></p>
+          <p className="font-bold my-1">================================</p>
+          <p className="text-center font-bold text-sm">
+            {order.payment === "Dinheiro" ? "*** TROCO P/ 150,00 ***" : order.payment.toUpperCase()}
+          </p>
+          <p className="font-bold my-1">--------------------------------</p>
+          <p className="text-center">Acompanhe: kero.app/{order.code.toLowerCase()}</p>
+          <p className="text-center font-bold">Obrigado! Até a próxima 🙏</p>
+          <p className="no-print text-center text-stone-400 font-sans text-[11px] mt-1">pré-visualização em tela — na bobina sai sem sombras</p>
+        </article>
+      </div>
+    </>
+  );
+}

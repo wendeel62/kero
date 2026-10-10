@@ -1,0 +1,10 @@
+node_modules/
+.next/
+.env
+.env.*
+!.env.example
+.playwright-mcp/
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+vercel.json.local
