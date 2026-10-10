@@ -4,6 +4,7 @@ node_modules/
 .env.*
 !.env.example
 .playwright-mcp/
+.superpowers/
 *.tsbuildinfo
 next-env.d.ts
 .DS_Store
