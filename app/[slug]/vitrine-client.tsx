@@ -62,7 +62,7 @@ export default function VitrineClient({ store, categories, isOpen, opensAt }: {
         <div className="bg-stone-900 text-amber-200/90 overflow-hidden whitespace-nowrap text-[12px] font-semibold py-1.5">
           <div className="marquee-track inline-flex gap-8 pr-8">
             {[0, 1].map((k) => (
-              <span key={k}>🔥 saindo do forno agora &nbsp;•&nbsp; taxa fixa {brl(store.delivery_fee_cents)} no centro &nbsp;•&nbsp; massa de fermentação lenta &nbsp;•&nbsp; {store.prep_time_min}–{store.prep_time_max} min &nbsp;•&nbsp;</span>
+              <span key={k}>🔥 saindo do forno agora &nbsp;•&nbsp; taxa fixa {brl(store.delivery_fee_cents ?? 0)} no centro &nbsp;•&nbsp; massa de fermentação lenta &nbsp;•&nbsp; {store.prep_time_min}–{store.prep_time_max} min &nbsp;•&nbsp;</span>
             ))}
           </div>
         </div>
@@ -98,7 +98,7 @@ export default function VitrineClient({ store, categories, isOpen, opensAt }: {
                 {isOpen ? "Aberta agora" : `Fechada • abre às ${opensAt}`}
               </span>
               <span className="px-2.5 py-1 rounded-full bg-stone-100 hover:bg-stone-200 transition-colors">⏱ {store.prep_time_min}–{store.prep_time_max} min</span>
-              <span className="px-2.5 py-1 rounded-full bg-stone-100 hover:bg-stone-200 transition-colors">🛵 {brl(store.delivery_fee_cents)}</span>
+              <span className="px-2.5 py-1 rounded-full bg-stone-100 hover:bg-stone-200 transition-colors">🛵 {brl(store.delivery_fee_cents ?? 0)}</span>
               <span className="px-2.5 py-1 rounded-full bg-stone-100 hover:bg-stone-200 transition-colors">mínimo {brl(store.min_order_cents)}</span>
             </div>
             {!isOpen && (

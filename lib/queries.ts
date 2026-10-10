@@ -1,0 +1,56 @@
+import { createClient } from "@/lib/supabase/server";
+import type { Addon, Category, Neighborhood, Product, Store } from "@/app/[slug]/menu-data";
+
+// Leituras públicas da vitrine via RLS (anon, sem sessão). Erros → null/[]; a página decide notFound().
+export async function getStoreBySlug(slug: string): Promise<Store | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("stores").select("*").eq("slug", slug).eq("active", true).single();
+  if (error || !data) return null;
+  return {
+    slug: data.slug, name: data.name, description: data.description ?? "",
+    logo_url: data.logo_url ?? null, whatsapp: data.whatsapp,
+    min_order_cents: data.min_order_cents ?? 0,
+    prep_time_min: data.prep_time_min ?? 0, prep_time_max: data.prep_time_max ?? 0,
+    active: data.active, force_closed: data.force_closed ?? false,
+  };
+}
+
+export async function getCategories(store_id: string): Promise<Category[]> {
+  const supabase = await createClient();
+  const [{ data: cats }, { data: prods }] = await Promise.all([
+    supabase.from("categories").select("id,name").eq("store_id", store_id).eq("active", true).order("sort_order"),
+    supabase.from("products").select("id,category_id,name,description,price_cents,active").eq("store_id", store_id).order("sort_order"),
+  ]);
+  const byCat = new Map<string, Product[]>();
+  for (const p of prods ?? []) {
+    const list = byCat.get(p.category_id) ?? [];
+    list.push({ id: p.id, name: p.name, description: p.description ?? "", price_cents: p.price_cents, active: p.active });
+    byCat.set(p.category_id, list);
+  }
+  return (cats ?? []).map((c) => ({ id: c.id, name: c.name, products: byCat.get(c.id) ?? [] }));
+}
+
+export async function getProduct(store_id: string, id: string): Promise<{ product: Product; categoryName: string } | null> {
+  const supabase = await createClient();
+  const { data: p, error } = await supabase.from("products").select("id,category_id,name,description,price_cents,active").eq("store_id", store_id).eq("id", id).single();
+  if (error || !p) return null;
+  const { data: c } = await supabase.from("categories").select("name").eq("id", p.category_id).single();
+  return {
+    product: { id: p.id, name: p.name, description: p.description ?? "", price_cents: p.price_cents, active: p.active },
+    categoryName: c?.name ?? "",
+  };
+}
+
+export async function getNeighborhoods(store_id: string): Promise<Neighborhood[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("neighborhoods").select("id,name,fee_cents,active").eq("store_id", store_id).eq("active", true).order("fee_cents");
+  if (error || !data) return [];
+  return data.map((n) => ({ id: n.id, name: n.name, fee_cents: n.fee_cents, active: n.active }));
+}
+
+export async function getAddons(store_id: string): Promise<(Addon & { product_id: string | null })[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("product_addons").select("id,product_id,name,price_cents").eq("store_id", store_id).eq("active", true);
+  if (error || !data) return [];
+  return data.map((a) => ({ id: a.id, name: a.name, price_cents: a.price_cents, product_id: a.product_id ?? null }));
+}
