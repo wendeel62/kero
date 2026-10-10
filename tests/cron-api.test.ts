@@ -143,7 +143,8 @@ test("4. gate desligado → 200 {ok, skipped} sem chamar RPCs", async () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true, skipped: true });
   } finally {
-    process.env.DAILY_SALT_ROTATION_ENABLED = prev;
+    if (prev === undefined) delete process.env.DAILY_SALT_ROTATION_ENABLED;
+    else process.env.DAILY_SALT_ROTATION_ENABLED = prev;
   }
 });
 

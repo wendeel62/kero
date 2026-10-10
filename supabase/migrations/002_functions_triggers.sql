@@ -524,8 +524,6 @@ end $$;
 -- Chamado pelo cron diário (API-05) com service_role.
 create or replace function auto_cancel_stale_orders() returns integer
 language plpgsql security definer set search_path = public as $$
-declare
-  v_n integer;
 begin
   perform set_config('app.actor', 'system', true);
   update orders set status = 'cancelled',
@@ -533,6 +531,5 @@ begin
                     canceled_by = 'system'
   where status = 'new'
     and created_at < now() - interval '24 hours';
-  get diagnostics v_n = row_count;
-  return v_n;
+  return sql%rowcount;
 end $$;
