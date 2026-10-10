@@ -102,7 +102,13 @@ export async function POST(req: Request) {
   });
   if (userError || !created.user) {
     await db.from("stores").delete().eq("id", store.id); // sem loja órfã
-    return apiError("EMAIL_TAKEN", "E-mail já cadastrado.", 409);
+    const dup =
+      userError &&
+      (userError.status === 400 ||
+        userError.status === 422 ||
+        /already|duplicate|exists/i.test(userError.message ?? ""));
+    if (dup) return apiError("EMAIL_TAKEN", "E-mail já cadastrado.", 409);
+    return apiError("UNEXPECTED", "Erro inesperado. Tente de novo.", 500);
   }
 
   // Trigger fn_on_signup cria o profile (role loja); aqui só o vínculo.
