@@ -1,12 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { Addon, Category, Neighborhood, Product, Store } from "@/app/[slug]/menu-data";
 
 // Leituras públicas da vitrine via RLS (anon, sem sessão). Erros → null/[]; a página decide notFound().
-export async function getStoreBySlug(slug: string): Promise<Store | null> {
+export async function getStoreBySlug(slug: string): Promise<(Store & { id: string; open_hours: unknown }) | null> {
   const supabase = await createClient();
   const { data, error } = await supabase.from("stores").select("*").eq("slug", slug).eq("active", true).single();
   if (error || !data) return null;
   return {
+    id: data.id, open_hours: data.open_hours,
     slug: data.slug, name: data.name, description: data.description ?? "",
     logo_url: data.logo_url ?? null, whatsapp: data.whatsapp,
     min_order_cents: data.min_order_cents ?? 0,
@@ -17,9 +19,10 @@ export async function getStoreBySlug(slug: string): Promise<Store | null> {
 
 export async function getCategories(store_id: string): Promise<Category[]> {
   const supabase = await createClient();
+  const admin = createAdminClient();
   const [{ data: cats }, { data: prods }] = await Promise.all([
     supabase.from("categories").select("id,name").eq("store_id", store_id).eq("active", true).order("sort_order"),
-    supabase.from("products").select("id,category_id,name,description,price_cents,active").eq("store_id", store_id).order("sort_order"),
+    admin.from("products").select("id,category_id,name,description,price_cents,active").eq("store_id", store_id).order("sort_order"),
   ]);
   const byCat = new Map<string, Product[]>();
   for (const p of prods ?? []) {
@@ -32,7 +35,7 @@ export async function getCategories(store_id: string): Promise<Category[]> {
 
 export async function getProduct(store_id: string, id: string): Promise<{ product: Product; categoryName: string } | null> {
   const supabase = await createClient();
-  const { data: p, error } = await supabase.from("products").select("id,category_id,name,description,price_cents,active").eq("store_id", store_id).eq("id", id).single();
+  const { data: p, error } = await createAdminClient().from("products").select("id,category_id,name,description,price_cents,active").eq("store_id", store_id).eq("id", id).single();
   if (error || !p) return null;
   const { data: c } = await supabase.from("categories").select("name").eq("id", p.category_id).single();
   return {

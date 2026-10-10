@@ -14,8 +14,8 @@ const THUMBS = [
   "from-lime-100 via-amber-100 to-yellow-200",
 ];
 
-export default function VitrineClient({ store, categories, isOpen, opensAt }: {
-  store: Store; categories: Category[]; isOpen: boolean; opensAt: string;
+export default function VitrineClient({ store, categories, isOpen, opensAt, minFee }: {
+  store: Store; categories: Category[]; isOpen: boolean; opensAt: string; minFee: number | null;
 }) {
   const [q, setQ] = useState("");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -62,7 +62,7 @@ export default function VitrineClient({ store, categories, isOpen, opensAt }: {
         <div className="bg-stone-900 text-amber-200/90 overflow-hidden whitespace-nowrap text-[12px] font-semibold py-1.5">
           <div className="marquee-track inline-flex gap-8 pr-8">
             {[0, 1].map((k) => (
-              <span key={k}>🔥 saindo do forno agora &nbsp;•&nbsp; taxa fixa {brl(store.delivery_fee_cents ?? 0)} no centro &nbsp;•&nbsp; massa de fermentação lenta &nbsp;•&nbsp; {store.prep_time_min}–{store.prep_time_max} min &nbsp;•&nbsp;</span>
+              <span key={k}>🔥 saindo do forno agora &nbsp;•&nbsp; {minFee !== null ? <>entrega a partir de {brl(minFee)} &nbsp;•&nbsp; </> : null}massa de fermentação lenta &nbsp;•&nbsp; {store.prep_time_min}–{store.prep_time_max} min &nbsp;•&nbsp;</span>
             ))}
           </div>
         </div>
@@ -98,7 +98,9 @@ export default function VitrineClient({ store, categories, isOpen, opensAt }: {
                 {isOpen ? "Aberta agora" : `Fechada • abre às ${opensAt}`}
               </span>
               <span className="px-2.5 py-1 rounded-full bg-stone-100 hover:bg-stone-200 transition-colors">⏱ {store.prep_time_min}–{store.prep_time_max} min</span>
-              <span className="px-2.5 py-1 rounded-full bg-stone-100 hover:bg-stone-200 transition-colors">🛵 {brl(store.delivery_fee_cents ?? 0)}</span>
+              {minFee !== null && (
+                <span className="px-2.5 py-1 rounded-full bg-stone-100 hover:bg-stone-200 transition-colors">🛵 entrega a partir de {brl(minFee)}</span>
+              )}
               <span className="px-2.5 py-1 rounded-full bg-stone-100 hover:bg-stone-200 transition-colors">mínimo {brl(store.min_order_cents)}</span>
             </div>
             {!isOpen && (
@@ -157,9 +159,7 @@ export default function VitrineClient({ store, categories, isOpen, opensAt }: {
                           {!p.active && <p className="text-xs text-stone-400 italic">pausado pelo pizzaiolo — volta já</p>}
                         </div>
                         <div className="w-24 shrink-0 text-center">
-                          <div className={`w-24 h-20 rounded-2xl bg-gradient-to-br ${THUMBS[(pi + ci) % THUMBS.length]} flex items-center justify-center text-[34px] shadow-inner overflow-hidden`}>
-                            <span className="dish-thumb inline-block drop-shadow">{p.image_emoji}</span>
-                          </div>
+                          <div aria-hidden className={`w-24 h-20 rounded-2xl bg-gradient-to-br ${THUMBS[(pi + ci) % THUMBS.length]} shadow-inner drop-shadow overflow-hidden`} />
                           <button
                             disabled={!p.active || !isOpen}
                             onClick={() => quickAdd(p.id)}
