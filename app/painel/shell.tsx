@@ -26,7 +26,7 @@ function NavIcon({ name, className = "w-5 h-5" }: { name: string; className?: st
   );
 }
 
-export default function PainelLayout({ children }: { children: React.ReactNode }) {
+export default function PainelShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const awaiting = TODAY_ORDERS.filter((o) => o.status === "new").length;
   const isActive = (href: string) => (href === "/painel" ? pathname === href : pathname.startsWith(href));
