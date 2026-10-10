@@ -45,7 +45,6 @@ export default function ProdutoClient({ slug, store, product, categoryName, addo
             <span className="absolute left-6 top-5 text-3xl opacity-40 -rotate-12 select-none">🌿</span>
             <span className="absolute right-8 top-8 text-2xl opacity-40 rotate-12 select-none">🧀</span>
             <span className="absolute left-10 bottom-5 text-2xl opacity-30 rotate-6 select-none">🍅</span>
-            <span className="text-[128px] drop-shadow-xl anim-drift select-none">{product.image_emoji}</span>
             <span className="absolute top-3 left-4 bg-stone-900/85 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">{categoryName}</span>
             <span className="absolute bottom-3 right-4 bg-white text-stone-900 font-extrabold tabular-nums px-3.5 py-1.5 rounded-xl shadow-lg">
               {brl(product.price_cents)}

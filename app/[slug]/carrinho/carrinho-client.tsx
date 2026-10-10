@@ -2,15 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { GLOBAL_ADDONS, brl, type Category, type Product, type Store } from "../menu-data";
+import { brl, type Addon, type Category, type Product, type Store } from "../menu-data";
 import { countItems, loadCart, removeLine, saveCart, setQty, type CartLine } from "@/lib/cart";
 
 type Resolved = { index: number; line: CartLine; product: Product; addonNames: string[]; unit: number };
 
 const STEPS = ["Sacola", "Checkout", "Receber"];
 
-export default function CarrinhoClient({ store, categories, isOpen, opensAt }: {
-  store: Store; categories: Category[]; isOpen: boolean; opensAt: string;
+export default function CarrinhoClient({ store, categories, addons, isOpen, opensAt }: {
+  store: Store; categories: Category[]; addons: Addon[]; isOpen: boolean; opensAt: string;
 }) {
   const [lines, setLines] = useState<CartLine[] | null>(null);
 
@@ -33,7 +33,7 @@ export default function CarrinhoClient({ store, categories, isOpen, opensAt }: {
     if (!lines) return [];
     const byId = new Map<string, Product>();
     for (const c of categories) for (const p of c.products) byId.set(p.id, p);
-    const addonName = new Map(GLOBAL_ADDONS.map((a) => [a.id, a] as const));
+    const addonName = new Map(addons.map((a) => [a.id, a] as const));
     return lines.flatMap((line, index) => {
       const product = byId.get(line.productId);
       if (!product) return []; // saiu do cardápio: ignora a linha
@@ -47,7 +47,7 @@ export default function CarrinhoClient({ store, categories, isOpen, opensAt }: {
         unit: product.price_cents + addons.reduce((s, a) => s + a.price_cents, 0),
       }];
     });
-  }, [lines, categories]);
+  }, [lines, categories, addons]);
 
   const subtotal = items.reduce((s, i) => s + i.unit * i.line.qty, 0);
   const reachedMin = subtotal >= store.min_order_cents;
@@ -126,9 +126,7 @@ export default function CarrinhoClient({ store, categories, isOpen, opensAt }: {
                 {items.map(({ index, line, product, addonNames, unit }, i) => (
                   <li key={`${line.productId}-${index}`} style={{ animationDelay: `${Math.min(i, 8) * 60}ms` }}
                     className="anim-rise dish-card bg-white border rounded-3xl shadow-sm p-4 flex gap-3.5">
-                    <div className="w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-amber-100 to-rose-100 flex items-center justify-center text-4xl shrink-0 shadow-inner ring-1 ring-black/5 overflow-hidden">
-                      <span className="dish-thumb inline-block drop-shadow">{product.image_emoji}</span>
-                    </div>
+                    <div aria-hidden className="w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-amber-100 to-rose-100 shadow-inner ring-1 ring-black/5 overflow-hidden" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start gap-2">
                         <p className="font-bold text-[15px] leading-snug flex-1">{product.name}</p>
