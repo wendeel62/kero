@@ -42,3 +42,19 @@ export async function requireStoreApi() {
   if (!user) return null;
   return { supabase, userId: user.id };
 }
+
+// Guard p/ rotas /api/admin/*: null = sem sessão OU sem role admin (caller → 401).
+export async function requireAdminApi() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  if (profile?.role !== "admin") return null;
+  return { supabase, userId: user.id };
+}
