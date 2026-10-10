@@ -2,12 +2,23 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { GLOBAL_ADDONS, brl, type Category, type Neighborhood, type Product, type Store } from "../menu-data";
-import { countItems, loadCart, type CartLine } from "@/lib/cart";
+import { useRouter } from "next/navigation";
+import { brl, type Addon, type Category, type Neighborhood, type Product, type Store } from "../menu-data";
+import { loadCart, saveCart, type CartLine } from "@/lib/cart";
+import { lineTotal, meetsMinimum, subtotal as calcSubtotal, total as calcTotal, unitPrice, validateChange } from "@/lib/pricing";
+import { waLink } from "@/lib/wa";
+import PriceChangeDialog from "@/components/ui/price-change-dialog";
 
 type Resolved = { line: CartLine; product: Product; unit: number };
 type Fulfillment = "delivery" | "pickup";
 type Payment = "cash" | "pix" | "card_machine";
+type PriceDiff = { originalTotal: number; correctedTotal: number };
+type OrderResult = {
+  tracking_token?: string;
+  error?: { code: string; message: string };
+  original_total?: number;
+  corrected_total?: number;
+};
 
 const MAX_NOTES = 300; // spec: obs do pedido ≤300 chars
 const onlyDigits = (s: string) => s.replace(/\D/g, "");
@@ -16,9 +27,11 @@ const reaisToCents = (s: string) => {
   return Number.isFinite(n) ? Math.round(n * 100) : NaN;
 };
 
-export default function CheckoutClient({ store, categories, neighborhoods, isOpen, opensAt }: {
-  store: Store; categories: Category[]; neighborhoods: Neighborhood[]; isOpen: boolean; opensAt: string;
+export default function CheckoutClient({ store, storeId, categories, neighborhoods, addons, isOpen, opensAt }: {
+  store: Store; storeId: string; categories: Category[]; neighborhoods: Neighborhood[]; addons: Addon[];
+  isOpen: boolean; opensAt: string;
 }) {
+  const router = useRouter();
   const activeHoods = neighborhoods.filter((n) => n.active);
   const pickupOnly = activeHoods.length === 0; // spec: 0 bairros ⇒ pickup-only
 
@@ -36,34 +49,121 @@ export default function CheckoutClient({ store, categories, neighborhoods, isOpe
   const [notes, setNotes] = useState("");
   const [website, setWebsite] = useState(""); // honeypot: campo oculto "website", deve ficar vazio
   const [errors, setErrors] = useState<string[]>([]);
-  const [sentDemo, setSentDemo] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [showWa, setShowWa] = useState(false);
+  const [priceDiff, setPriceDiff] = useState<PriceDiff | null>(null);
 
   useEffect(() => {
     setLines(loadCart(store.slug));
   }, [store.slug]);
 
+  const addonPrice = useMemo(() => new Map(addons.map((a) => [a.id, a.price_cents] as const)), [addons]);
+  const pricesOf = (ids: string[]) => ids.map((id) => addonPrice.get(id) ?? 0);
+
   const items = useMemo<Resolved[]>(() => {
     if (!lines) return [];
     const byId = new Map<string, Product>();
     for (const c of categories) for (const p of c.products) byId.set(p.id, p);
-    const addonPrice = new Map(GLOBAL_ADDONS.map((a) => [a.id, a.price_cents] as const));
     return lines.flatMap((line) => {
       const product = byId.get(line.productId);
       if (!product) return [];
-      const unit = product.price_cents + line.addonIds.reduce((s, id) => s + (addonPrice.get(id) ?? 0), 0);
+      const unit = unitPrice({ price_cents: product.price_cents, qty: line.qty, addons: pricesOf(line.addonIds) });
       return [{ line, product, unit }];
     });
-  }, [lines, categories]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lines, categories, addonPrice]);
 
   const fulfillment: Fulfillment = pickupOnly ? "pickup" : type;
   const hood = activeHoods.find((n) => n.id === hoodId) ?? activeHoods[0];
-  const subtotal = items.reduce((s, i) => s + i.unit * i.line.qty, 0);
+  const subtotal = calcSubtotal(items.map((i) => ({ price_cents: i.product.price_cents, qty: i.line.qty, addons: pricesOf(i.line.addonIds) })));
   const fee = fulfillment === "delivery" ? (hood?.fee_cents ?? 0) : 0;
-  const total = subtotal + fee;
-  const reachedMin = subtotal >= store.min_order_cents;
+  const total = calcTotal(subtotal, fee);
+  const reachedMin = meetsMinimum(subtotal, store.min_order_cents);
+
+  const buildPayload = (totalCents: number, confirmed: boolean) => {
+    const byId = new Map<string, Product>();
+    for (const c of categories) for (const p of c.products) byId.set(p.id, p);
+    const knownAddons = new Set(addons.map((a) => a.id));
+    return {
+      store_id: storeId,
+      customer_name: name.trim(),
+      customer_phone: onlyDigits(phone),
+      type: fulfillment,
+      payment_method: payment,
+      change_for_cents: payment === "cash" ? reaisToCents(changeFor) : null,
+      notes: notes || null,
+      address: fulfillment === "delivery"
+        ? {
+            neighborhood_id: hood?.id ?? null,
+            cep: onlyDigits(cep),
+            street: street.trim(),
+            number: number.trim(),
+            complement: complement.trim() || null,
+          }
+        : null,
+      items: (lines ?? []).flatMap((line) =>
+        byId.has(line.productId)
+          ? [{
+              id: line.productId,
+              qty: Math.min(Math.max(line.qty, 1), 20),
+              addons: line.addonIds.filter((id) => knownAddons.has(id)),
+              notes: line.notes || null,
+            }]
+          : []
+      ),
+      total_cents: totalCents,
+      website,
+      confirmedPriceDiff: confirmed,
+    };
+  };
+
+  const send = async (totalCents: number, confirmed: boolean) => {
+    setSending(true);
+    setShowWa(false);
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(buildPayload(totalCents, confirmed)),
+      });
+      const body = (await res.json().catch(() => null)) as OrderResult | null;
+      if (res.status === 201 && body?.tracking_token) {
+        saveCart(store.slug, []);
+        router.push(`/${store.slug}/pedido/${body.tracking_token}`);
+        return;
+      }
+      const code = body?.error?.code ?? "UNEXPECTED";
+      const message = body?.error?.message ?? "Erro inesperado. Tente de novo.";
+      if (code === "PRICE_CHANGED") {
+        // reabre/atualiza o diálogo com os totais do servidor; nada é gravado nem limpo
+        setPriceDiff({
+          originalTotal: body?.original_total ?? total,
+          correctedTotal: body?.corrected_total ?? total,
+        });
+        return;
+      }
+      if (code === "STORE_CLOSED") {
+        // copy local com o horário da página (opensAt), não a message genérica do servidor
+        setErrors([`A loja está fechada agora. ${opensAt}.`]);
+        return;
+      }
+      if (code === "DUPLICATE") {
+        setErrors([message]);
+        setShowWa(true);
+        return;
+      }
+      setErrors([message]);
+      if (code === "TROCO_INSUFICIENTE") document.getElementById("troco")?.focus();
+    } catch {
+      setErrors(["Erro de conexão. Tente de novo."]);
+    } finally {
+      setSending(false);
+    }
+  };
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (sending) return;
     const errs: string[] = [];
     if (website !== "") errs.push("HONEYPOT"); // bot: silenciosamente recusado no servidor
     if (name.trim().length < 2 || name.trim().length > 80) errs.push("Conte seu nome (2 a 80 letras).");
@@ -79,12 +179,19 @@ export default function CheckoutClient({ store, categories, neighborhoods, isOpe
     if (payment === "cash") {
       const cf = reaisToCents(changeFor);
       if (!Number.isFinite(cf)) errs.push("Troco: digite o valor em R$.");
-      else if (cf < total) errs.push("TROCO_INSUFICIENTE — o troco precisa cobrir o total.");
+      else if (!validateChange(payment, cf, total).ok) errs.push("TROCO_INSUFICIENTE — o troco precisa cobrir o total.");
     }
     if (!isOpen) errs.push(`STORE_CLOSED — abrimos às ${opensAt}.`);
     setErrors(errs);
-    if (errs.length === 0) setSentDemo(true);
-    else setSentDemo(false);
+    if (errs.length > 0) return;
+    void send(total, false);
+  };
+
+  const confirmPrice = () => {
+    if (!priceDiff) return;
+    const corrected = priceDiff.correctedTotal;
+    setPriceDiff(null);
+    void send(corrected, true);
   };
 
   const input = "w-full text-sm border rounded-xl px-3.5 py-2.5 bg-stone-50 focus:bg-white focus:border-red-300 focus:ring-2 focus:ring-red-100 outline-none transition-all disabled:opacity-50";
@@ -122,192 +229,190 @@ export default function CheckoutClient({ store, categories, neighborhoods, isOpe
           </div>
         )}
 
-        {sentDemo ? (
-          <div className="mt-4 bg-white border rounded-3xl p-8 sm:p-10 text-center anim-pop shadow-sm">
-            <p className="text-6xl">🧾</p>
-            <p className="font-display font-extrabold text-2xl mt-3 tracking-tight">Prévia do envio (demo)</p>
-            <p className="text-sm text-stone-500 mt-1 max-w-md mx-auto">
-              Pedido <b className="text-stone-800">#DEMO</b> · {countItems(lines ?? [])} itens · {fulfillment === "delivery" ? `entrega em ${hood?.name ?? "—"}` : "retirada"} · {brl(total)} no <b>{payment === "cash" ? "dinheiro" : payment === "pix" ? "Pix" : "maquininha"}</b>.
-              Na fase da API isso cria o pedido de verdade (<code className="text-xs bg-stone-100 px-1 rounded">POST /api/orders</code>) e limpa a sacola.
-            </p>
-            <div className="mt-5 flex gap-2 justify-center">
-              <button onClick={() => setSentDemo(false)} className="border border-stone-200 font-bold rounded-xl px-5 py-3 text-sm hover:bg-stone-50 transition-colors">
-                Revisar dados
-              </button>
-              <Link href={`/${store.slug}`} className="bg-stone-900 text-white font-bold rounded-xl px-5 py-3 text-sm hover:bg-stone-700 transition-colors">
-                Voltar ao cardápio
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <form id="checkout-form" onSubmit={submit} className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] items-start">
-            <div className="min-w-0 space-y-4">
-              {/* quem recebe */}
-              <section className="bg-white border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise">
-                <h2 className="font-display font-extrabold">Quem recebe?</h2>
-                <div className="grid sm:grid-cols-2 gap-3 mt-3">
-                  <div>
-                    <label htmlFor="nome" className={label}>Nome</label>
-                    <input id="nome" value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" autoComplete="name"
-                      className={`${input} mt-1`} maxLength={80} />
-                  </div>
-                  <div>
-                    <label htmlFor="zap" className={label}>WhatsApp</label>
-                    <input id="zap" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="11987654321" inputMode="tel" autoComplete="tel"
-                      className={`${input} mt-1`} maxLength={15} />
-                  </div>
+        <form id="checkout-form" onSubmit={submit} className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] items-start">
+          <div className="min-w-0 space-y-4">
+            {/* quem recebe */}
+            <section className="bg-white border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise">
+              <h2 className="font-display font-extrabold">Quem recebe?</h2>
+              <div className="grid sm:grid-cols-2 gap-3 mt-3">
+                <div>
+                  <label htmlFor="nome" className={label}>Nome</label>
+                  <input id="nome" value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" autoComplete="name"
+                    className={`${input} mt-1`} maxLength={80} />
                 </div>
-              </section>
-
-              {/* entrega ou retirada */}
-              <section className="bg-white border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise" style={{ animationDelay: "60ms" }}>
-                <h2 className="font-display font-extrabold">Entrega ou retirada?</h2>
-                <div className="grid grid-cols-2 gap-2 mt-3">
-                  {([["delivery", "Entrega"], ["pickup", "Retirada"]] as const).map(([v, t]) => (
-                    <label key={v} className={`border-2 rounded-2xl p-3 text-sm font-bold cursor-pointer transition-all ${fulfillment === v ? "border-red-600 bg-red-50/50" : "border-stone-100 hover:border-stone-300"}`}>
-                      <input type="radio" name="tipo" checked={fulfillment === v} disabled={v === "delivery" && pickupOnly}
-                        onChange={() => setType(v)} className="accent-red-600 mr-1.5" />
-                      {t}
-                    </label>
-                  ))}
-                </div>
-                {pickupOnly && <p className="text-xs text-stone-500 mt-2">🚲 Por enquanto só retirada — a loja ainda não cadastrou bairros.</p>}
-
-                {fulfillment === "delivery" && (
-                  <div className="grid sm:grid-cols-2 gap-3 mt-3">
-                    <div className="sm:col-span-2 grid grid-cols-[1fr_110px] gap-3">
-                      <div>
-                        <label htmlFor="rua" className={label}>Rua / Avenida</label>
-                        <input id="rua" value={street} onChange={(e) => setStreet(e.target.value)} placeholder="Rua das Flores" className={`${input} mt-1`} />
-                      </div>
-                      <div>
-                        <label htmlFor="num" className={label}>Número</label>
-                        <input id="num" value={number} onChange={(e) => setNumber(e.target.value)} placeholder="123" className={`${input} mt-1`} />
-                      </div>
-                    </div>
-                    <div>
-                      <label htmlFor="bairro" className={label}>Bairro · taxa</label>
-                      <select id="bairro" value={hoodId} onChange={(e) => setHoodId(e.target.value)} className={`${input} mt-1`}>
-                        {activeHoods.map((n) => (
-                          <option key={n.id} value={n.id}>{n.name} — {brl(n.fee_cents)}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label htmlFor="cep" className={label}>CEP*</label>
-                      <input id="cep" value={cep} onChange={(e) => setCep(e.target.value)} placeholder="01234567" inputMode="numeric" className={`${input} mt-1`} maxLength={9} />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label htmlFor="comp" className={label}>Complemento <span className="font-normal text-stone-400">(opcional)</span></label>
-                      <input id="comp" value={complement} onChange={(e) => setComplement(e.target.value)} placeholder="Apto, bloco, referência…" className={`${input} mt-1`} />
-                    </div>
-                  </div>
-                )}
-                {fulfillment === "pickup" && (
-                  <p className="text-xs text-stone-500 mt-3 bg-stone-50 border rounded-xl px-3 py-2">📍 Retirada no balcão — o endereço da loja chega na confirmação.</p>
-                )}
-              </section>
-
-              {/* pagamento */}
-              <section className="bg-white border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise" style={{ animationDelay: "120ms" }}>
-                <h2 className="font-display font-extrabold">Pagamento <span className="text-xs font-normal text-stone-400">só na entrega · sem maquininha online</span></h2>
-                <div className="grid grid-cols-3 gap-2 mt-3">
-                  {([["cash", "Dinheiro"], ["pix", "Pix"], ["card_machine", "Maquininha"]] as const).map(([v, t]) => (
-                    <label key={v} className={`border-2 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer transition-all ${payment === v ? "border-red-600 bg-red-50/50" : "border-stone-100 hover:border-stone-300"}`}>
-                      <input type="radio" name="pag" checked={payment === v} onChange={() => setPayment(v)} className="sr-only" />
-                      {t}
-                    </label>
-                  ))}
-                </div>
-                {payment === "cash" && (
-                  <div className="mt-3 anim-pop">
-                    <label htmlFor="troco" className={label}>Troco para quanto? (R$)</label>
-                    <input id="troco" value={changeFor} onChange={(e) => setChangeFor(e.target.value)} placeholder="Ex: 100,00" inputMode="decimal"
-                      className={`${input} mt-1 max-w-[200px]`} />
-                    <p className="text-[11px] text-stone-400 mt-1">Precisa cobrir o total de {brl(total)}.</p>
-                  </div>
-                )}
-              </section>
-
-              {/* obs */}
-              <section className="bg-white border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise" style={{ animationDelay: "180ms" }}>
-                <div className="flex items-baseline gap-2">
-                  <label htmlFor="obs" className="font-display font-extrabold">Observações</label>
-                  <span className="ml-auto text-[11px] text-stone-400 tabular-nums">{notes.length}/{MAX_NOTES}</span>
-                </div>
-                <textarea id="obs" rows={2} maxLength={MAX_NOTES} value={notes} onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Ex: campainha quebrada, pode chamar no portão…" className={`${input} mt-2`} />
-                <p className="text-[11px] text-stone-400 mt-2">🔒 LGPD: seus dados servem só p/ entregar este pedido.</p>
-                {/* honeypot anti-bot */}
-                <input type="text" name="website" value={website} onChange={(e) => setWebsite(e.target.value)}
-                  autoComplete="off" tabIndex={-1} aria-hidden className="hidden" />
-              </section>
-
-              {errors.length > 0 && (
-                <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm anim-pop" role="alert">
-                  <p className="font-extrabold text-red-700">Falta ajustar {errors.length === 1 ? "isto" : "estas coisas"}:</p>
-                  <ul className="list-disc pl-5 mt-1 text-red-700 space-y-0.5">
-                    {errors.filter((e) => e !== "HONEYPOT").map((e) => <li key={e}>{e}</li>)}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            {/* recibo */}
-            <div className="bg-stone-900 text-white rounded-3xl shadow-[0_20px_50px_-16px_rgba(28,25,23,0.55)] p-6 lg:sticky lg:top-20 h-fit texture-dots anim-rise" style={{ animationDelay: "100ms" }}>
-              <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-amber-300">seu pedido</p>
-              <ul className="mt-3 space-y-2 text-sm max-h-56 overflow-y-auto no-scrollbar">
-                {items.map(({ line, product, unit }) => (
-                  <li key={`${line.productId}-${line.addonIds.join("+")}-${line.notes}`} className="flex justify-between gap-2 text-stone-300">
-                    <span className="truncate">{line.qty}× {product.name}</span>
-                    <span className="font-bold tabular-nums text-white shrink-0">{brl(unit * line.qty)}</span>
-                  </li>
-                ))}
-                {items.length === 0 && <li className="text-stone-400 text-sm">Sacola vazia — <Link href={`/${store.slug}`} className="underline text-amber-300">voltar ao cardápio</Link></li>}
-              </ul>
-              <div className="receipt-div mt-4 pt-4 space-y-1.5 text-sm">
-                <div className="flex justify-between text-stone-300">
-                  <span>Subtotal</span><span className="font-bold tabular-nums text-white">{brl(subtotal)}</span>
-                </div>
-                <div className="flex justify-between text-stone-300">
-                  <span>{fulfillment === "delivery" ? `Entrega · ${hood?.name ?? "—"}` : "Retirada"}</span>
-                  <span className="font-bold tabular-nums text-white">{fulfillment === "delivery" ? brl(fee) : "grátis"}</span>
-                </div>
-                <div className="flex items-baseline justify-between pt-1">
-                  <span className="text-stone-300">Total</span>
-                  <span className="font-display font-extrabold text-3xl tabular-nums">{brl(total)}</span>
+                <div>
+                  <label htmlFor="zap" className={label}>WhatsApp</label>
+                  <input id="zap" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="11987654321" inputMode="tel" autoComplete="tel"
+                    className={`${input} mt-1`} maxLength={15} />
                 </div>
               </div>
-              {!reachedMin && items.length > 0 && (
-                <p className="mt-3 text-xs text-amber-200 bg-amber-300/10 border border-amber-300/25 rounded-xl px-3 py-2">
-                  Faltam {brl(store.min_order_cents - subtotal)} p/ o mínimo de {brl(store.min_order_cents)}.
-                </p>
+            </section>
+
+            {/* entrega ou retirada */}
+            <section className="bg-white border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise" style={{ animationDelay: "60ms" }}>
+              <h2 className="font-display font-extrabold">Entrega ou retirada?</h2>
+              <div className="grid grid-cols-2 gap-2 mt-3">
+                {([["delivery", "Entrega"], ["pickup", "Retirada"]] as const).map(([v, t]) => (
+                  <label key={v} className={`border-2 rounded-2xl p-3 text-sm font-bold cursor-pointer transition-all ${fulfillment === v ? "border-red-600 bg-red-50/50" : "border-stone-100 hover:border-stone-300"}`}>
+                    <input type="radio" name="tipo" checked={fulfillment === v} disabled={v === "delivery" && pickupOnly}
+                      onChange={() => setType(v)} className="accent-red-600 mr-1.5" />
+                    {t}
+                  </label>
+                ))}
+              </div>
+              {pickupOnly && <p className="text-xs text-stone-500 mt-2">🚲 Por enquanto só retirada — a loja ainda não cadastrou bairros.</p>}
+
+              {fulfillment === "delivery" && (
+                <div className="grid sm:grid-cols-2 gap-3 mt-3">
+                  <div className="sm:col-span-2 grid grid-cols-[1fr_110px] gap-3">
+                    <div>
+                      <label htmlFor="rua" className={label}>Rua / Avenida</label>
+                      <input id="rua" value={street} onChange={(e) => setStreet(e.target.value)} placeholder="Rua das Flores" className={`${input} mt-1`} />
+                    </div>
+                    <div>
+                      <label htmlFor="num" className={label}>Número</label>
+                      <input id="num" value={number} onChange={(e) => setNumber(e.target.value)} placeholder="123" className={`${input} mt-1`} />
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="bairro" className={label}>Bairro · taxa</label>
+                    <select id="bairro" value={hoodId} onChange={(e) => setHoodId(e.target.value)} className={`${input} mt-1`}>
+                      {activeHoods.map((n) => (
+                        <option key={n.id} value={n.id}>{n.name} — {brl(n.fee_cents)}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="cep" className={label}>CEP*</label>
+                    <input id="cep" value={cep} onChange={(e) => setCep(e.target.value)} placeholder="01234567" inputMode="numeric" className={`${input} mt-1`} maxLength={9} />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label htmlFor="comp" className={label}>Complemento <span className="font-normal text-stone-400">(opcional)</span></label>
+                    <input id="comp" value={complement} onChange={(e) => setComplement(e.target.value)} placeholder="Apto, bloco, referência…" className={`${input} mt-1`} />
+                  </div>
+                </div>
               )}
-              <button type="submit" form="checkout-form"
-                className="btn-shine mt-4 w-full bg-gradient-to-r from-red-600 to-orange-500 font-bold rounded-xl py-3.5 shadow-lg transition-transform active:scale-[0.99]">
-                Fazer pedido • {brl(total)}
-              </button>
-              <p className="mt-3 text-center text-[11px] text-stone-500">Servidor recalcula tudo — preço da tela é exibição.</p>
+              {fulfillment === "pickup" && (
+                <p className="text-xs text-stone-500 mt-3 bg-stone-50 border rounded-xl px-3 py-2">📍 Retirada no balcão — o endereço da loja chega na confirmação.</p>
+              )}
+            </section>
+
+            {/* pagamento */}
+            <section className="bg-white border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise" style={{ animationDelay: "120ms" }}>
+              <h2 className="font-display font-extrabold">Pagamento <span className="text-xs font-normal text-stone-400">só na entrega · sem maquininha online</span></h2>
+              <div className="grid grid-cols-3 gap-2 mt-3">
+                {([["cash", "Dinheiro"], ["pix", "Pix"], ["card_machine", "Maquininha"]] as const).map(([v, t]) => (
+                  <label key={v} className={`border-2 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer transition-all ${payment === v ? "border-red-600 bg-red-50/50" : "border-stone-100 hover:border-stone-300"}`}>
+                    <input type="radio" name="pag" checked={payment === v} onChange={() => setPayment(v)} className="sr-only" />
+                    {t}
+                  </label>
+                ))}
+              </div>
+              {payment === "cash" && (
+                <div className="mt-3 anim-pop">
+                  <label htmlFor="troco" className={label}>Troco para quanto? (R$)</label>
+                  <input id="troco" value={changeFor} onChange={(e) => setChangeFor(e.target.value)} placeholder="Ex: 100,00" inputMode="decimal"
+                    className={`${input} mt-1 max-w-[200px]`} />
+                  <p className="text-[11px] text-stone-400 mt-1">Precisa cobrir o total de {brl(total)}.</p>
+                </div>
+              )}
+            </section>
+
+            {/* obs */}
+            <section className="bg-white border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise" style={{ animationDelay: "180ms" }}>
+              <div className="flex items-baseline gap-2">
+                <label htmlFor="obs" className="font-display font-extrabold">Observações</label>
+                <span className="ml-auto text-[11px] text-stone-400 tabular-nums">{notes.length}/{MAX_NOTES}</span>
+              </div>
+              <textarea id="obs" rows={2} maxLength={MAX_NOTES} value={notes} onChange={(e) => setNotes(e.target.value)}
+                placeholder="Ex: campainha quebrada, pode chamar no portão…" className={`${input} mt-2`} />
+              <p className="text-[11px] text-stone-400 mt-2">🔒 LGPD: seus dados servem só p/ entregar este pedido.</p>
+              {/* honeypot anti-bot */}
+              <input type="text" name="website" value={website} onChange={(e) => setWebsite(e.target.value)}
+                autoComplete="off" tabIndex={-1} aria-hidden className="hidden" />
+            </section>
+
+            {errors.length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm anim-pop" role="alert">
+                <p className="font-extrabold text-red-700">Falta ajustar {errors.length === 1 ? "isto" : "estas coisas"}:</p>
+                <ul className="list-disc pl-5 mt-1 text-red-700 space-y-0.5">
+                  {errors.filter((e) => e !== "HONEYPOT").map((e) => <li key={e}>{e}</li>)}
+                </ul>
+                {showWa && (
+                  <a href={waLink(store.whatsapp)} target="_blank" rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center gap-1.5 bg-green-600 text-white font-bold rounded-xl px-4 py-2.5 text-sm hover:bg-green-700 transition-colors">
+                    Falar com a loja no WhatsApp
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* recibo */}
+          <div className="bg-stone-900 text-white rounded-3xl shadow-[0_20px_50px_-16px_rgba(28,25,23,0.55)] p-6 lg:sticky lg:top-20 h-fit texture-dots anim-rise" style={{ animationDelay: "100ms" }}>
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-amber-300">seu pedido</p>
+            <ul className="mt-3 space-y-2 text-sm max-h-56 overflow-y-auto no-scrollbar">
+              {items.map(({ line, product, unit }) => (
+                <li key={`${line.productId}-${line.addonIds.join("+")}-${line.notes}`} className="flex justify-between gap-2 text-stone-300">
+                  <span className="truncate">{line.qty}× {product.name}</span>
+                  <span className="font-bold tabular-nums text-white shrink-0">{brl(unit * line.qty)}</span>
+                </li>
+              ))}
+              {items.length === 0 && <li className="text-stone-400 text-sm">Sacola vazia — <Link href={`/${store.slug}`} className="underline text-amber-300">voltar ao cardápio</Link></li>}
+            </ul>
+            <div className="receipt-div mt-4 pt-4 space-y-1.5 text-sm">
+              <div className="flex justify-between text-stone-300">
+                <span>Subtotal</span><span className="font-bold tabular-nums text-white">{brl(subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-stone-300">
+                <span>{fulfillment === "delivery" ? `Entrega · ${hood?.name ?? "—"}` : "Retirada"}</span>
+                <span className="font-bold tabular-nums text-white">{fulfillment === "delivery" ? brl(fee) : "grátis"}</span>
+              </div>
+              <div className="flex items-baseline justify-between pt-1">
+                <span className="text-stone-300">Total</span>
+                <span className="font-display font-extrabold text-3xl tabular-nums">{brl(total)}</span>
+              </div>
             </div>
-          </form>
-        )}
+            {!reachedMin && items.length > 0 && (
+              <p className="mt-3 text-xs text-amber-200 bg-amber-300/10 border border-amber-300/25 rounded-xl px-3 py-2">
+                Faltam {brl(store.min_order_cents - subtotal)} p/ o mínimo de {brl(store.min_order_cents)}.
+              </p>
+            )}
+            <button type="submit" form="checkout-form" disabled={sending}
+              className="btn-shine mt-4 w-full bg-gradient-to-r from-red-600 to-orange-500 font-bold rounded-xl py-3.5 shadow-lg transition-transform active:scale-[0.99] disabled:opacity-60">
+              {sending ? "Enviando…" : `Fazer pedido • ${brl(total)}`}
+            </button>
+            <p className="mt-3 text-center text-[11px] text-stone-500">Servidor recalcula tudo — preço da tela é exibição.</p>
+          </div>
+        </form>
       </main>
 
       {/* CTA fixo mobile */}
-      {!sentDemo && (
-        <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <div className="max-w-3xl mx-auto bg-white border rounded-2xl shadow-[0_12px_30px_-8px_rgba(0,0,0,0.3)] p-2 anim-bar">
-            <div className="flex items-center justify-between px-2 pb-1.5">
-              <span className="text-xs text-stone-500 font-medium">{fulfillment === "delivery" ? `Entrega · ${hood?.name ?? "—"}` : "Retirada"}</span>
-              <span className="font-display font-extrabold tabular-nums">{brl(total)}</span>
-            </div>
-            <button type="submit" form="checkout-form"
-              className="btn-shine w-full bg-gradient-to-r from-red-700 via-red-600 to-red-500 text-white font-bold rounded-xl py-3.5">
-              Fazer pedido →
-            </button>
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="max-w-3xl mx-auto bg-white border rounded-2xl shadow-[0_12px_30px_-8px_rgba(0,0,0,0.3)] p-2 anim-bar">
+          <div className="flex items-center justify-between px-2 pb-1.5">
+            <span className="text-xs text-stone-500 font-medium">{fulfillment === "delivery" ? `Entrega · ${hood?.name ?? "—"}` : "Retirada"}</span>
+            <span className="font-display font-extrabold tabular-nums">{brl(total)}</span>
           </div>
+          <button type="submit" form="checkout-form" disabled={sending}
+            className="btn-shine w-full bg-gradient-to-r from-red-700 via-red-600 to-red-500 text-white font-bold rounded-xl py-3.5 disabled:opacity-60">
+            {sending ? "Enviando…" : "Fazer pedido →"}
+          </button>
         </div>
-      )}
+      </div>
+
+      <PriceChangeDialog
+        open={priceDiff !== null}
+        lines={items.map((i) => ({
+          name: i.product.name,
+          qty: i.line.qty,
+          line_total: lineTotal({ price_cents: i.product.price_cents, qty: i.line.qty, addons: pricesOf(i.line.addonIds) }),
+        }))}
+        originalTotal={priceDiff?.originalTotal ?? total}
+        correctedTotal={priceDiff?.correctedTotal ?? total}
+        onConfirm={confirmPrice}
+        onClose={() => setPriceDiff(null)}
+      />
     </div>
   );
 }
