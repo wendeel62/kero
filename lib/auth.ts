@@ -31,3 +31,14 @@ export async function requireAdmin() {
   if (s.profile?.role !== "admin") redirect(s.profile?.store_id ? "/painel" : "/login");
   return { supabase: s.supabase, userId: s.userId };
 }
+
+// Guard p/ rotas de API: 401 JSON é responsabilidade do caller; aqui só null.
+// Posse da loja fica no RPC (lojista órfão vira NOT_YOUR_STORE 403 — honesto).
+export async function requireStoreApi() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  return { supabase, userId: user.id };
+}

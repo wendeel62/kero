@@ -63,3 +63,27 @@ export function mapOrderError(pgMessage: string): MappedOrderError {
     ? { status: row.status, code: row.code ?? key, message: row.message }
     : { status: 500, code: "UNEXPECTED", message: "Erro inesperado. Tente de novo." };
 }
+
+// Mapeia a mensagem de exceção do RPC set_order_status + trigger de transição
+// (002: 'CODE[: detalhe]'). UNAUTHORIZED é gerado pela rota (sessão), mas fica
+// aqui para quem chamar o map com ele não virar 500.
+const STATUS_TABLE: Record<string, { status: number; message: string }> = {
+  UNAUTHORIZED: { status: 401, message: "Faça login para continuar." },
+  NOT_YOUR_STORE: { status: 403, message: "Esse pedido não é da sua loja." },
+  ORDER_NOT_FOUND: { status: 404, message: "Pedido não encontrado." },
+  INVALID_STATUS: { status: 400, message: "Status inválido." },
+  INVALID_ACTOR: { status: 400, message: "Ator inválido." },
+  FINAL_STATE: { status: 400, message: "Pedido já entregue — status final." },
+  INVALID_TRANSITION: { status: 400, message: "Transição de status não permitida." },
+  REASON_REQUIRED: { status: 400, message: "Cancelamento exige um motivo (3+ caracteres)." },
+  IMMUTABLE_COLUMNS: { status: 400, message: "Dados do pedido não podem ser alterados." },
+};
+
+export function mapStatusError(pgMessage: string): MappedOrderError {
+  const i = pgMessage.indexOf(":");
+  const key = (i === -1 ? pgMessage : pgMessage.slice(0, i)).trim();
+  const row = STATUS_TABLE[key];
+  return row
+    ? { status: row.status, code: key, message: row.message }
+    : { status: 500, code: "UNEXPECTED", message: "Erro inesperado. Tente de novo." };
+}
