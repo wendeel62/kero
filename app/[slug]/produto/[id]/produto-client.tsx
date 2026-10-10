@@ -59,7 +59,6 @@ export default function ProdutoClient({ slug, store, product, categoryName, addo
             <p className="text-sm text-stone-500 mt-1">{product.description}</p>
             <div className="flex flex-wrap gap-2 mt-3 text-xs font-semibold">
               <span className="px-2.5 py-1 rounded-full bg-stone-100">⏱ {store.prep_time_min}–{store.prep_time_max} min</span>
-              <span className="px-2.5 py-1 rounded-full bg-stone-100">🛵 {brl(store.delivery_fee_cents ?? 0)}</span>
               <span className="px-2.5 py-1 rounded-full bg-stone-100">👥 serve bem 2 pessoas</span>
             </div>
             {!product.active && (

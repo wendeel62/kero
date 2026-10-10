@@ -97,7 +97,7 @@ export default function CarrinhoClient({ store, categories, addons, isOpen, open
           </div>
           <div className="min-w-0">
             <p className="font-display font-extrabold leading-tight truncate">{store.name}</p>
-            <p className="text-xs text-stone-500">★ 4.9 · ⏱ {store.prep_time_min}–{store.prep_time_max} min · 🛵 {brl(store.delivery_fee_cents ?? 0)}</p>
+            <p className="text-xs text-stone-500">★ 4.9 · ⏱ {store.prep_time_min}–{store.prep_time_max} min</p>
           </div>
           <Link href={`/${store.slug}`} className="ml-auto shrink-0 text-xs font-extrabold text-red-700 border border-stone-200 rounded-full px-3.5 py-1.5 hover:bg-red-50 transition-colors">
             cardápio
