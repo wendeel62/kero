@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getClientes, getPedidosDoCliente } from "@/lib/painel";
 import type { Customer } from "@/lib/customers";
 import { toPanelOrder } from "@/lib/painel-utils";
-import { StatusBadge } from "@/components/ui/status-badge";
+import ClienteDetalhe from "./detalhe";
 
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -83,57 +83,7 @@ export default async function Clientes({ searchParams }: { searchParams: Promise
         </ul>
       </section>
 
-      {selected && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-[2px]" onClick={() => { window.location.href = "/painel/clientes"; }}>
-          <aside className="anim-pop w-full sm:w-[420px] h-full bg-[var(--surface)] border-l border-[var(--border)] overflow-y-auto p-4"
-            onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-2">
-              <span className="flex items-center justify-center w-10 h-10 rounded-full bg-[var(--pill-active-bg)] text-[var(--pill-active-ink)] text-sm font-extrabold">
-                {selected.name[0]?.toUpperCase() ?? "?"}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="font-extrabold truncate">{selected.name}</p>
-                <p className="text-xs text-[var(--muted)]">{selected.phone}</p>
-              </div>
-              <span className={`text-[10px] font-extrabold rounded-full px-2 py-0.5 ${PROFILE_TINT[selected.profile]}`}>{PROFILE_LABEL[selected.profile]}</span>
-              <Link href="/painel/clientes" aria-label="Fechar"
-                className="shrink-0 w-8 h-8 rounded-lg border border-[var(--border)] flex items-center justify-center text-[var(--muted)] hover:text-[var(--text)]">✕</Link>
-            </div>
-            <div className="grid grid-cols-3 gap-2 mt-3">
-              <div className="rounded-xl border border-[var(--border)] p-2.5 text-center">
-                <p className="font-extrabold tabular-nums">{selected.orders}</p>
-                <p className="text-[10px] text-[var(--muted)]">pedidos</p>
-              </div>
-              <div className="rounded-xl border border-[var(--border)] p-2.5 text-center">
-                <p className="font-extrabold tabular-nums text-sm">{brl(selected.spentCents)}</p>
-                <p className="text-[10px] text-[var(--muted)]">total gasto</p>
-              </div>
-              <div className="rounded-xl border border-[var(--border)] p-2.5 text-center">
-                <p className="font-extrabold tabular-nums">{daysAgo(selected.lastOrderAt)} d</p>
-                <p className="text-[10px] text-[var(--muted)]">último pedido</p>
-              </div>
-            </div>
-            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--muted)] mt-4 mb-2">Últimos 10 pedidos</h3>
-            <ul className="space-y-2">
-              {pedidos.map((o) => (
-                <li key={o.id} className="rounded-xl border border-[var(--border)] p-3">
-                  <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-sm bg-[var(--pill-bg)] rounded-lg px-2 py-0.5">#{o.code}</span>
-                    <StatusBadge status={o.status} size="sm" />
-                    <span className="ml-auto font-extrabold tabular-nums text-sm">{brl(o.total_cents)}</span>
-                  </div>
-                  <p className="text-[11px] text-[var(--muted)] mt-1.5">
-                    {o.type === "delivery" ? "Entrega" : "Retirada"} · {o.payment} · há {o.minutesAgo} min
-                  </p>
-                </li>
-              ))}
-              {pedidos.length === 0 && (
-                <li className="text-center text-xs text-[var(--muted)] py-6">sem pedidos válidos</li>
-              )}
-            </ul>
-          </aside>
-        </div>
-      )}
+      {selected && <ClienteDetalhe customer={selected} pedidos={pedidos} />}
     </main>
   );
 }
