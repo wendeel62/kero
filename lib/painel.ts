@@ -9,16 +9,18 @@ import type {
   PanelProduct, PanelRow, PanelSettings, PanelStatus,
 } from "./painel-utils";
 import { manausDayStartISO, toPanelOrder } from "./painel-utils";
+import { parsePeriodKind, resolvePeriod } from "./period";
 
 const ORDER_COLS = "id,code,customer_name,type,payment_method,total_cents,status,created_at";
 
-export async function getHoje() {
+export async function getHoje(period: string = "today") {
   const { supabase, storeId } = await requireStore();
   const now = Date.now();
+  const { from, to } = resolvePeriod(parsePeriodKind(period));
   const [{ data: store }, { data: rows }] = await Promise.all([
     supabase.from("stores").select("name,force_closed,force_closed_at").eq("id", storeId).single(),
     supabase.from("orders").select(ORDER_COLS).eq("store_id", storeId)
-      .gte("created_at", manausDayStartISO()).order("created_at", { ascending: false }),
+      .gte("created_at", from).lt("created_at", to).order("created_at", { ascending: false }),
   ]);
   if (!store) throw new Error("Loja não encontrada.");
   const orders = ((rows ?? []) as PanelRow[]).map((o) => toPanelOrder(o, now));

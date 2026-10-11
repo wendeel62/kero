@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getHoje } from "@/lib/painel";
 import { setForceClosed } from "@/lib/painel-actions";
+import { PERIOD_KINDS, PERIOD_LABEL, type PeriodKind } from "@/lib/period";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { StatCard } from "@/components/ui/StatCard";
 
@@ -57,7 +58,8 @@ type Hoje = Awaited<ReturnType<typeof getHoje>>;
 export default function PainelHoje() {
   const [data, setData] = useState<Hoje | null>(null);
   const [failed, setFailed] = useState(false);
-  useEffect(() => { getHoje().then(setData).catch(() => setFailed(true)); }, []);
+  const [period, setPeriod] = useState<PeriodKind>("today");
+  useEffect(() => { getHoje(period).then(setData).catch(() => setFailed(true)); }, [period]);
   const [closed, setClosed] = useState(false);
   const [closedAt, setClosedAt] = useState("");
   useEffect(() => {
@@ -124,6 +126,16 @@ export default function PainelHoje() {
           <span className={`store-dot ${closed ? "" : "store-dot--open"}`} aria-hidden />
           {closed ? "Reabrir loja" : "Fechar agora"}
         </button>
+      </div>
+
+      {/* controles de período */}
+      <div className="mt-4 inline-flex bg-[var(--surface)] border rounded-2xl p-1.5 gap-1 shadow-sm anim-rise" role="tablist">
+        {PERIOD_KINDS.map((k) => (
+          <button key={k} role="tab" aria-selected={period === k} onClick={() => setPeriod(k)}
+            className={`px-5 sm:px-8 py-2.5 rounded-xl text-sm font-extrabold transition-all ${period === k ? "bg-[var(--text)] text-white shadow" : "text-[var(--muted)] hover:text-[var(--text)]"}`}>
+            {PERIOD_LABEL[k]}
+          </button>
+        ))}
       </div>
 
       {closed && (
