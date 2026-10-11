@@ -11,6 +11,7 @@ export const PAYMENT_PT: Record<string, string> = { cash: "Dinheiro", pix: "Pix"
 export type PanelOrder = {
   id: string; code: string; customer: string; minutesAgo: number;
   type: PanelType; payment: string; total_cents: number; status: PanelStatus;
+  statusMinutes: number;
 };
 
 // meia-noite de Manaus em ISO UTC (Manaus = UTC-4 fixo, sem horário de verão)
@@ -28,11 +29,12 @@ export type PanelRow = {
   payment_method: string; total_cents: number; status: PanelStatus; created_at: string;
 };
 
-export const toPanelOrder = (o: PanelRow, now = Date.now()): PanelOrder => ({
+export const toPanelOrder = (o: PanelRow, now = Date.now(), statusMinutes?: number): PanelOrder => ({
   id: o.id, code: o.code, customer: o.customer_name,
   minutesAgo: Math.max(0, Math.round((now - new Date(o.created_at).getTime()) / 60000)),
   type: o.type, payment: PAYMENT_PT[o.payment_method] ?? o.payment_method,
   total_cents: o.total_cents, status: o.status,
+  statusMinutes: statusMinutes ?? Math.max(0, Math.round((now - new Date(o.created_at).getTime()) / 60000)),
 });
 
 export type PanelItem = { name: string; qty: number; unit: number; addons: string[]; notes: string };

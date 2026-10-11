@@ -10,6 +10,7 @@ import type {
 } from "./painel-utils";
 import { manausDayStartISO, toPanelOrder } from "./painel-utils";
 import { parsePeriodKind, resolvePeriod } from "./period";
+import { minutesInStatus } from "./order-timing";
 
 const ORDER_COLS = "id,code,customer_name,type,payment_method,total_cents,status,created_at";
 
@@ -197,16 +198,47 @@ export async function getSettings(): Promise<{ settings: PanelSettings | null }>
     },
   };
 }
-// Kanban (DS §8.7): janela = não finalizados + hoje, com "hoje" resolvido AQUI
-// (servidor, America/Manaus) — nunca no cliente.
-export async function getKanban() {
+// Kanban (DS §8.7): pedidos criados no período escolhido + coluna "Anteriores"
+// (D7): não finalizados criados antes do início do período. Tempo no status atual
+// derivado de order_events (C1) — nunca gravado, sempre calculado.
+export async function getKanban(period: string = "today", type: string = "all") {
   const { supabase, storeId } = await requireStore();
   const now = Date.now();
-  const { data: rows } = await supabase.from("orders").select(ORDER_COLS).eq("store_id", storeId)
-    .or(`status.in.(new,confirmed,preparing,ready,out),created_at.gte.${manausDayStartISO()}`)
-    .order("created_at", { ascending: true });
-  const orders = ((rows ?? []) as PanelRow[]).map((o) => toPanelOrder(o, now));
-  return { orders, cancelled: orders.filter((o) => o.status === "cancelled") };
+  const { from, to } = resolvePeriod(parsePeriodKind(period));
+
+  const cols = (q: ReturnType<typeof supabase.from>) => q.select(ORDER_COLS).eq("store_id", storeId);
+  let periodo = cols(supabase.from("orders")).gte("created_at", from).lt("created_at", to);
+  if (type === "delivery" || type === "pickup") periodo = periodo.eq("type", type);
+  const { data: rows, error: e1 } = await periodo.order("created_at", { ascending: true });
+  if (e1) throw new Error(e1.message); // design C5: nunca engolir
+
+  // "Anteriores" (D7): não finalizados criados ANTES do início do período.
+  const NAO_FINALIZADOS = "new,confirmed,preparing,ready,out";
+  let antigosQ = cols(supabase.from("orders"))
+    .lt("created_at", from).in("status", NAO_FINALIZADOS.split(","));
+  if (type === "delivery" || type === "pickup") antigosQ = antigosQ.eq("type", type);
+  const { data: antigos, error: e2 } = await antigosQ.order("created_at", { ascending: true });
+  if (e2) throw new Error(e2.message);
+
+  const orders = [...((rows ?? []) as PanelRow[])];
+  const anteriores = ((antigos ?? []) as PanelRow[]);
+
+  const ids = orders.filter((o) => !["new", "delivered", "cancelled"].includes(o.status)).map((o) => o.id);
+  const { data: events, error: e3 } = ids.length
+    ? await supabase.from("order_events").select("order_id,to_status,created_at").in("order_id", ids)
+    : { data: [] as { order_id: string; to_status: string; created_at: string }[], error: null };
+  if (e3) throw new Error(e3.message);
+  const byOrder = new Map<string, { to_status: string; created_at: string }[]>();
+  for (const e of events ?? []) byOrder.set(e.order_id, [...(byOrder.get(e.order_id) ?? []), e]);
+
+  const mapped = orders.map((o) =>
+    toPanelOrder(o, now, minutesInStatus(byOrder.get(o.id) ?? [], o.status, o.created_at, now))
+  );
+  return {
+    orders: mapped,
+    anteriores: anteriores.map((o) => toPanelOrder(o, now)),
+    cancelled: mapped.filter((o) => o.status === "cancelled"),
+  };
 }
 
 // Contexto do live (kanban): só o store_id p/ assinar o canal orders:{storeId}.

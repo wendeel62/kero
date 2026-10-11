@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getAwaitingCount, getKanban, getRealtimeContext } from "@/lib/painel";
 import { playNewOrderSound, updateFaviconBadge, usePanelLive } from "@/lib/painel-live";
 import type { PanelOrder } from "@/lib/painel-utils";
+import { PERIOD_KINDS, PERIOD_LABEL, type PeriodKind } from "@/lib/period";
 import { StatusBadge } from "@/components/ui/status-badge";
 
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -32,18 +33,24 @@ const NEXT_LABEL: Record<string, string> = {
   confirmed: "Confirmar", preparing: "P/ preparo", ready: "Pronto", out: "Saiu p/ entrega", delivered: "Entregar",
 };
 
+type TypeFilter = "all" | "delivery" | "pickup";
+
 export default function Kanban() {
   const [orders, setOrders] = useState<PanelOrder[] | null>(null);
+  const [anteriores, setAnteriores] = useState<PanelOrder[]>([]);
   const [storeId, setStoreId] = useState<string | null>(null);
   const [live, setLive] = useState(true);
   const [liveMsg, setLiveMsg] = useState("");
+  const [period, setPeriod] = useState<PeriodKind>("today");
+  const [type, setType] = useState<TypeFilter>("all");
   useEffect(() => {
-    getKanban().then((k) => {
+    getKanban(period, type).then((k) => {
       setOrders(k.orders);
+      setAnteriores(k.anteriores);
       updateFaviconBadge(k.orders.filter((o) => o.status === "new").length);
     }).catch(() => setOrders([]));
     getRealtimeContext().then((c) => setStoreId(c.storeId)).catch(() => {});
-  }, []);
+  }, [period, type]);
 
   const refreshBadge = () => {
     getAwaitingCount().then((s) => updateFaviconBadge(s.awaiting)).catch(() => {});
@@ -78,13 +85,14 @@ export default function Kanban() {
   useEffect(() => {
     if (live || !storeId) return;
     const t = setInterval(() => {
-      getKanban().then((k) => {
+      getKanban(period, type).then((k) => {
         setOrders(k.orders);
+        setAnteriores(k.anteriores);
         updateFaviconBadge(k.orders.filter((o) => o.status === "new").length);
       }).catch(() => {});
     }, 30000);
     return () => clearInterval(t);
-  }, [live, storeId]);
+  }, [live, storeId, period, type]);
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const [reasonError, setReasonError] = useState("");
@@ -164,6 +172,34 @@ export default function Kanban() {
         <p className="alert-banner anim-pop mt-3" role="alert">{advanceError}</p>
       )}
 
+      {/* Filtros de período e tipo */}
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <div className="flex gap-1">
+          {PERIOD_KINDS.map((k) => (
+            <button key={k} onClick={() => setPeriod(k)}
+              className={`px-3 py-1.5 rounded-full text-[12px] font-bold transition-colors ${
+                period === k
+                  ? "bg-[var(--text)] text-[var(--surface)]"
+                  : "bg-[var(--surface-2)] text-[var(--muted)] hover:text-[var(--text)]"
+              }`}>
+              {PERIOD_LABEL[k]}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-1 ml-auto">
+          {(["all", "delivery", "pickup"] as const).map((t) => (
+            <button key={t} onClick={() => setType(t)}
+              className={`px-3 py-1.5 rounded-full text-[12px] font-bold transition-colors ${
+                type === t
+                  ? "bg-[var(--text)] text-[var(--surface)]"
+                  : "bg-[var(--surface-2)] text-[var(--muted)] hover:text-[var(--text)]"
+              }`}>
+              {t === "all" ? "Todos" : t === "delivery" ? "Entrega" : "Retirada"}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="mt-5 flex gap-3 overflow-x-auto pb-4 snap-x">
         {COLS.map((col, ci) => {
           const list = colOrders(col.id);
@@ -177,16 +213,16 @@ export default function Kanban() {
               </header>
               <div className="space-y-2">
                 {list.map((o) => {
-                  const late = o.status === "new" && o.minutesAgo > 10; // spec: vermelho após 10 min em new
+                  const late = o.status === "new" ? o.statusMinutes > 10 : o.statusMinutes > 30;
                   const next = nextStatus(o);
                   return (
                     <article key={`${o.id}-${o.status}`} className={`card p-3.5 ${late ? "border-[var(--red)]" : ""}`}>
                       <div className="flex items-center gap-2">
                         <span className="font-extrabold text-sm bg-[var(--pill-bg)] rounded-lg px-2 py-0.5">#{o.code}</span>
                         {late ? (
-                          <span className="text-[11px] font-extrabold text-[var(--red)]">há {o.minutesAgo} min 🔴</span>
+                          <span className="text-[11px] font-extrabold text-[var(--red)]">há {o.statusMinutes} min 🔴</span>
                         ) : (
-                          <span className="text-[11px] font-medium text-[var(--muted)] tabular-nums">há {o.minutesAgo} min</span>
+                          <span className="text-[11px] font-medium text-[var(--muted)] tabular-nums">há {o.statusMinutes} min</span>
                         )}
                         <Link href={`/painel/pedidos/${o.id}`} aria-label={`Detalhe do pedido ${o.code}`}
                           className="ml-auto text-[var(--muted)] hover:text-[var(--text)] font-bold transition-colors">›</Link>
@@ -198,7 +234,7 @@ export default function Kanban() {
                       </div>
                       <p className="font-extrabold tabular-nums mt-1.5">{brl(o.total_cents)}</p>
                       {o.status === "new" && (
-                        <p className="text-[11px] font-bold text-[var(--red)] mt-0.5">Aguardando {o.minutesAgo} min</p>
+                        <p className="text-[11px] font-bold text-[var(--red)] mt-0.5">Aguardando {o.statusMinutes} min</p>
                       )}
                       {next && (
                         <div className="flex gap-1.5 mt-2.5">
@@ -222,6 +258,58 @@ export default function Kanban() {
             </section>
           );
         })}
+
+        {/* Coluna "Anteriores" (D7): não finalizados criados antes do período */}
+        {anteriores.length > 0 && (
+          <section className="anim-rise snap-start shrink-0 w-[280px] rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-2)] p-2.5">
+            <header className="flex items-center gap-2 px-1.5 py-1.5">
+              <span className="w-2 h-2 rounded-full bg-[var(--muted)]" />
+              <h2 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--muted)]">Anteriores</h2>
+              <span className="ml-auto text-[11px] font-extrabold tabular-nums text-[var(--muted)] bg-[var(--surface)] rounded-full px-2 py-0.5">{anteriores.length}</span>
+            </header>
+            <div className="space-y-2">
+              {anteriores.map((o) => {
+                const late = o.status === "new" ? o.statusMinutes > 10 : o.statusMinutes > 30;
+                const next = nextStatus(o);
+                return (
+                  <article key={`${o.id}-${o.status}`} className={`card p-3.5 ${late ? "border-[var(--red)]" : ""}`}>
+                    <div className="flex items-center gap-2">
+                      <span className="font-extrabold text-sm bg-[var(--pill-bg)] rounded-lg px-2 py-0.5">#{o.code}</span>
+                      {late ? (
+                        <span className="text-[11px] font-extrabold text-[var(--red)]">há {o.statusMinutes} min 🔴</span>
+                      ) : (
+                        <span className="text-[11px] font-medium text-[var(--muted)] tabular-nums">há {o.statusMinutes} min</span>
+                      )}
+                      <Link href={`/painel/pedidos/${o.id}`} aria-label={`Detalhe do pedido ${o.code}`}
+                        className="ml-auto text-[var(--muted)] hover:text-[var(--text)] font-bold transition-colors">›</Link>
+                    </div>
+                    <p className="text-sm font-bold mt-1.5">{o.customer}</p>
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      <span className="text-[11px] font-bold bg-[var(--pill-bg)] rounded-full px-2 py-0.5">{o.type === "delivery" ? "Entrega" : "Retirada"}</span>
+                      <span className="text-[11px] font-bold bg-[var(--pill-bg)] rounded-full px-2 py-0.5">{o.payment}</span>
+                    </div>
+                    <p className="font-extrabold tabular-nums mt-1.5">{brl(o.total_cents)}</p>
+                    {o.status === "new" && (
+                      <p className="text-[11px] font-bold text-[var(--red)] mt-0.5">Aguardando {o.statusMinutes} min</p>
+                    )}
+                    {next && (
+                      <div className="flex gap-1.5 mt-2.5">
+                        <button onClick={() => advance(o.id)}
+                          className="btn btn--primary flex-1 !min-h-0 text-[13px] font-extrabold py-2 transition-all active:scale-[0.98]">
+                          {NEXT_LABEL[next]} →
+                        </button>
+                        <button onClick={() => { setCancelId(o.id); setReason(""); setReasonError(""); }} aria-label={`Cancelar pedido ${o.code}`}
+                          className="btn btn--ghost px-3 text-[13px] font-bold text-[var(--muted)] hover:text-[var(--red)] transition-colors">
+                          ✕
+                        </button>
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* cancelados de hoje (colapsada) */}
         <section className="snap-start shrink-0 w-[280px] rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--text)] text-[var(--surface)] p-2.5 self-start">
