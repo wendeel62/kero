@@ -6,6 +6,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireStore } from "@/lib/auth";
+import type { GoalPeriod } from "./goals";
 
 const err = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -292,4 +293,16 @@ export async function saveEntrega(input: {
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
+}
+
+// Meta de faturamento (design D2): upsert do ALVO em sales_goals; a janela e
+// derivada na leitura (windowFor) — nunca gravada.
+export async function saveMeta(period: GoalPeriod, targetCents: number): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  if (!(targetCents > 0)) return { ok: false, error: "A meta precisa ser maior que zero." };
+  return mutate("/painel/relatorios", async () => {
+    const { error } = await supabase.from("sales_goals")
+      .upsert({ store_id: storeId, period, target_cents: targetCents }, { onConflict: "store_id,period" });
+    return { error };
+  });
 }

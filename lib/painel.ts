@@ -12,6 +12,7 @@ import { manausDayStartISO, toPanelOrder } from "./painel-utils";
 import { parsePeriodKind, resolvePeriod } from "./period";
 import { minutesInStatus } from "./order-timing";
 import { aggregateCustomers, type Customer } from "./customers";
+import { goalProgress, windowFor, type GoalPeriod } from "./goals";
 
 const ORDER_COLS = "id,code,customer_name,type,payment_method,total_cents,status,created_at";
 
@@ -269,4 +270,55 @@ export async function getPedidosDoCliente(phone: string): Promise<{ orders: Pane
 export async function getRealtimeContext() {
   const { storeId } = await requireStore();
   return { storeId };
+}
+
+// Relatorios (design C1): faturamento do periodo + mais vendidos + metas.
+// Uma passada em orders + uma em order_items; sem tabela derivada.
+export async function getRelatorios(period: string = "7d") {
+  const { supabase, storeId } = await requireStore();
+  const { from, to } = resolvePeriod(parsePeriodKind(period));
+
+  const { data: orders, error: e1 } = await supabase.from("orders")
+    .select("id,total_cents,status,created_at").eq("store_id", storeId)
+    .gte("created_at", from).lt("created_at", to);
+  if (e1) throw new Error(e1.message);
+
+  const validos = (orders ?? []).filter((o) => o.status !== "cancelled");
+  const revenueCents = validos.reduce((s, o) => s + o.total_cents, 0);
+  const ticketCents = validos.length ? Math.round(revenueCents / validos.length) : 0;
+
+  const ids = validos.map((o) => o.id);
+  const { data: items, error: e2 } = ids.length
+    ? await supabase.from("order_items").select("name_snapshot,qty,unit_price_cents").in("order_id", ids)
+    : { data: [] as { name_snapshot: string; qty: number; unit_price_cents: number }[], error: null };
+  if (e2) throw new Error(e2.message);
+
+  const topMap = new Map<string, { qty: number; cents: number }>();
+  for (const it of items ?? []) {
+    const cur = topMap.get(it.name_snapshot) ?? { qty: 0, cents: 0 };
+    cur.qty += it.qty; cur.cents += it.qty * it.unit_price_cents;
+    topMap.set(it.name_snapshot, cur);
+  }
+  const topProducts = [...topMap.entries()]
+    .map(([name, v]) => ({ name, qty: v.qty, cents: v.cents }))
+    .sort((a, b) => b.cents - a.cents).slice(0, 10);
+
+  const { data: goals, error: e3 } = await supabase.from("sales_goals")
+    .select("period,target_cents").eq("store_id", storeId);
+  if (e3) throw new Error(e3.message);
+
+  // faturamento de cada janela de meta, por periodo (1 query por janela distinta)
+  const metas: { period: GoalPeriod; targetCents: number; revenueCents: number; percent: number }[] = [];
+  for (const g of (goals ?? []) as { period: GoalPeriod; target_cents: number }[]) {
+    const w = windowFor(g.period);
+    const { data: janela, error: e4 } = await supabase.from("orders")
+      .select("total_cents,status").eq("store_id", storeId)
+      .gte("created_at", w.from).lt("created_at", w.to).neq("status", "cancelled");
+    if (e4) throw new Error(e4.message);
+    const revenue = (janela ?? []).reduce((s, o) => s + o.total_cents, 0);
+    const p = goalProgress(g.target_cents, revenue);
+    if (p) metas.push({ period: g.period, targetCents: g.target_cents, revenueCents: revenue, percent: p.percent });
+  }
+
+  return { from, to, revenueCents, ticketCents, count: validos.length, topProducts, metas };
 }
