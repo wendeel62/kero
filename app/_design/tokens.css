@@ -1,0 +1,103 @@
+/* Design System v2 – tokens importados do cardapio-digital/admin */
+:root, :root[data-theme='light'] {
+  --bg: #f6f6f7;
+  --surface: #ffffff;
+  --surface-2: #fbfbfc;
+  --border: #e7e7ea;
+  --text: #16161a;
+  --muted: #70707a;
+  --accent: #FFCE12;
+  --accent-ink: #1a1a1a;
+  --accent-soft: #fff6c9;
+  --green: #15803d;
+  --green-soft: #dcfce7;
+  --amber: #b45309;
+  --amber-soft: #fef3c7;
+  --red: #dc2626;
+  --red-soft: #fee2e2;
+  --pill-bg: #efeff1;
+  --pill-ink: #55555e;
+  --pill-active-bg: #17171a;
+  --pill-active-ink: #ffffff;
+  --shadow: 0 1px 2px rgba(16,16,20,0.05);
+  --shadow-card-hover: 0 8px 24px rgba(16,16,20,0.12);
+
+  --font-display: 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --radius-card: 14px;
+  --radius-button: 10px;
+  --radius-pill: 999px;
+  --shadow-card: var(--shadow);
+
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-slow: 350ms;
+  --easing-standard: cubic-bezier(0.16,1,0.3,1);
+}
+
+:root[data-theme='dark'] {
+  --bg: #0e0e10;
+  --surface: #211D1A;
+  --surface-2: #2a2522;
+  --border: #28282d;
+  --text: #f4f4f5;
+  --muted: #9b9ba4;
+  --accent: #FFCE12;
+  --accent-ink: #1a1a1a;
+  --accent-soft: #332c0d;
+  --green: #4ade80;
+  --green-soft: #0c2e1c;
+  --amber: #fbbf24;
+  --amber-soft: #33260a;
+  --red: #f87171;
+  --red-soft: #3a1212;
+  --pill-bg: #232327;
+  --pill-ink: #a4a4ad;
+  --pill-active-bg: #ffd400;
+  --pill-active-ink: #1a1a1a;
+}
+
+/* Alias para compatibilidade */
+html { color-scheme: light dark; }
+body { background: var(--bg); color: var(--text); font-family: var(--font-body); }
+
+/* Card base do admin */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  transition: transform var(--duration-base) var(--easing-standard), box-shadow var(--duration-base) var(--easing-standard);
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Pílulas */
+.pill {
+  background: var(--pill-bg);
+  color: var(--pill-ink);
+  border-radius: var(--radius-pill);
+  padding: 0.35rem 0.9rem;
+  font-weight: 700;
+  font-size: 0.8125rem;
+}
+.pill.is-active {
+  background: var(--pill-active-bg);
+  color: var(--pill-active-ink);
+}
+
+/* Alert banner */
+.alert-banner {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--red-soft);
+  color: var(--red);
+  font-size: 13px;
+  font-weight: 600;
+}

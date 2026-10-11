@@ -1,13 +1,11 @@
 @import "tailwindcss";
+@import "./_design/tokens.css";
+@import "./_design/admin.css";
 
 body {
   background: #f4f1ec;
   color: #1c1917;
   font-family: Inter, system-ui, sans-serif;
-}
-
-.font-display {
-  font-family: Sora, Inter, system-ui, sans-serif;
 }
 
 .no-scrollbar::-webkit-scrollbar {

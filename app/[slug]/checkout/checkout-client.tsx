@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { brl, type Addon, type Category, type Neighborhood, type Product, type Store } from "../menu-data";
-import { loadCart, saveCart, type CartLine } from "@/lib/cart";
+import { loadCart, saveCart, saveLastToken, type CartLine } from "@/lib/cart";
 import { lineTotal, meetsMinimum, subtotal as calcSubtotal, total as calcTotal, unitPrice, validateChange } from "@/lib/pricing";
 import { waLink } from "@/lib/wa";
 import PriceChangeDialog from "@/components/ui/price-change-dialog";
@@ -129,6 +129,7 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
       const body = (await res.json().catch(() => null)) as OrderResult | null;
       if (res.status === 201 && body?.tracking_token) {
         saveCart(store.slug, []);
+        saveLastToken(store.slug, body.tracking_token);
         router.push(`/${store.slug}/pedido/${body.tracking_token}`);
         return;
       }
@@ -200,7 +201,7 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
   return (
     <div className="min-h-screen bg-[#f4f1ec]">
       <div className="h-1 bg-gradient-to-r from-red-700 via-red-500 to-orange-400" />
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b shadow-[0_1px_12px_rgba(0,0,0,0.05)]">
+      <header className="sticky top-0 z-40 bg-white border-b shadow-[0_1px_12px_rgba(0,0,0,0.05)]">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center gap-2">
           <Link href={`/${store.slug}/carrinho`} className="w-9 h-9 rounded-full hover:bg-stone-100 flex items-center justify-center text-lg transition-colors" aria-label="Voltar à sacola">←</Link>
           <span className="font-display font-extrabold tracking-tight">Checkout</span>

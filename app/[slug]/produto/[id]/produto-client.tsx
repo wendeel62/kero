@@ -31,7 +31,7 @@ export default function ProdutoClient({ slug, store, product, categoryName, addo
   return (
     <div className="min-h-screen bg-[#f4f1ec]">
       <div className="h-1 bg-gradient-to-r from-red-700 via-red-500 to-orange-400" />
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b">
+      <header className="sticky top-0 z-40 bg-white border-b">
         <div className="max-w-3xl mx-auto px-4 h-14 flex items-center gap-2">
           <Link href={`/${slug}`} className="w-9 h-9 rounded-full hover:bg-stone-100 flex items-center justify-center text-lg transition-colors" aria-label="Voltar ao cardápio">←</Link>
           <span className="font-display font-extrabold tracking-tight">Kero<span className="text-red-600">.</span></span>
@@ -42,14 +42,20 @@ export default function ProdutoClient({ slug, store, product, categoryName, addo
       <main className="max-w-3xl mx-auto px-4 pb-32">
         <section className="mt-4 bg-white border rounded-3xl overflow-hidden shadow-sm anim-rise">
           <div className="relative h-56 sm:h-72 bg-gradient-to-br from-amber-200 via-orange-100 to-rose-200 texture-dots texture-grain flex items-center justify-center overflow-hidden">
-            <span className="absolute left-6 top-5 text-3xl opacity-40 -rotate-12 select-none">🌿</span>
-            <span className="absolute right-8 top-8 text-2xl opacity-40 rotate-12 select-none">🧀</span>
-            <span className="absolute left-10 bottom-5 text-2xl opacity-30 rotate-6 select-none">🍅</span>
+            {product.image_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={product.image_url} alt={product.name} className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+              <>
+                <span className="absolute left-6 top-5 text-3xl opacity-40 -rotate-12 select-none">🌿</span>
+                <span className="absolute right-8 top-8 text-2xl opacity-40 rotate-12 select-none">🧀</span>
+                <span className="absolute left-10 bottom-5 text-2xl opacity-30 rotate-6 select-none">🍅</span>
+              </>
+            )}
             <span className="absolute top-3 left-4 bg-stone-900/85 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">{categoryName}</span>
             <span className="absolute bottom-3 right-4 bg-white text-stone-900 font-extrabold tabular-nums px-3.5 py-1.5 rounded-xl shadow-lg">
               {brl(product.price_cents)}
             </span>
-            {/* ponytail: foto real via Storage WebP quando cardápio tiver upload */}
           </div>
           <div className="p-4 sm:p-6">
             <div className="flex items-start justify-between gap-3">

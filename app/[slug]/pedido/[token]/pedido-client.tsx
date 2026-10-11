@@ -105,7 +105,7 @@ export default function PedidoClient({ store, token }: { store: Store; token: st
   return (
     <div className="min-h-screen bg-[#f4f1ec]">
       <div className="h-1 bg-gradient-to-r from-red-700 via-red-500 to-orange-400" />
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b shadow-[0_1px_12px_rgba(0,0,0,0.05)]">
+      <header className="sticky top-0 z-40 bg-white border-b shadow-[0_1px_12px_rgba(0,0,0,0.05)]">
         <div className="max-w-3xl mx-auto px-4 h-14 flex items-center gap-2">
           <Link href={`/${store.slug}`} className="w-9 h-9 rounded-full hover:bg-stone-100 flex items-center justify-center text-lg transition-colors" aria-label="Voltar ao cardápio">←</Link>
           <span className="font-display font-extrabold tracking-tight">Acompanhar pedido</span>

@@ -55,3 +55,23 @@ export function saveCart(slug: string, lines: CartLine[]): void {
     // storage cheio/bloqueado: sacola segue só em memória
   }
 }
+
+// C-08: último tracking_token no aparelho (sem conta de cliente, sem histórico
+// no servidor) — a vitrine oferece "Acompanhar pedido" a partir daqui.
+const lastKey = (slug: string) => `kero:last-order:v1:${slug}`;
+
+export function saveLastToken(slug: string, token: string): void {
+  try {
+    localStorage.setItem(lastKey(slug), token);
+  } catch {
+    // storage cheio/bloqueado: acompanhamento segue só pela URL atual
+  }
+}
+
+export function loadLastToken(slug: string): string | null {
+  try {
+    return localStorage.getItem(lastKey(slug));
+  } catch {
+    return null;
+  }
+}

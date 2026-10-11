@@ -6,6 +6,9 @@ node_modules/
 .playwright-mcp/
 .superpowers/
 *.tsbuildinfo
+.vitest-cache/
+test-results/
+tests/e2e/.store.json
 next-env.d.ts
 .DS_Store
 vercel.json.local

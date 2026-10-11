@@ -1,10 +1,11 @@
 // ponytail: mock em código até Supabase wiring; trocar por queries.ts via RLS quando DB existir.
 // Única fonte do cardápio demo — vitrine, produto e (futuro) carrinho consomem daqui.
-export type Product = { id: string; name: string; description: string; price_cents: number; image_emoji?: string; active: boolean };
+export type Product = { id: string; name: string; description: string; price_cents: number; image_emoji?: string; image_url?: string | null; active: boolean };
 export type Addon = { id: string; name: string; price_cents: number };
 export type Category = { id: string; name: string; products: Product[] };
 export type Store = {
   slug: string; name: string; description: string; logo_url: string | null;
+  marquee_text?: string | null; cover_url?: string | null;
   whatsapp: string; min_order_cents: number; prep_time_min: number; prep_time_max: number;
   active: boolean; force_closed: boolean; delivery_fee_cents?: number;
 };

@@ -62,7 +62,7 @@ export default function CarrinhoClient({ store, categories, addons, isOpen, open
   return (
     <div className="min-h-screen bg-[#f4f1ec]">
       <div className="h-1 bg-gradient-to-r from-red-700 via-red-500 to-orange-400" />
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b shadow-[0_1px_12px_rgba(0,0,0,0.05)]">
+      <header className="sticky top-0 z-40 bg-white border-b shadow-[0_1px_12px_rgba(0,0,0,0.05)]">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center gap-2">
           <Link href={`/${store.slug}`} className="w-9 h-9 rounded-full hover:bg-stone-100 flex items-center justify-center text-lg transition-colors" aria-label="Voltar ao cardápio">←</Link>
           <span className="font-display font-extrabold tracking-tight">Kero<span className="text-red-600">.</span></span>
@@ -92,8 +92,13 @@ export default function CarrinhoClient({ store, categories, addons, isOpen, open
 
         {/* faixa da loja */}
         <div className="mt-3 bg-white border rounded-2xl shadow-sm px-4 py-3 flex items-center gap-3 anim-rise" style={{ animationDelay: "60ms" }}>
-          <div className="w-11 h-11 rounded-xl bg-stone-900 text-white flex items-center justify-center font-display font-extrabold ring-1 ring-black/5">
-            {store.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+          <div className="w-11 h-11 rounded-xl bg-stone-900 text-white flex items-center justify-center font-display font-extrabold ring-1 ring-black/5 overflow-hidden">
+            {store.logo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={store.logo_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              store.name.split(" ").map((w) => w[0]).slice(0, 2).join("")
+            )}
           </div>
           <div className="min-w-0">
             <p className="font-display font-extrabold leading-tight truncate">{store.name}</p>
@@ -126,7 +131,12 @@ export default function CarrinhoClient({ store, categories, addons, isOpen, open
                 {items.map(({ index, line, product, addonNames, unit }, i) => (
                   <li key={`${line.productId}-${index}`} style={{ animationDelay: `${Math.min(i, 8) * 60}ms` }}
                     className="anim-rise dish-card bg-white border rounded-3xl shadow-sm p-4 flex gap-3.5">
-                    <div aria-hidden className="w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-amber-100 to-rose-100 shadow-inner ring-1 ring-black/5 overflow-hidden" />
+                    <div aria-hidden className="w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-amber-100 to-rose-100 shadow-inner ring-1 ring-black/5 overflow-hidden">
+                      {product.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={product.image_url} alt="" className="w-full h-full object-cover" />
+                      ) : null}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start gap-2">
                         <p className="font-bold text-[15px] leading-snug flex-1">{product.name}</p>

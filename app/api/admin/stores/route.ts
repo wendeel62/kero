@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { apiError } from "@/lib/api-errors";
+import { sanitizeLikeTerm } from "@/lib/admin-utils";
 import { requireAdminApi } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -35,7 +36,7 @@ export async function GET(req: Request) {
   const q = new URL(req.url).searchParams;
   const page = Math.max(1, parseInt(q.get("page") ?? "1", 10) || 1);
   const status = q.get("status") ?? "all";
-  const term = (q.get("q") ?? "").trim();
+  const term = sanitizeLikeTerm(q.get("q") ?? "");
   const from = (page - 1) * PER_PAGE;
 
   let query = createAdminClient()

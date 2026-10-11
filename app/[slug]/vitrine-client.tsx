@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { brl, norm, type Category, type Store } from "./menu-data";
-import { addLine, countItems, loadCart, saveCart } from "@/lib/cart";
+import { addLine, countItems, loadCart, loadLastToken, saveCart } from "@/lib/cart";
 
 const PAGE_SIZE = 12; // spec §3.1: 12 itens/categoria + "Ver mais"
 // fundos variados p/ o thumb não parecer carimbo repetido de IA
@@ -21,9 +21,12 @@ export default function VitrineClient({ store, categories, isOpen, opensAt, minF
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [activeCat, setActiveCat] = useState(categories[0]?.id ?? "");
   const [cartQty, setCartQty] = useState(0);
+  const [lastToken, setLastToken] = useState<string | null>(null);
+  const hasMarquee = (store.marquee_text ?? "").trim().length > 0;
 
   useEffect(() => {
     setCartQty(countItems(loadCart(store.slug)));
+    setLastToken(loadLastToken(store.slug));
   }, [store.slug]);
 
   const quickAdd = (productId: string) => {
@@ -43,7 +46,7 @@ export default function VitrineClient({ store, categories, isOpen, opensAt, minF
     <div className="min-h-screen bg-[#f4f1ec]">
       {/* faixa topo */}
       <div className="h-1 bg-gradient-to-r from-red-700 via-red-500 to-orange-400" />
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b shadow-[0_1px_12px_rgba(0,0,0,0.05)]">
+      <header className="sticky top-0 z-40 bg-white border-b shadow-[0_1px_12px_rgba(0,0,0,0.05)]">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-2">
           <Link href="/" className="w-9 h-9 rounded-full hover:bg-stone-100 flex items-center justify-center text-lg transition-colors" aria-label="Voltar">←</Link>
           <span className="font-display font-extrabold text-lg tracking-tight">Kero<span className="text-red-600">.</span></span>
@@ -58,33 +61,47 @@ export default function VitrineClient({ store, categories, isOpen, opensAt, minF
             {q && <button onClick={() => setQ("")} aria-label="Limpar busca" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700">✕</button>}
           </div>
         </div>
-        {/* letreiro */}
-        <div className="bg-stone-900 text-amber-200/90 overflow-hidden whitespace-nowrap text-[12px] font-semibold py-1.5">
-          <div className="marquee-track inline-flex gap-8 pr-8">
-            {[0, 1].map((k) => (
-              <span key={k}>🔥 saindo do forno agora &nbsp;•&nbsp; {minFee !== null ? <>entrega a partir de {brl(minFee)} &nbsp;•&nbsp; </> : null}massa de fermentação lenta &nbsp;•&nbsp; {store.prep_time_min}–{store.prep_time_max} min &nbsp;•&nbsp;</span>
-            ))}
+        {/* letreiro — texto da loja (C-04); vazio = sem barra */}
+        {hasMarquee && (
+          <div className="bg-stone-900 text-amber-200/90 overflow-hidden whitespace-nowrap text-[12px] font-semibold py-1.5">
+            <div className="marquee-track inline-flex gap-8 pr-8">
+              {[0, 1].map((k) => (
+                <span key={k}>{store.marquee_text}</span>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </header>
 
       <main className="max-w-6xl mx-auto px-4 pb-32">
         {/* hero loja */}
         <section className="mt-4 bg-white border rounded-3xl overflow-hidden shadow-sm">
           <div className="relative h-36 sm:h-44 bg-gradient-to-br from-red-700 via-red-600 to-orange-500 texture-dots texture-grain overflow-hidden">
-            <span className="absolute -right-4 -top-8 text-[110px] opacity-30 anim-drift select-none">🍕</span>
-            <span className="absolute left-10 bottom-2 text-4xl opacity-25 select-none">🌿</span>
-            <span className="absolute left-1/3 top-3 text-2xl opacity-30 select-none">🧀</span>
+            {store.cover_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={store.cover_url} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+              <>
+                <span className="absolute -right-4 -top-8 text-[110px] opacity-30 anim-drift select-none">🍕</span>
+                <span className="absolute left-10 bottom-2 text-4xl opacity-25 select-none">🌿</span>
+                <span className="absolute left-1/3 top-3 text-2xl opacity-30 select-none">🧀</span>
+              </>
+            )}
             <div className="absolute bottom-3 right-4 bg-yellow-300 text-stone-900 text-[11px] font-extrabold px-3 py-1.5 rounded-lg shadow-lg">
               ★ 4.9 · 2,3 mil avaliações
             </div>
           </div>
           <div className="px-4 sm:px-6 pb-4">
             <div className="flex items-end gap-3 -mt-8">
-              <div className="w-[72px] h-[72px] rounded-2xl bg-white p-1 shadow-lg ring-1 ring-black/5 anim-pop">
-                <div className="w-full h-full rounded-xl bg-stone-900 text-white flex items-center justify-center font-display font-extrabold text-2xl">
-                  {store.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
-                </div>
+              <div className="w-[72px] h-[72px] rounded-2xl bg-white p-1 shadow-lg ring-1 ring-black/5 anim-pop overflow-hidden">
+                {store.logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={store.logo_url} alt={`Logo ${store.name}`} className="w-full h-full rounded-xl object-cover" />
+                ) : (
+                  <div className="w-full h-full rounded-xl bg-stone-900 text-white flex items-center justify-center font-display font-extrabold text-2xl">
+                    {store.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+                  </div>
+                )}
               </div>
               <div className="pb-1">
                 <p className="text-[11px] font-bold uppercase tracking-widest text-red-600">forno a lenha · desde 2016</p>
@@ -111,8 +128,17 @@ export default function VitrineClient({ store, categories, isOpen, opensAt, minF
           </div>
         </section>
 
+        {/* C-08: volta ao acompanhamento do último pedido feito neste aparelho */}
+        {lastToken && (
+          <Link href={`/${store.slug}/pedido/${lastToken}`}
+            className="mt-4 flex items-center justify-between bg-stone-900 text-white rounded-2xl px-5 py-3.5 font-bold shadow-lg active:scale-[0.99] transition-all">
+            <span className="text-sm">Acompanhar seu pedido</span>
+            <span aria-hidden>→</span>
+          </Link>
+        )}
+
         {/* categorias — abaixo do cartão da loja */}
-        <div className="sticky top-[85px] z-30 -mx-1 px-1 py-2 bg-[#f4f1ec]/95 backdrop-blur">
+        <div className={`sticky ${hasMarquee ? "top-[85px]" : "top-14"} z-30 -mx-1 px-1 py-2 bg-[#f4f1ec]`}>
           <div className="flex gap-2 overflow-x-auto no-scrollbar">
             {categories.map((c) => (
               <a key={c.id} href={`#cat-${c.id}`} onClick={() => setActiveCat(c.id)}
@@ -151,7 +177,7 @@ export default function VitrineClient({ store, categories, isOpen, opensAt, minF
                         className={`anim-rise dish-card flex gap-3 py-3.5 sm:border-b sm:border-dashed sm:border-stone-200 ${!p.active ? "opacity-50 saturate-50" : ""}`}>
                         <div className="flex-1 min-w-0">
                           <p className="font-bold text-[15px] leading-tight flex items-center gap-2">
-                            {p.name}
+                            <Link href={`/${store.slug}/produto/${p.id}`} className="hover:underline underline-offset-4">{p.name}</Link>
                             {ci === 0 && pi === 0 && <span className="bg-red-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md shadow-sm">MAIS PEDIDA</span>}
                           </p>
                           <p className="text-[13px] text-stone-500 line-clamp-2 mt-0.5">{p.description}</p>
@@ -159,7 +185,13 @@ export default function VitrineClient({ store, categories, isOpen, opensAt, minF
                           {!p.active && <p className="text-xs text-stone-400 italic">pausado pelo pizzaiolo — volta já</p>}
                         </div>
                         <div className="w-24 shrink-0 text-center">
-                          <div aria-hidden className={`w-24 h-20 rounded-2xl bg-gradient-to-br ${THUMBS[(pi + ci) % THUMBS.length]} shadow-inner drop-shadow overflow-hidden`} />
+                          <Link href={`/${store.slug}/produto/${p.id}`} aria-label={`Ver ${p.name}`}
+                            className={`block w-24 h-20 rounded-2xl bg-gradient-to-br ${THUMBS[(pi + ci) % THUMBS.length]} shadow-inner drop-shadow overflow-hidden`}>
+                            {p.image_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={p.image_url} alt="" className="w-full h-full object-cover" />
+                            ) : null}
+                          </Link>
                           <button
                             disabled={!p.active || !isOpen}
                             onClick={() => quickAdd(p.id)}
@@ -189,7 +221,7 @@ export default function VitrineClient({ store, categories, isOpen, opensAt, minF
           </div>
 
           {/* lateral desktop */}
-          <aside className="hidden lg:block sticky top-[104px] space-y-4">
+          <aside className={`hidden lg:block sticky ${hasMarquee ? "top-[104px]" : "top-[75px]"} space-y-4`}>
             <div className="bg-stone-900 text-white rounded-3xl p-5 shadow-lg">
               <p className="text-xs font-bold uppercase tracking-widest text-amber-300">sua sacola</p>
               <p className="font-display font-extrabold text-3xl mt-1 tabular-nums">{cartQty} {cartQty === 1 ? "item" : "itens"}</p>

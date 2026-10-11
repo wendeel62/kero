@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  typecheck-lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run lint
+      - run: npx tsc --noEmit
+      - run: npm test
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DAILY_SALT_ROTATION_ENABLED: "false"
+
+  rls-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+      - run: supabase start
+      - run: supabase db reset
+      - name: Install psql client
+        run: sudo apt-get update -y && sudo apt-get install -y postgresql-client
+      - name: Seed auth users + run RLS tests
+        env:
+          DB_URL: postgresql://postgres:postgres@localhost:54322/postgres
+          GOTRUE_URL: http://localhost:54321/auth/v1
+        run: |
+            eval "$(supabase status --output env | grep -E '^(SERVICE_ROLE_KEY|ANON_KEY)=')"
+            mkusers() {
+              curl -s -X POST "$GOTRUE_URL/admin/users" \
+                -H "apikey: $SERVICE_ROLE_KEY" \
+                -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+                -H "Content-Type: application/json" \
+                -d "{\"email\":\"$1\",\"password\":\"Rls-Test-123!\",\"email_confirm\":true}" \
+              | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).id"
+            }
+            UID_A=$(mkusers rls-a@example.com)
+            UID_B=$(mkusers rls-b@example.com)
+            echo "uid_a=$UID_A uid_b=$UID_B"
+            psql "$DB_URL" -v ON_ERROR_STOP=1 -v uid_a="$UID_A" -v uid_b="$UID_B" -f tests/rls.sql

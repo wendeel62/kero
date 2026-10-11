@@ -24,6 +24,14 @@ export function meetsMinimum(subtotalCents: number, minOrderCents: number): bool
   return subtotalCents >= minOrderCents;
 }
 
+// "49,90" | "1.234,56" | "R$ 10,00" → centavos int; inválido/negativo → NaN
+export function parseBRLToCents(raw: string): number {
+  const digits = raw.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+  const n = Number(digits);
+  if (!Number.isFinite(n) || n < 0 || digits === "") return NaN;
+  return Math.round(n * 100);
+}
+
 // Troco (SPEC §2.30): cash exige change_for ≥ total; demais métodos → null. Echo do valor p/ manter o campo na UI.
 export function validateChange(
   paymentMethod: string,

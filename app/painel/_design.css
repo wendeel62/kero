@@ -1,0 +1,28 @@
+/* Override visual do painel com design system v2 */
+main {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+/* Cards existentes ganham estilo admin */
+.bg-white\/80, .bg-white\/80.backdrop-blur {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-card) !important;
+  box-shadow: var(--shadow) !important;
+}
+
+/* Botões principais */
+button, a {
+  font-family: var(--font-body) !important;
+}
+
+/* Pílulas */
+.pill, .period-pill {
+  background: var(--pill-bg);
+  color: var(--pill-ink);
+}
+.pill.is-active, .period-pill.is-active {
+  background: var(--pill-active-bg);
+  color: var(--pill-active-ink);
+}
