@@ -11,6 +11,7 @@ import type {
 import { manausDayStartISO, toPanelOrder } from "./painel-utils";
 import { parsePeriodKind, resolvePeriod } from "./period";
 import { minutesInStatus } from "./order-timing";
+import { aggregateCustomers, type Customer } from "./customers";
 
 const ORDER_COLS = "id,code,customer_name,type,payment_method,total_cents,status,created_at";
 
@@ -239,6 +240,29 @@ export async function getKanban(period: string = "today", type: string = "all") 
     anteriores: anteriores.map((o) => toPanelOrder(o, now)),
     cancelled: mapped.filter((o) => o.status === "cancelled"),
   };
+}
+
+// Clientes (design D3): agrega o histórico inteiro da loja. Teto de 1000 linhas
+// mais recentes — acima disso a lista fica parcial.
+// ponytail: agrega no servidor sobre 1000 pedidos; se a loja passar disso, trocar
+// por uma view materializada.
+export async function getClientes(): Promise<{ customers: Customer[] }> {
+  const { supabase, storeId } = await requireStore();
+  const { data, error } = await supabase.from("orders")
+    .select("customer_name,customer_phone,total_cents,status,created_at")
+    .eq("store_id", storeId).order("created_at", { ascending: false }).limit(1000);
+  if (error) throw new Error(error.message); // design C5: nunca engolir
+  return { customers: aggregateCustomers((data ?? []) as { customer_name: string; customer_phone: string; total_cents: number; status: string; created_at: string }[]) };
+}
+
+export async function getPedidosDoCliente(phone: string): Promise<{ orders: PanelRow[] }> {
+  const { supabase, storeId } = await requireStore();
+  const { data, error } = await supabase.from("orders")
+    .select(ORDER_COLS)
+    .eq("store_id", storeId).eq("customer_phone", phone)
+    .order("created_at", { ascending: false }).limit(10);
+  if (error) throw new Error(error.message);
+  return { orders: (data ?? []) as PanelRow[] };
 }
 
 // Contexto do live (kanban): só o store_id p/ assinar o canal orders:{storeId}.
