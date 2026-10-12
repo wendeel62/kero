@@ -26,12 +26,12 @@ export async function setForceClosed(closed: boolean): Promise<{ ok: boolean; at
 
 type R = { ok: boolean; error?: string };
 
-async function mutate(path: string, fn: () => Promise<{ error: unknown }>): Promise<R> {
+async function mutate(path: string, fn: () => Promise<{ error: unknown; id?: string }>): Promise<R & { id?: string }> {
   try {
-    const { error } = await fn();
+    const { error, id } = await fn();
     if (error) throw error;
     revalidatePath(path);
-    return { ok: true };
+    return { ok: true, id };
   } catch (e) {
     const m = err(e);
     // teto de 200 produtos ativos (trigger) em PT-BR de lojista
@@ -122,6 +122,45 @@ export async function deleteAddon(id: string): Promise<R> {
   const { supabase, storeId } = await requireStore();
   return mutate("/painel/cardapio", async () => {
     const { error } = await supabase.from("product_addons").delete().eq("id", id).eq("store_id", storeId);
+    return { error };
+  });
+}
+
+// Grupos de opção (migration 012) — o grupo é o único conceito novo; as opções
+// são os adicionais com group_id preenchido (design D4).
+export async function saveAddonGroup(input: {
+  id?: string; name: string; required: boolean; maxChoices: number | null; sortOrder: number;
+}): Promise<R & { id?: string }> {
+  const { supabase, storeId } = await requireStore();
+  const name = input.name.trim();
+  if (name.length < 1 || name.length > 40) return { ok: false, error: "Nome do grupo: 1 a 40 letras." };
+  if (input.maxChoices !== null && input.maxChoices < 1) {
+    return { ok: false, error: "Máximo de escolhas precisa ser 1 ou mais (ou vazio)." };
+  }
+  const row = { store_id: storeId, name, required: input.required, max_choices: input.maxChoices, sort_order: input.sortOrder };
+  return mutate("/painel/cardapio", async () => {
+    const q = input.id
+      ? supabase.from("product_addon_groups").update(row).eq("id", input.id).eq("store_id", storeId).select("id").single()
+      : supabase.from("product_addon_groups").insert(row).select("id").single();
+    const { data, error } = await q;
+    return { error, id: data?.id as string | undefined };
+  });
+}
+
+export async function deleteAddonGroup(id: string): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  return mutate("/painel/cardapio", async () => {
+    // cascade na FK apaga as opções do grupo — a UI confirma antes de chamar
+    const { error } = await supabase.from("product_addon_groups").delete().eq("id", id).eq("store_id", storeId);
+    return { error };
+  });
+}
+
+export async function setAddonGroup(addonId: string, groupId: string | null): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  return mutate("/painel/cardapio", async () => {
+    const { error } = await supabase.from("product_addons").update({ group_id: groupId })
+      .eq("id", addonId).eq("store_id", storeId);
     return { error };
   });
 }

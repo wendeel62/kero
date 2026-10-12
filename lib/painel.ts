@@ -13,6 +13,7 @@ import { parsePeriodKind, resolvePeriod } from "./period";
 import { minutesInStatus } from "./order-timing";
 import { aggregateCustomers, type Customer } from "./customers";
 import { goalProgress, windowFor, type GoalPeriod } from "./goals";
+import type { AddonGroupRow } from "./addon-groups";
 
 const ORDER_COLS = "id,code,customer_name,type,payment_method,total_cents,status,created_at";
 
@@ -109,13 +110,15 @@ export async function getPedido(id: string): Promise<{ order: PanelDetail | null
 // ordenado por sort_order (persistido no banco, não no cliente).
 export async function getCardapio() {
   const { supabase, storeId } = await requireStore();
-  const [{ data: cats }, { data: prods }, { data: addons }, { data: prodAddons }] = await Promise.all([
+  const [{ data: cats }, { data: prods }, { data: addons }, { data: prodAddons }, { data: groups }] = await Promise.all([
     supabase.from("categories").select("id,name,active,sort_order").eq("store_id", storeId).order("sort_order"),
     supabase.from("products").select("id,category_id,name,description,price_cents,image_url,active,sort_order")
       .eq("store_id", storeId).order("sort_order"),
-    supabase.from("product_addons").select("id,name,price_cents,active")
+    supabase.from("product_addons").select("id,name,price_cents,active,group_id")
       .eq("store_id", storeId).is("product_id", null),
     supabase.from("product_addons").select("id,product_id").eq("store_id", storeId).not("product_id", "is", null),
+    supabase.from("product_addon_groups").select("id,name,required,max_choices,sort_order")
+      .eq("store_id", storeId).order("sort_order"),
   ]);
   const byCat = new Map<string, PanelProduct[]>();
   const addonIdsByProduct = new Map<string, string[]>();
@@ -137,7 +140,8 @@ export async function getCardapio() {
     categories: ((cats ?? []) as { id: string; name: string; active: boolean; sort_order: number }[]).map((c) => ({
       ...c, products: byCat.get(c.id) ?? [],
     })),
-    addons: ((addons ?? []) as PanelAddon[]).map((a) => ({ ...a })),
+    addons: ((addons ?? []) as (PanelAddon & { group_id: string | null })[]).map((a) => ({ ...a })),
+    groups: ((groups ?? []) as AddonGroupRow[]),
     addonIdsByProduct,
   };
 }

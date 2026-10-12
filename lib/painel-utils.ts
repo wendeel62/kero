@@ -56,7 +56,7 @@ export type PanelProduct = {
   image_url: string | null; active: boolean; sort_order: number; category_id: string;
 };
 export type PanelCategory = { id: string; name: string; active: boolean; sort_order: number; products: PanelProduct[] };
-export type PanelAddon = { id: string; name: string; price_cents: number; active: boolean };
+export type PanelAddon = { id: string; name: string; price_cents: number; active: boolean; group_id: string | null };
 export type CardapioData = {
   storeId: string; categories: PanelCategory[]; addons: PanelAddon[]; addonIdsByProduct: Map<string, string[]>;
 };
