@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { getEntregas } from "@/lib/painel";
-import { assignEntrega, criarMotoboy } from "@/lib/painel-actions";
+import { assignEntrega, criarMotoboy, encerrarRota } from "@/lib/painel-actions";
 import type { Courier, MapPoint } from "@/lib/deliveries";
 import type { PanelOrder } from "@/lib/painel-utils";
 
@@ -18,6 +18,7 @@ type EntregasData = {
   counts: { prontas: number; emRota: number; concluidas: number };
   couriers: Courier[];
   courierOnRoute: Set<string>;
+  routeIdPorCourier: Record<string, string>;
   mapPoints: MapPoint[];
 };
 
@@ -71,12 +72,24 @@ export default function Entregas() {
               <span className="text-[11px] font-bold bg-[var(--pill-bg)] rounded-full px-2 py-0.5">{o.payment}</span>
             </div>
             <p className="font-extrabold tabular-nums mt-1.5">{brl(o.total_cents)}</p>
-            {o.status === "out" && (
-              <button onClick={() => { setAssignId(o.id); setError(""); }}
-                className="btn btn--primary w-full mt-2.5 !min-h-0 text-[13px] font-extrabold py-2 transition-all active:scale-[0.98]">
-                Atribuir motoboy
-              </button>
-            )}
+            {o.status === "out" && (() => {
+              const cid = o.courierId;
+              const rid = cid ? data.routeIdPorCourier[cid] : undefined;
+              return (
+                <>
+                  <button onClick={() => { setAssignId(o.id); setError(""); }}
+                    className="btn btn--primary w-full mt-2.5 !min-h-0 text-[13px] font-extrabold py-2 transition-all active:scale-[0.98]">
+                    Atribuir motoboy
+                  </button>
+                  {rid && (
+                    <button onClick={() => { void encerrarRota(rid).then((r) => { if (!r.ok) setError(r.error ?? "Erro ao encerrar rota."); load(); }); }}
+                      className="btn btn--ghost w-full mt-1.5 !min-h-0 text-[13px] font-extrabold py-2 transition-all active:scale-[0.98]">
+                      Encerrar rota
+                    </button>
+                  )}
+                </>
+              );
+            })()}
           </article>
         ))}
         {orders.length === 0 && (

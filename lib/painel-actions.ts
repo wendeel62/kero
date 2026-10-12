@@ -550,6 +550,24 @@ export async function saveTracking(fb_pixel_id: string, ga4_id: string): Promise
   });
 }
 
+// Task 12: encerra rota (status→closed) e remove posições do motoboy (LGPD).
+export async function encerrarRota(routeId: string): Promise<R> {
+  try {
+    const { supabase, storeId } = await requireStore();
+    const { data: route, error: rErr } = await supabase.from("routes")
+      .select("courier_id").eq("id", routeId).single();
+    if (rErr || !route) return { ok: false, error: "Rota não encontrada." };
+    const { error: uErr } = await supabase.from("routes")
+      .update({ status: "closed" }).eq("id", routeId).eq("store_id", storeId);
+    if (uErr) throw uErr;
+    await supabase.from("courier_positions").delete().eq("courier_id", route.courier_id);
+    revalidatePath("/painel/entregas");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: err(e) };
+  }
+}
+
 // Cadastro de motoboy com acesso ao PWA (Task 9).
 export async function criarMotoboy(input: { name: string; phone: string; email: string; password: string }): Promise<R> {
   try {

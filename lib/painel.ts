@@ -381,15 +381,26 @@ export async function getEntregas() {
       .in("status", ["ready", "out", "delivered"])
       .gte("created_at", manausDayStartISO()).order("created_at", { ascending: false }),
     supabase.from("couriers").select("id,name,phone,active,user_id").eq("store_id", storeId).eq("active", true).order("name"),
-    supabase.from("routes").select("courier_id,status").eq("store_id", storeId).eq("status", "open"),
+    supabase.from("routes").select("id,courier_id,status").eq("store_id", storeId).eq("status", "open"),
   ]);
   const now = Date.now();
-  const panelOrders = ((orders ?? []) as unknown as PanelRow[]).map((o) => toPanelOrder(o, now));
+  const routesList = (routes ?? []) as { id: string; courier_id: string; status: string }[];
+  const routeIds = routesList.map((r) => r.id);
+  const { data: stops } = await supabase.from("route_stops").select("route_id,order_id").in("route_id", routeIds.length ? routeIds : ["00000000-0000-0000-0000-000000000000"]);
+  const orderCourier = new Map<string, string>();
+  for (const r of routesList) {
+    for (const s of (stops ?? []) as { route_id: string; order_id: string }[]) {
+      if (s.route_id === r.id) orderCourier.set(s.order_id, r.courier_id);
+    }
+  }
+  const panelOrders = ((orders ?? []) as unknown as PanelRow[]).map((o) => toPanelOrder(o, now, undefined, orderCourier.get(o.id)));
   const cols = boardColumns(panelOrders);
   const onRoute = courierOnRoute(
     (couriers ?? []) as { id: string }[],
-    (routes ?? []) as { courier_id: string; status: string }[],
+    routesList,
   );
+  const routeIdPorCourier: Record<string, string> = {};
+  for (const r of routesList) routeIdPorCourier[r.courier_id] = r.id;
   const outOrders = ((orders ?? []) as unknown as PanelRow[]).filter((o) => o.status === "out");
   return {
     prontas: panelOrders.filter((o) => o.status === "ready"),
@@ -398,6 +409,7 @@ export async function getEntregas() {
     counts: cols,
     couriers: ((couriers ?? []) as { id: string; name: string; phone: string; active: boolean; user_id: string | null }[]).map((c) => ({ ...c, vinculado: c.user_id != null })),
     courierOnRoute: onRoute,
+    routeIdPorCourier,
     mapPoints: mapPoints(outOrders as unknown as { id: string; code: string; status: string; address: unknown }[]),
   };
 }
