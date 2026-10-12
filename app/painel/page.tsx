@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getHoje } from "@/lib/painel";
 import { setForceClosed } from "@/lib/painel-actions";
+import { PERIOD_LABEL, type CustomRange, type PeriodKind } from "@/lib/period";
+import PeriodFilter from "@/components/ui/period-filter";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { StatCard } from "@/components/ui/StatCard";
 
@@ -57,7 +59,9 @@ type Hoje = Awaited<ReturnType<typeof getHoje>>;
 export default function PainelHoje() {
   const [data, setData] = useState<Hoje | null>(null);
   const [failed, setFailed] = useState(false);
-  useEffect(() => { getHoje().then(setData).catch(() => setFailed(true)); }, []);
+  const [period, setPeriod] = useState<PeriodKind>("today");
+  const [range, setRange] = useState<CustomRange>({});
+  useEffect(() => { getHoje(period, range).then(setData).catch(() => setFailed(true)); }, [period, range]);
   const [closed, setClosed] = useState(false);
   const [closedAt, setClosedAt] = useState("");
   useEffect(() => {
@@ -66,7 +70,7 @@ export default function PainelHoje() {
     setClosedAt(data.closedAt ? fmtClosedAt(data.closedAt) : "");
   }, [data]);
 
-  const stats = data?.stats ?? { count: 0, revenue: 0, ticket: 0, awaiting: 0 };
+  const stats = data?.stats ?? { count: 0, revenue: 0, ticket: 0, awaiting: 0, entregasAndamento: 0 };
 
   const count = useCountUp(stats.count);
   const revenue = useCountUp(stats.revenue, 1100);
@@ -85,9 +89,9 @@ export default function PainelHoje() {
   const recent = data?.recent ?? [];
 
   const cards = [
-    { label: "Pedidos hoje", display: String(count), sub: "válidos · exc. cancelados", tone: "flat" as const, spark: SPARKS.count, stroke: "var(--muted)" },
-    { label: "Faturamento", display: brl(revenue), sub: "exc. cancelados", tone: "up" as const, spark: SPARKS.revenue, stroke: "var(--green)" },
-    { label: "Ticket médio", display: brl(ticket), sub: "por pedido válido", tone: "flat" as const, spark: SPARKS.ticket, stroke: "var(--info)" },
+    { label: `Pedidos · ${PERIOD_LABEL[period]}`, display: String(count), sub: "válidos · exc. cancelados", tone: "flat" as const, spark: SPARKS.count, stroke: "var(--muted)" },
+    { label: `Faturamento · ${PERIOD_LABEL[period]}`, display: brl(revenue), sub: "exc. cancelados", tone: "up" as const, spark: SPARKS.revenue, stroke: "var(--green)" },
+    { label: `Ticket médio · ${PERIOD_LABEL[period]}`, display: brl(ticket), sub: "por pedido válido", tone: "flat" as const, spark: SPARKS.ticket, stroke: "var(--info)" },
   ];
 
   if (failed) {
@@ -126,6 +130,11 @@ export default function PainelHoje() {
         </button>
       </div>
 
+      {/* controles de período (compartilhado: datepicker no "Personalizado") */}
+      <div className="mt-4">
+        <PeriodFilter period={period} range={range} onPeriod={setPeriod} onRange={setRange} />
+      </div>
+
       {closed && (
         <div className="alert-banner anim-pop mt-3" role="status">
           <span className="flex items-center justify-center w-9 h-9 rounded-lg bg-[var(--red-soft)] text-lg shrink-0">🌙</span>
@@ -153,6 +162,21 @@ export default function PainelHoje() {
           </span>
           <span className="stat-delta stat-delta--flat">
             {stats.awaiting > 0 ? "toque p/ atender no kanban" : "tudo em dia ✓"}
+          </span>
+        </Link>
+        <Link href="/painel/pedidos"
+          className="card anim-rise group transition-shadow duration-300"
+          style={{ animationDelay: "280ms" }}>
+          <div className="stat-top">
+            <span className="stat-label">Entregas em andamento</span>
+            <span className="text-xs font-extrabold text-[var(--muted)] transition-transform group-hover:translate-x-0.5">→</span>
+          </div>
+          <span className="stat-value flex items-center gap-2.5">
+            {stats.entregasAndamento > 0 && <span className="live-dot w-2.5 h-2.5 rounded-full bg-[var(--info)] shrink-0" />}
+            {stats.entregasAndamento}
+          </span>
+          <span className="stat-delta stat-delta--flat">
+            {stats.entregasAndamento > 0 ? "preparando · pronto · a caminho" : "nenhuma no momento"}
           </span>
         </Link>
       </div>

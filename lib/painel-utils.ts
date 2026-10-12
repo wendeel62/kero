@@ -11,6 +11,7 @@ export const PAYMENT_PT: Record<string, string> = { cash: "Dinheiro", pix: "Pix"
 export type PanelOrder = {
   id: string; code: string; customer: string; minutesAgo: number;
   type: PanelType; payment: string; total_cents: number; status: PanelStatus;
+  statusMinutes: number;
 };
 
 // meia-noite de Manaus em ISO UTC (Manaus = UTC-4 fixo, sem horário de verão)
@@ -28,11 +29,12 @@ export type PanelRow = {
   payment_method: string; total_cents: number; status: PanelStatus; created_at: string;
 };
 
-export const toPanelOrder = (o: PanelRow, now = Date.now()): PanelOrder => ({
+export const toPanelOrder = (o: PanelRow, now = Date.now(), statusMinutes?: number): PanelOrder => ({
   id: o.id, code: o.code, customer: o.customer_name,
   minutesAgo: Math.max(0, Math.round((now - new Date(o.created_at).getTime()) / 60000)),
   type: o.type, payment: PAYMENT_PT[o.payment_method] ?? o.payment_method,
   total_cents: o.total_cents, status: o.status,
+  statusMinutes: statusMinutes ?? Math.max(0, Math.round((now - new Date(o.created_at).getTime()) / 60000)),
 });
 
 export type PanelItem = { name: string; qty: number; unit: number; addons: string[]; notes: string };
@@ -54,7 +56,7 @@ export type PanelProduct = {
   image_url: string | null; active: boolean; sort_order: number; category_id: string;
 };
 export type PanelCategory = { id: string; name: string; active: boolean; sort_order: number; products: PanelProduct[] };
-export type PanelAddon = { id: string; name: string; price_cents: number; active: boolean };
+export type PanelAddon = { id: string; name: string; price_cents: number; active: boolean; group_id: string | null };
 export type CardapioData = {
   storeId: string; categories: PanelCategory[]; addons: PanelAddon[]; addonIdsByProduct: Map<string, string[]>;
 };
@@ -77,4 +79,8 @@ export type PanelSettings = {
   min_order_cents: number; prep_time_min: number | null; prep_time_max: number | null;
   open_hours: Record<string, [string, string][]>;
   hoods: { id: string; name: string; fee_cents: number; active: boolean }[];
+  tables: { id: string; number: number; label: string; active: boolean }[];
+  occupiedTableIds: string[];
+  fb_pixel_id: string | null;
+  ga4_id: string | null;
 };

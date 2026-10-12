@@ -3,15 +3,16 @@
 import { useEffect, useState } from "react";
 import { getSettings } from "@/lib/painel";
 import type { PanelSettings } from "@/lib/painel-utils";
-import { saveEntrega, saveHorarios, saveLoja, setCoverUrl, setLogoUrl } from "@/lib/painel-actions";
+import { saveEntrega, saveHorarios, saveLoja, saveTables, saveTracking, setCoverUrl, setLogoUrl } from "@/lib/painel-actions";
 import { createClient } from "@/lib/supabase/client";
 import { parseBRLToCents } from "@/lib/pricing";
 import ImageUploader from "@/components/ui/image-uploader";
 
-type Tab = "loja" | "horarios" | "entrega";
+type Tab = "loja" | "horarios" | "entrega" | "salao" | "rastreamento";
 type Range = { from: string; to: string };
 type Day = { open: boolean; ranges: Range[] };
 type Hood = { id: string; name: string; fee_cents: number; active: boolean };
+type Table = { id: string; number: number; label: string; active: boolean };
 const DAYS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -36,9 +37,15 @@ export default function Configuracoes() {
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [newHood, setNewHood] = useState("");
   const [newFee, setNewFee] = useState("");
+  const [tables, setTables] = useState<Table[]>([]);
+  const [deletedTableIds, setDeletedTableIds] = useState<string[]>([]);
+  const [newTableNumber, setNewTableNumber] = useState("");
+  const [newTableLabel, setNewTableLabel] = useState("");
   const [minOrder, setMinOrder] = useState("");
   const [prepMin, setPrepMin] = useState("");
   const [prepMax, setPrepMax] = useState("");
+  const [fbPixel, setFbPixel] = useState("");
+  const [ga4Id, setGa4Id] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -58,9 +65,12 @@ export default function Configuracoes() {
         return ranges.length > 0 ? { open: true, ranges } : { open: false, ranges: [] };
       }));
       setHoods(s.hoods.map((h) => ({ ...h })));
+      setTables(s.tables.map((t) => ({ ...t })));
       setMinOrder(centsStr(s.min_order_cents));
       setPrepMin(String(s.prep_time_min ?? ""));
       setPrepMax(String(s.prep_time_max ?? ""));
+      setFbPixel(s.fb_pixel_id ?? "");
+      setGa4Id(s.ga4_id ?? "");
     }).catch(() => setSettings(null));
   }, []);
 
@@ -177,10 +187,42 @@ export default function Configuracoes() {
   };
   const activeCount = hoods.filter((h) => h.active).length;
 
+  const saveSalaoTab = async () => {
+    setSaving(true);
+    const r = await saveTables({ tables, deletedIds: deletedTableIds });
+    if (r.ok) {
+      const g = await getSettings().catch(() => null);
+      if (g?.settings) {
+        setTables(g.settings.tables.map((t) => ({ ...t })));
+        setDeletedTableIds([]);
+      }
+    }
+    done("salao", r);
+  };
+
+  const addTable = () => {
+    const n = Number(newTableNumber);
+    if (!Number.isInteger(n) || n < 1 || n > 999) return;
+    setTables((ts) => [...ts, { id: `new-${Date.now()}`, number: n, label: newTableLabel.trim(), active: true }]);
+    setNewTableNumber("");
+    setNewTableLabel("");
+  };
+  const removeTable = (id: string) => {
+    if (!id.startsWith("new-")) setDeletedTableIds((ds) => [...ds, id]);
+    setTables((ts) => ts.filter((t) => t.id !== id));
+  };
+  const updateTable = (id: string, patch: Partial<Table>) =>
+    setTables((ts) => ts.map((t) => {
+      if (t.id !== id) return t;
+      return { ...t, ...patch };
+    }));
+
   const tabs: { id: Tab; label: string }[] = [
     { id: "loja", label: "Loja" },
     { id: "horarios", label: "Horários" },
     { id: "entrega", label: "Entrega" },
+    { id: "salao", label: "Salão" },
+    { id: "rastreamento", label: "Rastreamento" },
   ];
 
   return (
@@ -363,6 +405,66 @@ export default function Configuracoes() {
             </button>
           </section>
         </div>
+      )}
+
+      {tab === "salao" && (
+        <section className="mt-3 bg-[var(--surface)] border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise">
+          <h2 className="font-extrabold">Mesas do salão</h2>
+          <p className="text-xs text-[var(--muted)] mt-1">Número de 1 a 999. Mesa com pedido ativo não pode ser excluída.</p>
+          <ul className="divide-y divide-dashed mt-2">
+            {tables.map((t) => {
+              const occupied = settings.occupiedTableIds.includes(t.id);
+              return (
+                <li key={t.id} className={`flex items-center gap-3 py-2.5 ${t.active ? "" : "opacity-50"}`}>
+                  <button onClick={() => updateTable(t.id, { active: !t.active })} role="switch" aria-checked={t.active} aria-label={`${t.active ? "Desativar" : "Ativar"} mesa ${t.number}`}
+                    className={`relative inline-flex w-9 h-5 rounded-full transition-colors shrink-0 ${t.active ? "bg-[var(--green)]" : "bg-[var(--muted)]"}`}>
+                    <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-[var(--surface)] shadow transition-all ${t.active ? "left-[18px]" : "left-0.5"}`} />
+                  </button>
+                  <span className="w-10 text-sm font-extrabold tabular-nums">{t.number}</span>
+                  <input value={t.label} onChange={(e) => updateTable(t.id, { label: e.target.value })} placeholder="Rótulo (opcional)"
+                    className="flex-1 min-w-0 text-sm border rounded-xl px-3 py-2 bg-[var(--surface-2)] focus:bg-[var(--surface)] focus:border-[var(--red)] outline-none" />
+                  {occupied && <span className="text-xs font-bold text-[var(--amber)] shrink-0">pedido ativo</span>}
+                  <button onClick={() => removeTable(t.id)} disabled={occupied} aria-label={`Remover mesa ${t.number}`}
+                    className="text-[var(--muted)] hover:text-[var(--red)] font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed">✕</button>
+                </li>
+              );
+            })}
+          </ul>
+          <div className="border-t border-dashed pt-3 flex gap-2">
+            <input value={newTableNumber} onChange={(e) => setNewTableNumber(e.target.value.replace(/\D/g, ""))} placeholder="Número" inputMode="numeric"
+              className="w-20 text-sm border rounded-xl px-3 py-2 bg-[var(--surface-2)] focus:bg-[var(--surface)] focus:border-[var(--red)] outline-none tabular-nums" />
+            <input value={newTableLabel} onChange={(e) => setNewTableLabel(e.target.value)} placeholder="Rótulo (opcional)"
+              className="flex-1 min-w-0 text-sm border rounded-xl px-3 py-2 bg-[var(--surface-2)] focus:bg-[var(--surface)] focus:border-[var(--red)] outline-none" />
+            <button onClick={addTable} className="shrink-0 bg-[var(--text)] hover:bg-[var(--pill-active-bg)] text-white text-sm font-extrabold rounded-xl px-4 transition-colors">
+              Adicionar
+            </button>
+          </div>
+          <button onClick={saveSalaoTab} disabled={saving} className="mt-4 w-full sm:w-auto bg-[var(--text)] hover:bg-[var(--pill-active-bg)] text-white font-extrabold rounded-2xl px-8 py-3 transition-all active:scale-[0.99] disabled:opacity-50">
+            {saving ? "Salvando…" : "Salvar mesas"}
+          </button>
+        </section>
+      )}
+
+      {tab === "rastreamento" && (
+        <section className="mt-3 bg-[var(--surface)] border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise">
+          <h2 className="font-extrabold">Rastreamento</h2>
+          <p className="text-xs text-[var(--muted)] mt-1">IDs de Pixel do Facebook e GA4 injetados na vitrine. Deixe vazio para não injetar.</p>
+          <div className="grid sm:grid-cols-2 gap-3 mt-3">
+            <div>
+              <label htmlFor="c-fbpixel" className={label}>Pixel do Facebook</label>
+              <input id="c-fbpixel" value={fbPixel} onChange={(e) => setFbPixel(e.target.value)} placeholder="Ex: 1234567890123" inputMode="numeric" className={`${input} mt-1 tabular-nums`} />
+              <p className="text-[11px] text-[var(--muted)] mt-1">10 a 20 dígitos</p>
+            </div>
+            <div>
+              <label htmlFor="c-ga4" className={label}>GA4 (Google Analytics)</label>
+              <input id="c-ga4" value={ga4Id} onChange={(e) => setGa4Id(e.target.value)} placeholder="Ex: G-ABC123XYZ" className={`${input} mt-1`} />
+              <p className="text-[11px] text-[var(--muted)] mt-1">Formato G-XXXXXXXXXX</p>
+            </div>
+          </div>
+          <button onClick={async () => { setSaving(true); done("rastreamento", await saveTracking(fbPixel, ga4Id)); }} disabled={saving} className="mt-4 w-full sm:w-auto bg-[var(--text)] hover:bg-[var(--pill-active-bg)] text-white font-extrabold rounded-2xl px-8 py-3 transition-all active:scale-[0.99] disabled:opacity-50">
+            {saving ? "Salvando…" : "Salvar rastreamento"}
+          </button>
+        </section>
       )}
     </main>
   );

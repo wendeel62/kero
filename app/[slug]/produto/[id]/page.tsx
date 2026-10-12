@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import ProdutoClient from "./produto-client";
-import { getAddons, getProduct, getStoreBySlug } from "@/lib/queries";
+import { getAddonGroups, getProduct, getStoreBySlug } from "@/lib/queries";
+import { groupAddons } from "@/lib/addon-groups";
 import { isStoreOpen, nextOpeningLabel } from "@/lib/store-hours";
 
 type Params = { slug: string; id: string };
@@ -33,15 +34,16 @@ export default async function ProdutoPage({ params }: { params: Promise<Params> 
   // pausado NÃO dá 404 (DS §8.2): o client desabilita tudo com aviso
   const isOpen = !store.force_closed && isStoreOpen(store.open_hours);
   const opensAt = nextOpeningLabel(store.open_hours);
-  const allAddons = await getAddons(store.id);
-  const addons = allAddons.filter((a) => a.product_id === null || a.product_id === found.product.id);
+  const { addons: allAddons, groups } = await getAddonGroups(store.id);
+  const aplicaveis = allAddons.filter((a) => a.product_id === null || a.product_id === found.product.id);
+  const addonGroups = groupAddons(aplicaveis, groups);
   return (
     <ProdutoClient
       slug={slug}
       store={store}
       product={found.product}
       categoryName={found.categoryName}
-      addons={addons}
+      addonGroups={addonGroups}
       isOpen={isOpen}
       opensAt={opensAt}
     />

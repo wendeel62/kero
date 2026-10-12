@@ -15,13 +15,18 @@ const GRUPOS = [
     items: [
       { href: "/painel", label: "Hoje", icon: "hoje" },
       { href: "/painel/pedidos", label: "Pedidos", icon: "pedidos" },
+      { href: "/painel/pdv", label: "PDV", icon: "pedidos" },
+      { href: "/painel/entregas", label: "Entregas", icon: "pedidos" },
     ],
   },
   {
     label: "Gestão",
     items: [
       { href: "/painel/cardapio", label: "Cardápio", icon: "cardapio" },
+      { href: "/painel/clientes", label: "Clientes", icon: "pedidos" },
       { href: "/painel/configuracoes", label: "Config", icon: "config" },
+      { href: "/painel/relatorios", label: "Relatórios", icon: "hoje" },
+      { href: "/painel/financeiro", label: "Financeiro", icon: "hoje" },
     ],
   },
 ];

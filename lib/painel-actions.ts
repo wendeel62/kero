@@ -6,6 +6,9 @@
 import { revalidatePath } from "next/cache";
 
 import { requireStore } from "@/lib/auth";
+import type { GoalPeriod } from "./goals";
+import { sanitizeTrackingId } from "./tracking";
+
 
 const err = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
@@ -25,12 +28,12 @@ export async function setForceClosed(closed: boolean): Promise<{ ok: boolean; at
 
 type R = { ok: boolean; error?: string };
 
-async function mutate(path: string, fn: () => Promise<{ error: unknown }>): Promise<R> {
+async function mutate(path: string, fn: () => Promise<{ error: unknown; id?: string }>): Promise<R & { id?: string }> {
   try {
-    const { error } = await fn();
+    const { error, id } = await fn();
     if (error) throw error;
     revalidatePath(path);
-    return { ok: true };
+    return { ok: true, id };
   } catch (e) {
     const m = err(e);
     // teto de 200 produtos ativos (trigger) em PT-BR de lojista
@@ -121,6 +124,45 @@ export async function deleteAddon(id: string): Promise<R> {
   const { supabase, storeId } = await requireStore();
   return mutate("/painel/cardapio", async () => {
     const { error } = await supabase.from("product_addons").delete().eq("id", id).eq("store_id", storeId);
+    return { error };
+  });
+}
+
+// Grupos de opção (migration 012) — o grupo é o único conceito novo; as opções
+// são os adicionais com group_id preenchido (design D4).
+export async function saveAddonGroup(input: {
+  id?: string; name: string; required: boolean; maxChoices: number | null; sortOrder: number;
+}): Promise<R & { id?: string }> {
+  const { supabase, storeId } = await requireStore();
+  const name = input.name.trim();
+  if (name.length < 1 || name.length > 40) return { ok: false, error: "Nome do grupo: 1 a 40 letras." };
+  if (input.maxChoices !== null && input.maxChoices < 1) {
+    return { ok: false, error: "Máximo de escolhas precisa ser 1 ou mais (ou vazio)." };
+  }
+  const row = { store_id: storeId, name, required: input.required, max_choices: input.maxChoices, sort_order: input.sortOrder };
+  return mutate("/painel/cardapio", async () => {
+    const q = input.id
+      ? supabase.from("product_addon_groups").update(row).eq("id", input.id).eq("store_id", storeId).select("id").single()
+      : supabase.from("product_addon_groups").insert(row).select("id").single();
+    const { data, error } = await q;
+    return { error, id: data?.id as string | undefined };
+  });
+}
+
+export async function deleteAddonGroup(id: string): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  return mutate("/painel/cardapio", async () => {
+    // cascade na FK apaga as opções do grupo — a UI confirma antes de chamar
+    const { error } = await supabase.from("product_addon_groups").delete().eq("id", id).eq("store_id", storeId);
+    return { error };
+  });
+}
+
+export async function setAddonGroup(addonId: string, groupId: string | null): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  return mutate("/painel/cardapio", async () => {
+    const { error } = await supabase.from("product_addons").update({ group_id: groupId })
+      .eq("id", addonId).eq("store_id", storeId);
     return { error };
   });
 }
@@ -292,4 +334,217 @@ export async function saveEntrega(input: {
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
+}
+
+// Mesas do salão (dine_tables) — insert/update/delete com validação de número.
+export async function saveTables(input: {
+  tables: { id?: string; number: number; label: string; active: boolean }[];
+  deletedIds: string[];
+}): Promise<R> {
+  try {
+    for (const t of input.tables) {
+      if (!Number.isInteger(t.number) || t.number < 1 || t.number > 999) {
+        return { ok: false, error: "Número da mesa: 1 a 999." };
+      }
+    }
+    const { supabase, storeId } = await requireStore();
+    if (input.deletedIds.length > 0) {
+      const { error } = await supabase.from("dine_tables").delete()
+        .eq("store_id", storeId).in("id", input.deletedIds);
+      if (error) throw error;
+    }
+    for (const t of input.tables) {
+      const row = { store_id: storeId, number: t.number, label: t.label.trim(), active: t.active };
+      if (!t.id || t.id.startsWith("new-")) {
+        const { error } = await supabase.from("dine_tables").insert(row);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("dine_tables").update(row)
+          .eq("id", t.id).eq("store_id", storeId);
+        if (error) throw error;
+      }
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+export async function deleteTable(id: string): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  return mutate("/painel/configuracoes", async () => {
+    const { error } = await supabase.from("dine_tables").delete().eq("id", id).eq("store_id", storeId);
+    return { error };
+  });
+}
+
+// Meta de faturamento (design D2): upsert do ALVO em sales_goals; a janela é
+// derivada na leitura (windowFor) — nunca gravada.
+export async function saveMeta(period: GoalPeriod, targetCents: number): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  if (!(targetCents > 0)) return { ok: false, error: "A meta precisa ser maior que zero." };
+  return mutate("/painel/relatorios", async () => {
+    const { error } = await supabase.from("sales_goals")
+      .upsert({ store_id: storeId, period, target_cents: targetCents }, { onConflict: "store_id,period" });
+    return { error };
+  });
+}
+
+// PDV (recon §3): cria pedido via RPC pdv_create_order (security definer).
+export async function pdvCriarPedido(input: {
+  type: 'dine_in' | 'pickup' | 'delivery';
+  table_id?: string;
+  payment_method: string;
+  customer_name: string;
+  customer_phone: string;
+  items: { id: string; qty: number; addons: string[]; notes?: string }[];
+}): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  return mutate("/painel/pdv", async () => {
+    const { data, error } = await supabase.rpc("pdv_create_order", {
+      p_store_id: storeId,
+      p_type: input.type,
+      p_table_id: input.table_id ?? null,
+      p_payment_method: input.payment_method,
+      p_customer_name: input.customer_name,
+      p_customer_phone: input.customer_phone,
+      p_items: input.items,
+    });
+    if (error) {
+      const msg = err(error);
+      if (msg.includes("MESA_JA_OCUPADA")) return { error: new Error("Essa mesa já tem um pedido em aberto.") };
+      if (msg.includes("MESA_INVALIDA")) return { error: new Error("Mesa inválida.") };
+      return { error };
+    }
+    return { error: null, id: data?.order_id as string | undefined };
+  });
+}
+
+// Entregas: assign de motoboy via RPC assign_courier (security definer).
+export async function assignEntrega(orderId: string, courierId: string): Promise<R> {
+  const { supabase } = await requireStore();
+  return mutate("/painel/entregas", async () => {
+    const { data, error } = await supabase.rpc("assign_courier", {
+      p_order_id: orderId,
+      p_courier_id: courierId,
+    });
+    if (error) {
+      const msg = err(error);
+      if (msg.includes("COURIER_EM_ROTA")) return { error: new Error("Esse motoboy já está em rota.") };
+      if (msg.includes("ORDER_NOT_READY")) return { error: new Error("Pedido não está pronto para entrega.") };
+      if (msg.includes("COURIER_INVALID")) return { error: new Error("Motoboy inválido.") };
+      return { error };
+    }
+    return { error: null, id: data as string };
+  });
+}
+
+// Financeiro (recon §5): caixa + contas a pagar. Todos via mutate().
+
+export async function abrirCaixa(openingCents: number): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  if (!Number.isInteger(openingCents) || openingCents < 0) {
+    return { ok: false, error: "Fundo inicial inválido." };
+  }
+  return mutate("/painel/financeiro", async () => {
+    const { error } = await supabase.from("cash_sessions")
+      .insert({ store_id: storeId, opening_cents: openingCents });
+    return { error };
+  });
+}
+
+export async function movimentoCaixa(direction: "in" | "out", amount: number, note: string): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  if (!Number.isInteger(amount) || amount <= 0) {
+    return { ok: false, error: "Valor do movimento inválido." };
+  }
+  return mutate("/painel/financeiro", async () => {
+    // caixa aberto da loja
+    const { data: session, error: sErr } = await supabase.from("cash_sessions")
+      .select("id").eq("store_id", storeId).is("closed_at", null).single();
+    if (sErr || !session) return { error: new Error("Abra o caixa antes de lançar movimentos.") };
+    const { error } = await supabase.from("cash_movements")
+      .insert({ store_id: storeId, session_id: session.id, direction, amount_cents: amount, note: note.trim() || null });
+    return { error };
+  });
+}
+
+export async function fecharCaixa(closingCents: number): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  if (!Number.isInteger(closingCents) || closingCents < 0) {
+    return { ok: false, error: "Valor contado inválido." };
+  }
+  return mutate("/painel/financeiro", async () => {
+    const { data: session, error: sErr } = await supabase.from("cash_sessions")
+      .select("id").eq("store_id", storeId).is("closed_at", null).single();
+    if (sErr || !session) return { error: new Error("Caixa já está fechado ou não foi aberto.") };
+    const { error } = await supabase.from("cash_sessions")
+      .update({ closing_cents: closingCents, closed_at: new Date().toISOString() })
+      .eq("id", session.id);
+    return { error };
+  });
+}
+
+export async function pagarConta(id: string, paidCents: number): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  if (!Number.isInteger(paidCents) || paidCents <= 0) {
+    return { ok: false, error: "Valor pago inválido." };
+  }
+  return mutate("/painel/financeiro", async () => {
+    const { data: conta, error: cErr } = await supabase.from("payable_accounts")
+      .select("paid,amount_cents").eq("id", id).eq("store_id", storeId).single();
+    if (cErr || !conta) return { error: new Error("Conta não encontrada.") };
+    if (conta.paid) return { error: null }; // idempotente
+    if (paidCents > conta.amount_cents) {
+      return { error: new Error("Valor pago não pode passar do devido.") };
+    }
+    const { error } = await supabase.from("payable_accounts")
+      .update({ paid: true, paid_at: new Date().toISOString(), paid_cents: paidCents })
+      .eq("id", id);
+    return { error };
+  });
+}
+
+export async function saveConta(input: {
+  id?: string; description: string; amountCents: number; dueDate: string;
+}): Promise<R & { id?: string }> {
+  const { supabase, storeId } = await requireStore();
+  const description = input.description.trim();
+  if (description.length < 2) return { ok: false, error: "Descrição com pelo menos 2 letras." };
+  if (!Number.isInteger(input.amountCents) || input.amountCents <= 0) {
+    return { ok: false, error: "Valor inválido." };
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.dueDate)) {
+    return { ok: false, error: "Vencimento inválido." };
+  }
+  const row = { store_id: storeId, description, amount_cents: input.amountCents, due_date: input.dueDate };
+  return mutate("/painel/financeiro", async () => {
+    const q = input.id
+      ? supabase.from("payable_accounts").update(row).eq("id", input.id).eq("store_id", storeId).select("id").single()
+      : supabase.from("payable_accounts").insert(row).select("id").single();
+    const { data, error } = await q;
+    return { error, id: data?.id as string | undefined };
+  });
+}
+
+export async function deleteConta(id: string): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  return mutate("/painel/financeiro", async () => {
+    const { error } = await supabase.from("payable_accounts").delete().eq("id", id).eq("store_id", storeId);
+    return { error };
+  });
+}
+
+// Rastreamento (recon §8): upsert de fb_pixel_id/ga4_id. Valida com
+// sanitizeTrackingId — id inválido nunca vira <script> na vitrine.
+export async function saveTracking(fb_pixel_id: string, ga4_id: string): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  const pixel = sanitizeTrackingId("pixel", fb_pixel_id);
+  const ga4 = sanitizeTrackingId("ga4", ga4_id);
+  if (!pixel && !ga4) return { ok: false, error: "Pixel/GA4 inválido." };
+  return mutate("/painel/configuracoes", async () => {
+    const { error } = await supabase.from("store_tracking")
+      .upsert({ store_id: storeId, fb_pixel_id: pixel, ga4_id: ga4 });
+    return { error };
+  });
 }

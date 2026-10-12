@@ -7,6 +7,8 @@ import ImageUploader from "@/components/ui/image-uploader";
 import { addAddon, addCategory, deleteAddon, deleteCategory, deleteFicha, moveCategory, saveFicha, setProductImageUrl, toggleAddon, updateAddon, updateCategory } from "@/lib/painel-actions";
 import { getCardapio as loadCardapio } from "@/lib/painel";
 import type { PanelAddon, PanelCategory, PanelProduct } from "@/lib/painel-utils";
+import type { AddonGroupRow } from "@/lib/addon-groups";
+import Grupos from "./grupos";
 import { parseBRLToCents } from "@/lib/pricing";
 import "./cardapio.css";
 
@@ -48,6 +50,7 @@ export default function Cardapio() {
   const [tab, setTab] = useState<Tab>("categorias");
   const [cats, setCats] = useState<PanelCategory[] | null>(null);
   const [addons, setAddons] = useState<PanelAddon[]>([]);
+  const [groups, setGroups] = useState<AddonGroupRow[]>([]);
   const [addonIdsByProduct, setAddonIdsByProduct] = useState<Map<string, string[]>>(new Map());
   const [storeId, setStoreId] = useState("");
   const [sidebar, setSidebar] = useState<SidebarMode | null>(null);
@@ -59,6 +62,7 @@ export default function Cardapio() {
     const d = await loadCardapio();
     setCats(d.categories);
     setAddons(d.addons);
+    setGroups(d.groups);
     setAddonIdsByProduct(d.addonIdsByProduct);
     setStoreId(d.storeId);
   };
@@ -289,6 +293,16 @@ export default function Cardapio() {
                 <h2 className="cfg-panel-title">Complementos</h2>
                 <p className="cfg-panel-desc">Adicionais globais válidos para todo o cardápio.</p>
               </div>
+
+              {/* grupos de opção (migration 012) */}
+              <div className="cfg-panel-head" style={{ marginTop: 6 }}>
+                <h3 className="cfg-panel-title">Grupos de opção</h3>
+                <p className="cfg-panel-desc">
+                  Um grupo junta adicionais com uma regra: obrigatório e máximo de escolhas.
+                </p>
+              </div>
+              <Grupos groups={groups} addons={addons} onChange={reload} />
+
               <div className="menu-comp-group" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {addons.length === 0 ? (
                   <div className="menu-empty"><Layers size={20} strokeWidth={1.7} /> Nenhum complemento cadastrado.</div>
