@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "./supabase/server";
+import { createClient as createBrowserClient } from "@/lib/supabase/client";
 
 type Profile = { role: "loja" | "admin"; store_id: string | null };
 
@@ -57,4 +58,20 @@ export async function requireAdminApi() {
     .single();
   if (profile?.role !== "admin") return null;
   return { supabase, userId: user.id };
+}
+
+// Guard do painel do motoboy (client-side; usa browser client p/ auth em rota pública).
+export async function requireCourier() {
+  const supabase = await createBrowserClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/motoboy/login");
+  const { data: courier } = await supabase
+    .from("couriers")
+    .select("id, store_id")
+    .eq("user_id", user.id)
+    .single();
+  if (!courier) redirect("/motoboy/login");
+  return { supabase, userId: user.id, courierId: courier.id, storeId: courier.store_id };
 }
