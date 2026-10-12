@@ -14,6 +14,7 @@ import { minutesInStatus } from "./order-timing";
 import { aggregateCustomers, type Customer } from "./customers";
 import { goalProgress, windowFor, type GoalPeriod } from "./goals";
 import type { AddonGroupRow } from "./addon-groups";
+import { activeTableOrder } from "./pdv";
 
 const ORDER_COLS = "id,code,customer_name,type,payment_method,total_cents,status,created_at";
 
@@ -333,4 +334,28 @@ export async function getRelatorios(period: string = "7d", range: CustomRange = 
   }
 
   return { from, to, revenueCents, ticketCents, count: validos.length, topProducts, metas };
+}
+
+// PDV (recon §3): products ativos, addons, mesas e pedidos não finalizados.
+export async function getPdv() {
+  const { supabase, storeId } = await requireStore();
+  const [{ data: prods }, { data: addons }, { data: tables }, { data: orders }] = await Promise.all([
+    supabase.from("products").select("id,name,price_cents").eq("store_id", storeId).eq("active", true).order("sort_order"),
+    supabase.from("product_addons").select("id,name,price_cents").eq("store_id", storeId).eq("active", true),
+    supabase.from("dine_tables").select("id,number,label,active").eq("store_id", storeId).order("number"),
+    supabase.from("orders").select("table_id,status").eq("store_id", storeId)
+      .in("status", ["new", "confirmed", "preparing", "ready", "out"])
+      .not("table_id", "is", null),
+  ]);
+  const tableIds = ((tables ?? []) as { id: string }[]).map((t) => t.id);
+  const activeByTable = activeTableOrder(
+    tableIds,
+    (orders ?? []) as { table_id: string | null; status: string }[]
+  );
+  return {
+    products: (prods ?? []) as { id: string; name: string; price_cents: number }[],
+    addons: (addons ?? []) as { id: string; name: string; price_cents: number }[],
+    tables: (tables ?? []) as { id: string; number: number; label: string | null; active: boolean }[],
+    activeByTable,
+  };
 }

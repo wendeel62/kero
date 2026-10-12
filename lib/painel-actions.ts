@@ -345,3 +345,33 @@ export async function saveMeta(period: GoalPeriod, targetCents: number): Promise
     return { error };
   });
 }
+
+// PDV (recon §3): cria pedido via RPC pdv_create_order (security definer).
+export async function pdvCriarPedido(input: {
+  type: 'dine_in' | 'pickup' | 'delivery';
+  table_id?: string;
+  payment_method: string;
+  customer_name: string;
+  customer_phone: string;
+  items: { id: string; qty: number; addons: string[]; notes?: string }[];
+}): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  return mutate("/painel/pdv", async () => {
+    const { data, error } = await supabase.rpc("pdv_create_order", {
+      p_store_id: storeId,
+      p_type: input.type,
+      p_table_id: input.table_id ?? null,
+      p_payment_method: input.payment_method,
+      p_customer_name: input.customer_name,
+      p_customer_phone: input.customer_phone,
+      p_items: input.items,
+    });
+    if (error) {
+      const msg = err(error);
+      if (msg.includes("MESA_JA_OCUPADA")) return { error: new Error("Essa mesa já tem um pedido em aberto.") };
+      if (msg.includes("MESA_INVALIDA")) return { error: new Error("Mesa inválida.") };
+      return { error };
+    }
+    return { error: null, id: data?.order_id as string | undefined };
+  });
+}

@@ -15,6 +15,7 @@ const GRUPOS = [
     items: [
       { href: "/painel", label: "Hoje", icon: "hoje" },
       { href: "/painel/pedidos", label: "Pedidos", icon: "pedidos" },
+      { href: "/painel/pdv", label: "PDV", icon: "pedidos" },
     ],
   },
   {
