@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { apiError, mapOrderError } from "@/lib/api-errors";
+import { posicaoValida } from "@/lib/geocode";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type OrderBody = {
@@ -35,6 +36,15 @@ export async function POST(req: Request) {
   }
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "0.0.0.0";
+
+  // Coordenada inválida não rejeita o pedido — só remove as chaves (endereço textual continua válido)
+  if (b.address && typeof b.address === "object" && "lat" in b.address && "lng" in b.address) {
+    const a = b.address as Record<string, unknown>;
+    if (!posicaoValida(Number(a.lat), Number(a.lng))) {
+      delete a.lat;
+      delete a.lng;
+    }
+  }
 
   // Toda a regra de negócio vive no RPC create_order (002): rate limit, dedup,
   // horário, bairro, recálculo/preço, mínimo, troco, código, promised_at, ip_hash.

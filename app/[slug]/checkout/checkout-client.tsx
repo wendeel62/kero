@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -8,6 +9,11 @@ import { loadCart, saveCart, saveLastToken, type CartLine } from "@/lib/cart";
 import { lineTotal, meetsMinimum, subtotal as calcSubtotal, total as calcTotal, unitPrice, validateChange } from "@/lib/pricing";
 import { waLink } from "@/lib/wa";
 import PriceChangeDialog from "@/components/ui/price-change-dialog";
+
+const CheckoutMap = dynamic(() => import("@/components/checkout-map"), {
+  ssr: false,
+  loading: () => <div style={{ height: 260 }} />,
+});
 
 type Resolved = { line: CartLine; product: Product; unit: number };
 type Fulfillment = "delivery" | "pickup";
@@ -52,10 +58,31 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
   const [sending, setSending] = useState(false);
   const [showWa, setShowWa] = useState(false);
   const [priceDiff, setPriceDiff] = useState<PriceDiff | null>(null);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [pinoConfirmado, setPinoConfirmado] = useState(false);
 
   useEffect(() => {
     setLines(loadCart(store.slug));
   }, [store.slug]);
+
+  // Geocodifica endereço com debounce de 700ms — não dispara se o cliente já arrastou o pino
+  useEffect(() => {
+    if (pinoConfirmado) return;
+    if (onlyDigits(cep).length !== 8 || street.trim() === "") return;
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/geo/geocode", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ cep, street, number, neighborhood: activeHoods.find((n) => n.id === hoodId)?.name }),
+        });
+        if (res.ok) setCoords(await res.json());
+      } catch {
+        // rede falhou — segue sem coords
+      }
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [cep, street, number, pinoConfirmado, hoodId]);
 
   const addonPrice = useMemo(() => new Map(addons.map((a) => [a.id, a.price_cents] as const)), [addons]);
   const pricesOf = (ids: string[]) => ids.map((id) => addonPrice.get(id) ?? 0);
@@ -99,6 +126,8 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
             street: street.trim(),
             number: number.trim(),
             complement: complement.trim() || null,
+            lat: coords?.lat ?? null,
+            lng: coords?.lng ?? null,
           }
         : null,
       items: (lines ?? []).flatMap((line) =>
@@ -176,6 +205,7 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
       if (!hood) errs.push("BAIRROS_NAO_CONFIGURADOS — entrega indisponível, escolha retirada.");
       if (street.trim() === "" || number.trim() === "") errs.push("Rua e número são obrigatórios p/ entrega.");
       if (onlyDigits(cep).length !== 8) errs.push("CEP obrigatório com 8 dígitos.");
+      if (!coords) errs.push("Confirme o ponto de entrega no mapa.");
     }
     if (payment === "cash") {
       const cf = reaisToCents(changeFor);
@@ -290,6 +320,16 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
                   <div className="sm:col-span-2">
                     <label htmlFor="comp" className={label}>Complemento <span className="font-normal text-stone-400">(opcional)</span></label>
                     <input id="comp" value={complement} onChange={(e) => setComplement(e.target.value)} placeholder="Apto, bloco, referência…" className={`${input} mt-1`} />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <p className="text-[13px] font-bold text-stone-700">Confirme o ponto no mapa — arraste o pino se precisar.</p>
+                    <div className="mt-1">
+                      <CheckoutMap
+                        lat={coords?.lat ?? -3.10}
+                        lng={coords?.lng ?? -60.00}
+                        onChange={(la, ln) => { setCoords({ lat: la, lng: ln }); setPinoConfirmado(true); }}
+                      />
+                    </div>
                   </div>
                 </div>
               )}
