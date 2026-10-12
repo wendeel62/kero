@@ -26,6 +26,7 @@ const GRUPOS = [
       { href: "/painel/clientes", label: "Clientes", icon: "pedidos" },
       { href: "/painel/configuracoes", label: "Config", icon: "config" },
       { href: "/painel/relatorios", label: "Relatórios", icon: "hoje" },
+      { href: "/painel/financeiro", label: "Financeiro", icon: "hoje" },
     ],
   },
 ];

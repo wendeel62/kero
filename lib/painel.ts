@@ -396,3 +396,77 @@ export async function getEntregas() {
     courierOnRoute: onRoute,
   };
 }
+
+// Financeiro (recon §5): faturamento válido do período (exclui cancelados),
+// sessão de caixa aberta + movimentos, contas com payableStatus e netRevenue.
+import { cashSummary, payableStatus, netRevenue, type CashMovement } from "./finance";
+
+export async function getFinanceiro(period: string = "7d", range: CustomRange = {}) {
+  const { supabase, storeId } = await requireStore();
+  const { from, to } = resolvePeriod(parsePeriodKind(period), range);
+
+  // faturamento válido do período (exclui cancelados — mesma query de getRelatorios)
+  const { data: orders, error: e1 } = await supabase.from("orders")
+    .select("id,total_cents,status,created_at").eq("store_id", storeId)
+    .gte("created_at", from).lt("created_at", to);
+  if (e1) throw new Error(e1.message);
+  const validos = (orders ?? []).filter((o) => o.status !== "cancelled");
+  const revenueCents = validos.reduce((s, o) => s + o.total_cents, 0);
+
+  // despesas pagas no período (contas marcadas paid_at no período)
+  const { data: paidAccts, error: e2 } = await supabase.from("payable_accounts")
+    .select("paid_cents").eq("store_id", storeId).eq("paid", true)
+    .gte("paid_at", from).lt("paid_at", to);
+  if (e2) throw new Error(e2.message);
+  const paidExpensesCents = (paidAccts ?? []).reduce((s, a) => s + (a.paid_cents ?? 0), 0);
+
+  // caixa: sessão aberta + movimentos da loja
+  const { data: sessions } = await supabase.from("cash_sessions")
+    .select("id,opening_cents,opened_at,closed_at,closed_cents")
+    .eq("store_id", storeId).order("opened_at", { ascending: false }).limit(1);
+  const openSession = (sessions ?? []).find((s) => s.closed_at === null) ?? null;
+  let movements: CashMovement[] = [];
+  if (openSession) {
+    const { data: movs } = await supabase.from("cash_movements")
+      .select("direction,amount_cents,note,created_at")
+      .eq("store_id", storeId).eq("session_id", openSession.id)
+      .order("created_at", { ascending: true });
+    movements = (movs ?? []) as CashMovement[];
+  }
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const salesCentsToday = (() => {
+    // faturamento válido de HOJE (para o saldo esperado do caixa)
+    const dayStart = new Date(manausDayStartISO(new Date()));
+    const dayEnd = new Date(dayStart.getTime() + 86_400_000).toISOString();
+    return validos
+      .filter((o) => o.created_at >= dayStart.toISOString() && o.created_at < dayEnd)
+      .reduce((s, o) => s + o.total_cents, 0);
+  })();
+
+  const { data: contas } = await supabase.from("payable_accounts")
+    .select("id,description,amount_cents,due_date,paid,paid_at,paid_cents")
+    .eq("store_id", storeId).order("due_date", { ascending: true });
+  const payable = (contas ?? []).map((c) => ({
+    ...c,
+    status: payableStatus({ paid: c.paid, due_date: c.due_date }, todayISO),
+  }));
+
+  return {
+    from, to,
+    revenueCents,
+    paidExpensesCents,
+    netRevenueCents: netRevenue(revenueCents, paidExpensesCents),
+    cash: openSession
+      ? {
+          session: openSession,
+          movements,
+          summary: cashSummary(
+            { opening_cents: openSession.opening_cents, closing_cents: openSession.closed_cents },
+            movements,
+            salesCentsToday,
+          ),
+        }
+      : null,
+    payable,
+  };
+}

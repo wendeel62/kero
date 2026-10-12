@@ -437,3 +437,99 @@ export async function assignEntrega(orderId: string, courierId: string): Promise
     return { error: null, id: data as string };
   });
 }
+
+// Financeiro (recon §5): caixa + contas a pagar. Todos via mutate().
+
+export async function abrirCaixa(openingCents: number): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  if (!Number.isInteger(openingCents) || openingCents < 0) {
+    return { ok: false, error: "Fundo inicial inválido." };
+  }
+  return mutate("/painel/financeiro", async () => {
+    const { error } = await supabase.from("cash_sessions")
+      .insert({ store_id: storeId, opening_cents: openingCents });
+    return { error };
+  });
+}
+
+export async function movimentoCaixa(direction: "in" | "out", amount: number, note: string): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  if (!Number.isInteger(amount) || amount <= 0) {
+    return { ok: false, error: "Valor do movimento inválido." };
+  }
+  return mutate("/painel/financeiro", async () => {
+    // caixa aberto da loja
+    const { data: session, error: sErr } = await supabase.from("cash_sessions")
+      .select("id").eq("store_id", storeId).is("closed_at", null).single();
+    if (sErr || !session) return { error: new Error("Abra o caixa antes de lançar movimentos.") };
+    const { error } = await supabase.from("cash_movements")
+      .insert({ store_id: storeId, session_id: session.id, direction, amount_cents: amount, note: note.trim() || null });
+    return { error };
+  });
+}
+
+export async function fecharCaixa(closingCents: number): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  if (!Number.isInteger(closingCents) || closingCents < 0) {
+    return { ok: false, error: "Valor contado inválido." };
+  }
+  return mutate("/painel/financeiro", async () => {
+    const { data: session, error: sErr } = await supabase.from("cash_sessions")
+      .select("id").eq("store_id", storeId).is("closed_at", null).single();
+    if (sErr || !session) return { error: new Error("Caixa já está fechado ou não foi aberto.") };
+    const { error } = await supabase.from("cash_sessions")
+      .update({ closing_cents: closingCents, closed_at: new Date().toISOString() })
+      .eq("id", session.id);
+    return { error };
+  });
+}
+
+export async function pagarConta(id: string, paidCents: number): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  if (!Number.isInteger(paidCents) || paidCents <= 0) {
+    return { ok: false, error: "Valor pago inválido." };
+  }
+  return mutate("/painel/financeiro", async () => {
+    const { data: conta, error: cErr } = await supabase.from("payable_accounts")
+      .select("paid,amount_cents").eq("id", id).eq("store_id", storeId).single();
+    if (cErr || !conta) return { error: new Error("Conta não encontrada.") };
+    if (conta.paid) return { error: null }; // idempotente
+    if (paidCents > conta.amount_cents) {
+      return { error: new Error("Valor pago não pode passar do devido.") };
+    }
+    const { error } = await supabase.from("payable_accounts")
+      .update({ paid: true, paid_at: new Date().toISOString(), paid_cents: paidCents })
+      .eq("id", id);
+    return { error };
+  });
+}
+
+export async function saveConta(input: {
+  id?: string; description: string; amountCents: number; dueDate: string;
+}): Promise<R & { id?: string }> {
+  const { supabase, storeId } = await requireStore();
+  const description = input.description.trim();
+  if (description.length < 2) return { ok: false, error: "Descrição com pelo menos 2 letras." };
+  if (!Number.isInteger(input.amountCents) || input.amountCents <= 0) {
+    return { ok: false, error: "Valor inválido." };
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.dueDate)) {
+    return { ok: false, error: "Vencimento inválido." };
+  }
+  const row = { store_id: storeId, description, amount_cents: input.amountCents, due_date: input.dueDate };
+  return mutate("/painel/financeiro", async () => {
+    const q = input.id
+      ? supabase.from("payable_accounts").update(row).eq("id", input.id).eq("store_id", storeId).select("id").single()
+      : supabase.from("payable_accounts").insert(row).select("id").single();
+    const { data, error } = await q;
+    return { error, id: data?.id as string | undefined };
+  });
+}
+
+export async function deleteConta(id: string): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  return mutate("/painel/financeiro", async () => {
+    const { error } = await supabase.from("payable_accounts").delete().eq("id", id).eq("store_id", storeId);
+    return { error };
+  });
+}
