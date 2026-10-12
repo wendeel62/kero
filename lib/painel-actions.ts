@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { requireStore } from "@/lib/auth";
 import type { GoalPeriod } from "./goals";
 
+
 const err = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 export async function setForceClosed(closed: boolean): Promise<{ ok: boolean; at: string | null; error?: string }> {
@@ -415,5 +416,24 @@ export async function pdvCriarPedido(input: {
       return { error };
     }
     return { error: null, id: data?.order_id as string | undefined };
+  });
+}
+
+// Entregas: assign de motoboy via RPC assign_courier (security definer).
+export async function assignEntrega(orderId: string, courierId: string): Promise<R> {
+  const { supabase } = await requireStore();
+  return mutate("/painel/entregas", async () => {
+    const { data, error } = await supabase.rpc("assign_courier", {
+      p_order_id: orderId,
+      p_courier_id: courierId,
+    });
+    if (error) {
+      const msg = err(error);
+      if (msg.includes("COURIER_EM_ROTA")) return { error: new Error("Esse motoboy já está em rota.") };
+      if (msg.includes("ORDER_NOT_READY")) return { error: new Error("Pedido não está pronto para entrega.") };
+      if (msg.includes("COURIER_INVALID")) return { error: new Error("Motoboy inválido.") };
+      return { error };
+    }
+    return { error: null, id: data as string };
   });
 }

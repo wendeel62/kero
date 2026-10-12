@@ -16,6 +16,7 @@ import { goalProgress, windowFor, type GoalPeriod } from "./goals";
 import type { AddonGroupRow } from "./addon-groups";
 import { activeTableOrder } from "./pdv";
 import { entregasEmAndamento } from "./kpis";
+import { boardColumns, courierOnRoute, type Courier } from "./deliveries";
 
 const ORDER_COLS = "id,code,customer_name,type,payment_method,total_cents,status,created_at";
 
@@ -364,7 +365,34 @@ export async function getPdv() {
   return {
     products: (prods ?? []) as { id: string; name: string; price_cents: number }[],
     addons: (addons ?? []) as { id: string; name: string; price_cents: number }[],
-    tables: (tables ?? []) as { id: string; number: number; label: string | null; active: boolean }[],
+    tables: (tables ?? []) as { id: string; number: string; label: string | null; active: boolean }[],
     activeByTable,
+  };
+}
+
+// Entregas (recon §4, sem mapa): prontas/em rota/concluídas hoje + couriers ativos.
+export async function getEntregas() {
+  const { supabase, storeId } = await requireStore();
+  const [{ data: orders }, { data: couriers }, { data: routes }] = await Promise.all([
+    supabase.from("orders").select(ORDER_COLS).eq("store_id", storeId)
+      .in("status", ["ready", "out", "delivered"])
+      .gte("created_at", manausDayStartISO()).order("created_at", { ascending: false }),
+    supabase.from("couriers").select("id,name,phone,active").eq("store_id", storeId).eq("active", true).order("name"),
+    supabase.from("routes").select("courier_id,status").eq("store_id", storeId).eq("status", "open"),
+  ]);
+  const now = Date.now();
+  const panelOrders = ((orders ?? []) as PanelRow[]).map((o) => toPanelOrder(o, now));
+  const cols = boardColumns(panelOrders);
+  const onRoute = courierOnRoute(
+    (couriers ?? []) as { id: string }[],
+    (routes ?? []) as { courier_id: string; status: string }[],
+  );
+  return {
+    prontas: panelOrders.filter((o) => o.status === "ready"),
+    emRota: panelOrders.filter((o) => o.status === "out"),
+    concluidas: panelOrders.filter((o) => o.status === "delivered"),
+    counts: cols,
+    couriers: (couriers ?? []) as Courier[],
+    courierOnRoute: onRoute,
   };
 }
