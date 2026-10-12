@@ -334,7 +334,49 @@ export async function saveEntrega(input: {
   }
 }
 
-// Meta de faturamento (design D2): upsert do ALVO em sales_goals; a janela e
+// Mesas do salão (dine_tables) — insert/update/delete com validação de número.
+export async function saveTables(input: {
+  tables: { id?: string; number: number; label: string; active: boolean }[];
+  deletedIds: string[];
+}): Promise<R> {
+  try {
+    for (const t of input.tables) {
+      if (!Number.isInteger(t.number) || t.number < 1 || t.number > 999) {
+        return { ok: false, error: "Número da mesa: 1 a 999." };
+      }
+    }
+    const { supabase, storeId } = await requireStore();
+    if (input.deletedIds.length > 0) {
+      const { error } = await supabase.from("dine_tables").delete()
+        .eq("store_id", storeId).in("id", input.deletedIds);
+      if (error) throw error;
+    }
+    for (const t of input.tables) {
+      const row = { store_id: storeId, number: t.number, label: t.label.trim(), active: t.active };
+      if (!t.id || t.id.startsWith("new-")) {
+        const { error } = await supabase.from("dine_tables").insert(row);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("dine_tables").update(row)
+          .eq("id", t.id).eq("store_id", storeId);
+        if (error) throw error;
+      }
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+export async function deleteTable(id: string): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  return mutate("/painel/configuracoes", async () => {
+    const { error } = await supabase.from("dine_tables").delete().eq("id", id).eq("store_id", storeId);
+    return { error };
+  });
+}
+
+// Meta de faturamento (design D2): upsert do ALVO em sales_goals; a janela é
 // derivada na leitura (windowFor) — nunca gravada.
 export async function saveMeta(period: GoalPeriod, targetCents: number): Promise<R> {
   const { supabase, storeId } = await requireStore();

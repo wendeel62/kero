@@ -79,4 +79,6 @@ export type PanelSettings = {
   min_order_cents: number; prep_time_min: number | null; prep_time_max: number | null;
   open_hours: Record<string, [string, string][]>;
   hoods: { id: string; name: string; fee_cents: number; active: boolean }[];
+  tables: { id: string; number: number; label: string; active: boolean }[];
+  occupiedTableIds: string[];
 };
