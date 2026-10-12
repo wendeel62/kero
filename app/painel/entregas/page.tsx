@@ -133,7 +133,7 @@ export default function Entregas() {
 
       {error && <p className="alert-banner anim-pop mt-3" role="alert">{error}</p>}
 
-      {data.mapPoints.length > 0 && (
+      {data.mapPoints.length > 0 && !assignId && (
         <div className="mt-4">
           <DeliveryMap points={data.mapPoints} couriers={courierPositions} />
         </div>
