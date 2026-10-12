@@ -140,6 +140,8 @@ export default function Kanban() {
   };
 
   const cancelled = useMemo(() => (orders ?? []).filter((o) => o.status === "cancelled"), [orders]);
+  // rótulo do período (o período selecionado, não "hoje" fixo)
+  const periodLabel = PERIOD_LABEL[period];
   const colOrders = (c: Col["id"]) =>
     c === "done"
       ? (orders ?? []).filter((o) => o.status === "delivered")
@@ -315,7 +317,7 @@ export default function Kanban() {
         <section className="snap-start shrink-0 w-[280px] rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--text)] text-[var(--surface)] p-2.5 self-start">
           <details>
             <summary className="flex items-center gap-2 px-1.5 py-1.5 cursor-pointer list-none">
-              <h2 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--muted)]">Cancelados · hoje</h2>
+              <h2 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--muted)]">Cancelados · {periodLabel}</h2>
               <span className="ml-auto text-[11px] font-extrabold tabular-nums bg-[var(--pill-bg)] rounded-full px-2 py-0.5">{cancelled.length}</span>
             </summary>
             <div className="space-y-2 mt-1">

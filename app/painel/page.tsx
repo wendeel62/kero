@@ -87,9 +87,9 @@ export default function PainelHoje() {
   const recent = data?.recent ?? [];
 
   const cards = [
-    { label: "Pedidos hoje", display: String(count), sub: "válidos · exc. cancelados", tone: "flat" as const, spark: SPARKS.count, stroke: "var(--muted)" },
-    { label: "Faturamento", display: brl(revenue), sub: "exc. cancelados", tone: "up" as const, spark: SPARKS.revenue, stroke: "var(--green)" },
-    { label: "Ticket médio", display: brl(ticket), sub: "por pedido válido", tone: "flat" as const, spark: SPARKS.ticket, stroke: "var(--info)" },
+    { label: `Pedidos · ${PERIOD_LABEL[period]}`, display: String(count), sub: "válidos · exc. cancelados", tone: "flat" as const, spark: SPARKS.count, stroke: "var(--muted)" },
+    { label: `Faturamento · ${PERIOD_LABEL[period]}`, display: brl(revenue), sub: "exc. cancelados", tone: "up" as const, spark: SPARKS.revenue, stroke: "var(--green)" },
+    { label: `Ticket médio · ${PERIOD_LABEL[period]}`, display: brl(ticket), sub: "por pedido válido", tone: "flat" as const, spark: SPARKS.ticket, stroke: "var(--info)" },
   ];
 
   if (failed) {

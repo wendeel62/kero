@@ -240,11 +240,9 @@ export async function getKanban(period: string = "today", type: string = "all") 
   const mapped = orders.map((o) =>
     toPanelOrder(o, now, minutesInStatus(byOrder.get(o.id) ?? [], o.status, o.created_at, now))
   );
-  return {
-    orders: mapped,
-    anteriores: anteriores.map((o) => toPanelOrder(o, now)),
-    cancelled: mapped.filter((o) => o.status === "cancelled"),
-  };
+  // `cancelled` NÃO é devolvido: a página deriva de `orders` (uma fonte só), e o
+  // Realtime atualiza `orders` localmente — devolver o campo criaria duas fontes.
+  return { orders: mapped, anteriores: anteriores.map((o) => toPanelOrder(o, now)) };
 }
 
 // Clientes (design D3): agrega o histórico inteiro da loja. Teto de 1000 linhas
