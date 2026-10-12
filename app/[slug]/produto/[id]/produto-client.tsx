@@ -3,30 +3,41 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { brl, type Addon, type Product, type Store } from "../../menu-data";
+import { brl, type Product, type Store } from "../../menu-data";
 import { addLine, loadCart, saveCart } from "@/lib/cart";
+import { priceOf, validateChoice, type AddonGroup } from "@/lib/addon-groups";
 
 const MAX_QTY = 20; // spec: order_items qty 1..20
 const MAX_NOTES = 200; // spec: obs do item ≤200 chars
 
-export default function ProdutoClient({ slug, store, product, categoryName, addons, isOpen, opensAt }: {
+export default function ProdutoClient({ slug, store, product, categoryName, addonGroups, isOpen, opensAt }: {
   slug: string; store: Store; product: Product; categoryName: string;
-  addons: Addon[]; isOpen: boolean; opensAt: string;
+  addonGroups: AddonGroup[]; isOpen: boolean; opensAt: string;
 }) {
   const [checked, setChecked] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [qty, setQty] = useState(1);
+  const [erro, setErro] = useState("");
   const router = useRouter();
 
-  const addonsTotal = useMemo(
-    () => addons.filter((a) => checked.includes(a.id)).reduce((s, a) => s + a.price_cents, 0),
-    [addons, checked]
-  );
+  // todos os adicionais aplicáveis, achatados (o preço soma os escolhidos)
+  const addons = useMemo(() => addonGroups.flatMap((g) => g.addons), [addonGroups]);
+  const addonsTotal = useMemo(() => priceOf(addons, checked), [addons, checked]);
   const total = (product.price_cents + addonsTotal) * qty;
   const canAdd = product.active && isOpen;
 
-  const toggle = (id: string) =>
+  const toggle = (id: string) => {
+    setErro("");
     setChecked((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id]));
+  };
+
+  const adicionar = () => {
+    const v = validateChoice(addonGroups, checked);
+    if (!v.ok) { setErro(v.error); return; }
+    const lines = addLine(loadCart(slug), { productId: product.id, addonIds: checked, notes: notes.trim(), qty });
+    saveCart(slug, lines);
+    router.push(`/${slug}/carrinho`);
+  };
 
   return (
     <div className="min-h-screen bg-[#f4f1ec]">
@@ -87,22 +98,41 @@ export default function ProdutoClient({ slug, store, product, categoryName, addo
             <span className="text-xs text-stone-400">pra deixar do seu jeito</span>
           </div>
           <ul className="divide-y divide-dashed px-4 sm:px-6 pb-2">
-            {addons.map((a) => {
-              const on = checked.includes(a.id);
-              return (
-                <li key={a.id}>
-                  <label className={`flex items-center gap-3 py-3 cursor-pointer rounded-xl px-2 -mx-2 transition-colors ${on ? "bg-red-50/60" : ""} ${!canAdd ? "opacity-50" : ""}`}>
-                    <input
-                      type="checkbox" disabled={!canAdd} checked={on} onChange={() => toggle(a.id)}
-                      className="w-5 h-5 rounded accent-red-600"
-                    />
-                    <span className="flex-1 text-sm font-semibold">{a.name}</span>
-                    <span className="text-sm font-bold tabular-nums text-stone-600">+{brl(a.price_cents)}</span>
-                  </label>
-                </li>
-              );
-            })}
+            {addonGroups.length === 0 && (
+              <li className="py-3 text-sm text-stone-400">Este item não tem adicionais.</li>
+            )}
+            {addonGroups.map((g) => (
+              <li key={g.id ?? "__implicito"} className="py-1">
+                <div className="flex items-center gap-2 pt-2">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-stone-500">{g.name}</span>
+                  {g.required && <span className="text-[10px] font-bold rounded-full px-2 py-0.5 bg-red-100 text-red-700">obrigatório</span>}
+                  {g.maxChoices !== null && <span className="text-[10px] font-bold rounded-full px-2 py-0.5 bg-stone-100 text-stone-500">máx {g.maxChoices}</span>}
+                </div>
+                <ul className="divide-y divide-dashed">
+                  {g.addons.map((a) => {
+                    const on = checked.includes(a.id);
+                    return (
+                      <li key={a.id}>
+                        <label className={`flex items-center gap-3 py-3 cursor-pointer rounded-xl px-2 -mx-2 transition-colors ${on ? "bg-red-50/60" : ""} ${!canAdd ? "opacity-50" : ""}`}>
+                          <input
+                            type="checkbox" disabled={!canAdd} checked={on} onChange={() => toggle(a.id)}
+                            className="w-5 h-5 rounded accent-red-600"
+                          />
+                          <span className="flex-1 text-sm font-semibold">{a.name}</span>
+                          <span className="text-sm font-bold tabular-nums text-stone-600">+{brl(a.price_cents)}</span>
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </li>
+            ))}
           </ul>
+          {erro && (
+            <p className="mx-4 sm:mx-6 mb-3 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2" role="alert">
+              {erro}
+            </p>
+          )}
         </section>
 
         <section className="mt-4 bg-white border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise" style={{ animationDelay: "140ms" }}>
@@ -135,11 +165,7 @@ export default function ProdutoClient({ slug, store, product, categoryName, addo
               <button onClick={() => setQty((n) => Math.min(MAX_QTY, n + 1))} disabled={!canAdd || qty >= MAX_QTY} aria-label="Aumentar"
                 className="w-10 h-11 text-lg font-bold hover:bg-stone-100 disabled:opacity-30 transition-colors">+</button>
             </div>
-            <button disabled={!canAdd} onClick={() => {
-              const lines = addLine(loadCart(slug), { productId: product.id, addonIds: checked, notes: notes.trim(), qty });
-              saveCart(slug, lines);
-              router.push(`/${slug}/carrinho`);
-            }}
+            <button disabled={!canAdd} onClick={adicionar}
               className="flex-1 bg-gradient-to-r from-red-700 via-red-600 to-red-500 hover:to-orange-500 disabled:from-stone-300 disabled:to-stone-300 text-white font-bold rounded-xl py-3.5 px-4 active:scale-[0.99] transition-all">
               {canAdd ? `Adicionar • ${brl(total)}` : product.active ? `Fechada • abre ${opensAt}` : "Indisponível"}
             </button>

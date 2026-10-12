@@ -58,6 +58,12 @@ export function mapOrderError(pgMessage: string): MappedOrderError {
     };
   }
 
+  if (key === "GROUP_REQUIRED")
+    return { status: 422, code: key, message: `Escolha uma opção em "${arg}".` };
+
+  if (key === "GROUP_MAX_CHOICES")
+    return { status: 422, code: key, message: `"${arg}"` };
+
   const row = TABLE[key];
   return row
     ? { status: row.status, code: row.code ?? key, message: row.message }

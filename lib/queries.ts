@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { Addon, Category, Neighborhood, Product, Store } from "@/app/[slug]/menu-data";
+import type { Category, Neighborhood, Product, Store } from "@/app/[slug]/menu-data";
+import type { AddonGroupRow } from "@/lib/addon-groups";
 
 // Leituras públicas da vitrine via RLS (anon, sem sessão). Erros → null/[]; a página decide notFound().
 export async function getStoreBySlug(slug: string): Promise<(Store & { id: string; open_hours: unknown }) | null> {
@@ -52,9 +53,25 @@ export async function getNeighborhoods(store_id: string): Promise<Neighborhood[]
   return data.map((n) => ({ id: n.id, name: n.name, fee_cents: n.fee_cents, active: n.active }));
 }
 
-export async function getAddons(store_id: string): Promise<(Addon & { product_id: string | null })[]> {
+// Lista plana de adicionais ativos — carrinho e checkout só precisam do lookup
+// de preço/nome por id; não usam grupos. Wrapper fino sobre getAddonGroups.
+export async function getAddons(store_id: string) {
+  const { addons } = await getAddonGroups(store_id);
+  return addons;
+}
+
+// Grupos de opção da vitrine (migration 012): devolve os adicionais ativos e os
+// grupos, para o cliente agrupar com groupAddons (lib/addon-groups.ts).
+export async function getAddonGroups(store_id: string) {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("product_addons").select("id,product_id,name,price_cents").eq("store_id", store_id).eq("active", true);
-  if (error || !data) return [];
-  return data.map((a) => ({ id: a.id, name: a.name, price_cents: a.price_cents, product_id: a.product_id ?? null }));
+  const [{ data: addons }, { data: groups }] = await Promise.all([
+    supabase.from("product_addons").select("id,product_id,name,price_cents,active,group_id")
+      .eq("store_id", store_id).eq("active", true),
+    supabase.from("product_addon_groups").select("id,name,required,max_choices,sort_order")
+      .eq("store_id", store_id).order("sort_order"),
+  ]);
+  return {
+    addons: (addons ?? []) as { id: string; product_id: string | null; name: string; price_cents: number; active: boolean; group_id: string | null }[],
+    groups: (groups ?? []) as AddonGroupRow[],
+  };
 }
