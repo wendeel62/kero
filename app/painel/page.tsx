@@ -70,7 +70,7 @@ export default function PainelHoje() {
     setClosedAt(data.closedAt ? fmtClosedAt(data.closedAt) : "");
   }, [data]);
 
-  const stats = data?.stats ?? { count: 0, revenue: 0, ticket: 0, awaiting: 0 };
+  const stats = data?.stats ?? { count: 0, revenue: 0, ticket: 0, awaiting: 0, entregasAndamento: 0 };
 
   const count = useCountUp(stats.count);
   const revenue = useCountUp(stats.revenue, 1100);
@@ -162,6 +162,21 @@ export default function PainelHoje() {
           </span>
           <span className="stat-delta stat-delta--flat">
             {stats.awaiting > 0 ? "toque p/ atender no kanban" : "tudo em dia ✓"}
+          </span>
+        </Link>
+        <Link href="/painel/pedidos"
+          className="card anim-rise group transition-shadow duration-300"
+          style={{ animationDelay: "280ms" }}>
+          <div className="stat-top">
+            <span className="stat-label">Entregas em andamento</span>
+            <span className="text-xs font-extrabold text-[var(--muted)] transition-transform group-hover:translate-x-0.5">→</span>
+          </div>
+          <span className="stat-value flex items-center gap-2.5">
+            {stats.entregasAndamento > 0 && <span className="live-dot w-2.5 h-2.5 rounded-full bg-[var(--info)] shrink-0" />}
+            {stats.entregasAndamento}
+          </span>
+          <span className="stat-delta stat-delta--flat">
+            {stats.entregasAndamento > 0 ? "preparando · pronto · a caminho" : "nenhuma no momento"}
           </span>
         </Link>
       </div>

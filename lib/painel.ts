@@ -15,6 +15,7 @@ import { aggregateCustomers, type Customer } from "./customers";
 import { goalProgress, windowFor, type GoalPeriod } from "./goals";
 import type { AddonGroupRow } from "./addon-groups";
 import { activeTableOrder } from "./pdv";
+import { entregasEmAndamento } from "./kpis";
 
 const ORDER_COLS = "id,code,customer_name,type,payment_method,total_cents,status,created_at";
 
@@ -39,6 +40,7 @@ export async function getHoje(period: string = "today", range: CustomRange = {})
       count: valid.length, revenue,
       ticket: valid.length ? Math.round(revenue / valid.length) : 0,
       awaiting: orders.filter((o) => o.status === "new").length,
+      entregasAndamento: entregasEmAndamento(orders),
     },
     recent: orders.slice(0, 5),
   };
