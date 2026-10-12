@@ -16,7 +16,7 @@ import { goalProgress, windowFor, type GoalPeriod } from "./goals";
 import type { AddonGroupRow } from "./addon-groups";
 import { activeTableOrder } from "./pdv";
 import { entregasEmAndamento } from "./kpis";
-import { boardColumns, courierOnRoute, type Courier } from "./deliveries";
+import { boardColumns, courierOnRoute, mapPoints, type Courier } from "./deliveries";
 
 const ORDER_COLS = "id,code,customer_name,type,payment_method,total_cents,status,created_at";
 
@@ -377,19 +377,20 @@ export async function getPdv() {
 export async function getEntregas() {
   const { supabase, storeId } = await requireStore();
   const [{ data: orders }, { data: couriers }, { data: routes }] = await Promise.all([
-    supabase.from("orders").select(ORDER_COLS).eq("store_id", storeId)
+    supabase.from("orders").select(ORDER_COLS + ",address").eq("store_id", storeId)
       .in("status", ["ready", "out", "delivered"])
       .gte("created_at", manausDayStartISO()).order("created_at", { ascending: false }),
     supabase.from("couriers").select("id,name,phone,active").eq("store_id", storeId).eq("active", true).order("name"),
     supabase.from("routes").select("courier_id,status").eq("store_id", storeId).eq("status", "open"),
   ]);
   const now = Date.now();
-  const panelOrders = ((orders ?? []) as PanelRow[]).map((o) => toPanelOrder(o, now));
+  const panelOrders = ((orders ?? []) as unknown as PanelRow[]).map((o) => toPanelOrder(o, now));
   const cols = boardColumns(panelOrders);
   const onRoute = courierOnRoute(
     (couriers ?? []) as { id: string }[],
     (routes ?? []) as { courier_id: string; status: string }[],
   );
+  const outOrders = ((orders ?? []) as unknown as PanelRow[]).filter((o) => o.status === "out");
   return {
     prontas: panelOrders.filter((o) => o.status === "ready"),
     emRota: panelOrders.filter((o) => o.status === "out"),
@@ -397,6 +398,7 @@ export async function getEntregas() {
     counts: cols,
     couriers: (couriers ?? []) as Courier[],
     courierOnRoute: onRoute,
+    mapPoints: mapPoints(outOrders as unknown as { id: string; code: string; status: string; address: unknown }[]),
   };
 }
 

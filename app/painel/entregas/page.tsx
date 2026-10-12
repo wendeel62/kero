@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { getEntregas } from "@/lib/painel";
 import { assignEntrega } from "@/lib/painel-actions";
-import type { Courier } from "@/lib/deliveries";
+import type { Courier, MapPoint } from "@/lib/deliveries";
 import type { PanelOrder } from "@/lib/painel-utils";
+
+const DeliveryMap = dynamic(() => import("@/components/delivery-map"), { ssr: false });
 
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -15,6 +18,7 @@ type EntregasData = {
   counts: { prontas: number; emRota: number; concluidas: number };
   couriers: Courier[];
   courierOnRoute: Set<string>;
+  mapPoints: MapPoint[];
 };
 
 export default function Entregas() {
@@ -85,6 +89,12 @@ export default function Entregas() {
       <p className="text-xs text-[var(--muted)] mt-0.5">Prontas, em rota e concluídas hoje.</p>
 
       {error && <p className="alert-banner anim-pop mt-3" role="alert">{error}</p>}
+
+      {data.mapPoints.length > 0 && (
+        <div className="mt-4">
+          <DeliveryMap points={data.mapPoints} />
+        </div>
+      )}
 
       <div className="mt-5 flex gap-3 overflow-x-auto pb-4 snap-x">
         {col("prontas", "Prontas", data.prontas, "bg-[var(--green-soft)] border-[var(--border)]", "bg-[var(--green)]")}
