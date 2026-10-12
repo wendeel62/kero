@@ -186,7 +186,7 @@ export async function getFicha(id: string): Promise<{ ficha: FichaData | null }>
 // Configurações (DS §8.12): linha da loja + bairros; salvamento é por aba nas actions.
 export async function getSettings(): Promise<{ settings: PanelSettings | null }> {
   const { supabase, storeId } = await requireStore();
-  const [{ data: store }, { data: hoods }, { data: tables }, { data: busyOrders }] = await Promise.all([
+  const [{ data: store }, { data: hoods }, { data: tables }, { data: busyOrders }, { data: tracking }] = await Promise.all([
     supabase.from("stores").select("name,whatsapp,description,pix_key,logo_url,marquee_text,cover_url,min_order_cents,prep_time_min,prep_time_max,open_hours")
       .eq("id", storeId).single(),
     supabase.from("neighborhoods").select("id,name,fee_cents,active").eq("store_id", storeId).order("name"),
@@ -194,6 +194,7 @@ export async function getSettings(): Promise<{ settings: PanelSettings | null }>
     supabase.from("orders").select("table_id").eq("store_id", storeId)
       .in("status", ["new", "confirmed", "preparing", "ready", "out"])
       .not("table_id", "is", null),
+    supabase.from("store_tracking").select("fb_pixel_id,ga4_id").eq("store_id", storeId).single(),
   ]);
   const occupiedTableIds = ((busyOrders ?? []) as { table_id: string }[]).map((o) => o.table_id);
   if (!store) return { settings: null };
@@ -212,6 +213,8 @@ export async function getSettings(): Promise<{ settings: PanelSettings | null }>
       hoods: ((hoods ?? []) as PanelSettings["hoods"]).map((h) => ({ ...h })),
       tables: ((tables ?? []) as PanelSettings["tables"]).map((t) => ({ ...t })),
       occupiedTableIds,
+      fb_pixel_id: (tracking?.fb_pixel_id as string | null) ?? null,
+      ga4_id: (tracking?.ga4_id as string | null) ?? null,
     },
   };
 }

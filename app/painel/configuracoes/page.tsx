@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { getSettings } from "@/lib/painel";
 import type { PanelSettings } from "@/lib/painel-utils";
-import { saveEntrega, saveHorarios, saveLoja, saveTables, setCoverUrl, setLogoUrl } from "@/lib/painel-actions";
+import { saveEntrega, saveHorarios, saveLoja, saveTables, saveTracking, setCoverUrl, setLogoUrl } from "@/lib/painel-actions";
 import { createClient } from "@/lib/supabase/client";
 import { parseBRLToCents } from "@/lib/pricing";
 import ImageUploader from "@/components/ui/image-uploader";
 
-type Tab = "loja" | "horarios" | "entrega" | "salao";
+type Tab = "loja" | "horarios" | "entrega" | "salao" | "rastreamento";
 type Range = { from: string; to: string };
 type Day = { open: boolean; ranges: Range[] };
 type Hood = { id: string; name: string; fee_cents: number; active: boolean };
@@ -44,6 +44,8 @@ export default function Configuracoes() {
   const [minOrder, setMinOrder] = useState("");
   const [prepMin, setPrepMin] = useState("");
   const [prepMax, setPrepMax] = useState("");
+  const [fbPixel, setFbPixel] = useState("");
+  const [ga4Id, setGa4Id] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -67,6 +69,8 @@ export default function Configuracoes() {
       setMinOrder(centsStr(s.min_order_cents));
       setPrepMin(String(s.prep_time_min ?? ""));
       setPrepMax(String(s.prep_time_max ?? ""));
+      setFbPixel(s.fb_pixel_id ?? "");
+      setGa4Id(s.ga4_id ?? "");
     }).catch(() => setSettings(null));
   }, []);
 
@@ -218,6 +222,7 @@ export default function Configuracoes() {
     { id: "horarios", label: "Horários" },
     { id: "entrega", label: "Entrega" },
     { id: "salao", label: "Salão" },
+    { id: "rastreamento", label: "Rastreamento" },
   ];
 
   return (
@@ -436,6 +441,28 @@ export default function Configuracoes() {
           </div>
           <button onClick={saveSalaoTab} disabled={saving} className="mt-4 w-full sm:w-auto bg-[var(--text)] hover:bg-[var(--pill-active-bg)] text-white font-extrabold rounded-2xl px-8 py-3 transition-all active:scale-[0.99] disabled:opacity-50">
             {saving ? "Salvando…" : "Salvar mesas"}
+          </button>
+        </section>
+      )}
+
+      {tab === "rastreamento" && (
+        <section className="mt-3 bg-[var(--surface)] border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise">
+          <h2 className="font-extrabold">Rastreamento</h2>
+          <p className="text-xs text-[var(--muted)] mt-1">IDs de Pixel do Facebook e GA4 injetados na vitrine. Deixe vazio para não injetar.</p>
+          <div className="grid sm:grid-cols-2 gap-3 mt-3">
+            <div>
+              <label htmlFor="c-fbpixel" className={label}>Pixel do Facebook</label>
+              <input id="c-fbpixel" value={fbPixel} onChange={(e) => setFbPixel(e.target.value)} placeholder="Ex: 1234567890123" inputMode="numeric" className={`${input} mt-1 tabular-nums`} />
+              <p className="text-[11px] text-[var(--muted)] mt-1">10 a 20 dígitos</p>
+            </div>
+            <div>
+              <label htmlFor="c-ga4" className={label}>GA4 (Google Analytics)</label>
+              <input id="c-ga4" value={ga4Id} onChange={(e) => setGa4Id(e.target.value)} placeholder="Ex: G-ABC123XYZ" className={`${input} mt-1`} />
+              <p className="text-[11px] text-[var(--muted)] mt-1">Formato G-XXXXXXXXXX</p>
+            </div>
+          </div>
+          <button onClick={async () => { setSaving(true); done("rastreamento", await saveTracking(fbPixel, ga4Id)); }} disabled={saving} className="mt-4 w-full sm:w-auto bg-[var(--text)] hover:bg-[var(--pill-active-bg)] text-white font-extrabold rounded-2xl px-8 py-3 transition-all active:scale-[0.99] disabled:opacity-50">
+            {saving ? "Salvando…" : "Salvar rastreamento"}
           </button>
         </section>
       )}

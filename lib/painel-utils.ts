@@ -81,4 +81,6 @@ export type PanelSettings = {
   hoods: { id: string; name: string; fee_cents: number; active: boolean }[];
   tables: { id: string; number: number; label: string; active: boolean }[];
   occupiedTableIds: string[];
+  fb_pixel_id: string | null;
+  ga4_id: string | null;
 };

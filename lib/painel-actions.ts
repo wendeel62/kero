@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireStore } from "@/lib/auth";
 import type { GoalPeriod } from "./goals";
+import { sanitizeTrackingId } from "./tracking";
 
 
 const err = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -530,6 +531,20 @@ export async function deleteConta(id: string): Promise<R> {
   const { supabase, storeId } = await requireStore();
   return mutate("/painel/financeiro", async () => {
     const { error } = await supabase.from("payable_accounts").delete().eq("id", id).eq("store_id", storeId);
+    return { error };
+  });
+}
+
+// Rastreamento (recon §8): upsert de fb_pixel_id/ga4_id. Valida com
+// sanitizeTrackingId — id inválido nunca vira <script> na vitrine.
+export async function saveTracking(fb_pixel_id: string, ga4_id: string): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  const pixel = sanitizeTrackingId("pixel", fb_pixel_id);
+  const ga4 = sanitizeTrackingId("ga4", ga4_id);
+  if (!pixel && !ga4) return { ok: false, error: "Pixel/GA4 inválido." };
+  return mutate("/painel/configuracoes", async () => {
+    const { error } = await supabase.from("store_tracking")
+      .upsert({ store_id: storeId, fb_pixel_id: pixel, ga4_id: ga4 });
     return { error };
   });
 }
