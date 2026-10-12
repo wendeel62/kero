@@ -2,7 +2,7 @@
 // Motoboy "em rota" = rota aberta; assign reusa set_order_status (Trava A).
 import { posicaoValida } from "./geocode";
 
-export type Courier = { id: string; name: string; phone: string; active: boolean };
+export type Courier = { id: string; name: string; phone: string; active: boolean; vinculado: boolean };
 
 export type MapPoint = { id: string; code: string; lat: number; lng: number; status: string };
 

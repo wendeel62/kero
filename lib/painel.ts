@@ -16,7 +16,7 @@ import { goalProgress, windowFor, type GoalPeriod } from "./goals";
 import type { AddonGroupRow } from "./addon-groups";
 import { activeTableOrder } from "./pdv";
 import { entregasEmAndamento } from "./kpis";
-import { boardColumns, courierOnRoute, mapPoints, type Courier } from "./deliveries";
+import { boardColumns, courierOnRoute, mapPoints } from "./deliveries";
 
 const ORDER_COLS = "id,code,customer_name,type,payment_method,total_cents,status,created_at";
 
@@ -380,7 +380,7 @@ export async function getEntregas() {
     supabase.from("orders").select(ORDER_COLS + ",address").eq("store_id", storeId)
       .in("status", ["ready", "out", "delivered"])
       .gte("created_at", manausDayStartISO()).order("created_at", { ascending: false }),
-    supabase.from("couriers").select("id,name,phone,active").eq("store_id", storeId).eq("active", true).order("name"),
+    supabase.from("couriers").select("id,name,phone,active,user_id").eq("store_id", storeId).eq("active", true).order("name"),
     supabase.from("routes").select("courier_id,status").eq("store_id", storeId).eq("status", "open"),
   ]);
   const now = Date.now();
@@ -396,7 +396,7 @@ export async function getEntregas() {
     emRota: panelOrders.filter((o) => o.status === "out"),
     concluidas: panelOrders.filter((o) => o.status === "delivered"),
     counts: cols,
-    couriers: (couriers ?? []) as Courier[],
+    couriers: ((couriers ?? []) as { id: string; name: string; phone: string; active: boolean; user_id: string | null }[]).map((c) => ({ ...c, vinculado: c.user_id != null })),
     courierOnRoute: onRoute,
     mapPoints: mapPoints(outOrders as unknown as { id: string; code: string; status: string; address: unknown }[]),
   };

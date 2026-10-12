@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { getEntregas } from "@/lib/painel";
-import { assignEntrega } from "@/lib/painel-actions";
+import { assignEntrega, criarMotoboy } from "@/lib/painel-actions";
 import type { Courier, MapPoint } from "@/lib/deliveries";
 import type { PanelOrder } from "@/lib/painel-utils";
 
@@ -25,6 +25,9 @@ export default function Entregas() {
   const [data, setData] = useState<EntregasData | null>(null);
   const [assignId, setAssignId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [novoMotoboy, setNovoMotoboy] = useState(false);
+  const [motoboyForm, setMotoboyForm] = useState({ name: "", phone: "", email: "", password: "" });
+  const [salvando, setSalvando] = useState(false);
 
   const load = () => {
     getEntregas().then(setData).catch(() => setData(null));
@@ -85,8 +88,16 @@ export default function Entregas() {
 
   return (
     <main className="admin-content">
-      <h1 className="text-xl font-extrabold">Entregas</h1>
-      <p className="text-xs text-[var(--muted)] mt-0.5">Prontas, em rota e concluídas hoje.</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-extrabold">Entregas</h1>
+          <p className="text-xs text-[var(--muted)] mt-0.5">Prontas, em rota e concluídas hoje.</p>
+        </div>
+        <button onClick={() => { setNovoMotoboy(true); setError(""); }}
+          className="btn btn--primary !min-h-0 px-4 py-2 text-[13px] font-extrabold shrink-0">
+          Novo motoboy
+        </button>
+      </div>
 
       {error && <p className="alert-banner anim-pop mt-3" role="alert">{error}</p>}
 
@@ -116,12 +127,46 @@ export default function Entregas() {
                 return (
                   <button key={c.id} disabled={busy} onClick={() => doAssign(assignId, c.id)}
                     className={`w-full text-left px-3.5 py-2.5 rounded-[var(--radius-button)] border text-sm font-bold transition-colors ${busy ? "opacity-40 cursor-not-allowed border-[var(--border)] bg-[var(--surface-2)]" : "border-[var(--border)] bg-[var(--surface-2)] hover:bg-[var(--surface)] hover:border-[var(--red)]"}`}>
-                    {c.name} {busy && "· em rota"}
+                    {c.name} {busy && "· em rota"} {!c.vinculado && <span className="text-[10px] font-bold text-[var(--muted)] ml-1">· sem acesso</span>}
                   </button>
                 );
               })}
             </div>
             <button onClick={() => setAssignId(null)} className="btn btn--ghost w-full mt-3 py-3 text-sm">Voltar</button>
+          </div>
+        </div>
+      )}
+
+      {novoMotoboy && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-[2px] p-4" onClick={() => setNovoMotoboy(false)}>
+          <div className="anim-pop w-full max-w-sm card p-5" onClick={(e) => e.stopPropagation()}>
+            <p className="font-extrabold text-lg">Novo motoboy</p>
+            <p className="text-sm text-[var(--muted)] mt-0.5">Cadastre um motoboy com acesso ao PWA.</p>
+            <div className="mt-3 space-y-2">
+              <input value={motoboyForm.name} onChange={(e) => setMotoboyForm({ ...motoboyForm, name: e.target.value })}
+                placeholder="Nome completo" className="input w-full" />
+              <input value={motoboyForm.phone} onChange={(e) => setMotoboyForm({ ...motoboyForm, phone: e.target.value })}
+                placeholder="Telefone" className="input w-full" />
+              <input value={motoboyForm.email} onChange={(e) => setMotoboyForm({ ...motoboyForm, email: e.target.value })}
+                placeholder="E-mail" type="email" className="input w-full" />
+              <input value={motoboyForm.password} onChange={(e) => setMotoboyForm({ ...motoboyForm, password: e.target.value })}
+                placeholder="Senha (mín. 8 caracteres)" type="password" className="input w-full" />
+            </div>
+            <button onClick={() => {
+              const f = motoboyForm;
+              setMotoboyForm({ name: "", phone: "", email: "", password: "" });
+              setNovoMotoboy(false);
+              setSalvando(true);
+              void criarMotoboy(f).then((r) => {
+                setSalvando(false);
+                if (!r.ok) { setError(r.error ?? "Erro ao cadastrar."); return; }
+                load();
+              });
+            }} disabled={salvando}
+              className="btn btn--primary w-full mt-4 py-3 text-sm font-extrabold disabled:opacity-50">
+              {salvando ? "Salvando…" : "Cadastrar motoboy"}
+            </button>
+            <button onClick={() => setNovoMotoboy(false)} className="btn btn--ghost w-full mt-2 py-3 text-sm">Voltar</button>
           </div>
         </div>
       )}

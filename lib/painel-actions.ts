@@ -6,6 +6,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireStore } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { GoalPeriod } from "./goals";
 import { sanitizeTrackingId } from "./tracking";
 
@@ -547,4 +548,41 @@ export async function saveTracking(fb_pixel_id: string, ga4_id: string): Promise
       .upsert({ store_id: storeId, fb_pixel_id: pixel, ga4_id: ga4 });
     return { error };
   });
+}
+
+// Cadastro de motoboy com acesso ao PWA (Task 9).
+export async function criarMotoboy(input: { name: string; phone: string; email: string; password: string }): Promise<R> {
+  try {
+    const { storeId } = await requireStore();
+    const name = input.name.trim();
+    const email = input.email.trim().toLowerCase();
+    if (name.length < 2) return { ok: false, error: "Nome com pelo menos 2 letras." };
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: "E-mail inválido." };
+    if (input.password.length < 8) return { ok: false, error: "Senha com pelo menos 8 caracteres." };
+
+    const admin = createAdminClient();
+    const { data: created, error: uerr } = await admin.auth.admin.createUser({
+      email,
+      password: input.password,
+      email_confirm: true,
+    });
+    if (uerr) {
+      if (uerr.message.includes("EMAIL_EXISTS") || uerr.message.includes("already been registered")) {
+        return { ok: false, error: "E-mail já cadastrado." };
+      }
+      return { ok: false, error: uerr.message };
+    }
+    if (!created?.user) return { ok: false, error: "Erro ao criar usuário." };
+
+    const { error } = await admin.from("couriers")
+      .insert({ store_id: storeId, name, phone: input.phone.trim(), user_id: created.user.id });
+    if (error) {
+      await admin.auth.admin.deleteUser(created.user.id); // rollback: não deixar órfão
+      return { ok: false, error: error.message };
+    }
+    revalidatePath("/painel/entregas");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
 }
