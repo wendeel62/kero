@@ -376,12 +376,13 @@ export async function getPdv() {
 // Entregas (recon §4, sem mapa): prontas/em rota/concluídas hoje + couriers ativos.
 export async function getEntregas() {
   const { supabase, storeId } = await requireStore();
-  const [{ data: orders }, { data: couriers }, { data: routes }] = await Promise.all([
+  const [{ data: orders }, { data: couriers }, { data: routes }, { data: courierPositions }] = await Promise.all([
     supabase.from("orders").select(ORDER_COLS + ",address").eq("store_id", storeId)
       .in("status", ["ready", "out", "delivered"])
       .gte("created_at", manausDayStartISO()).order("created_at", { ascending: false }),
     supabase.from("couriers").select("id,name,phone,active,user_id").eq("store_id", storeId).eq("active", true).order("name"),
     supabase.from("routes").select("id,courier_id,status").eq("store_id", storeId).eq("status", "open"),
+    supabase.from("courier_positions").select("courier_id,lat,lng,atualizado_em,couriers(name)").eq("store_id", storeId),
   ]);
   const now = Date.now();
   const routesList = (routes ?? []) as { id: string; courier_id: string; status: string }[];
@@ -411,6 +412,8 @@ export async function getEntregas() {
     courierOnRoute: onRoute,
     routeIdPorCourier,
     mapPoints: mapPoints(outOrders as unknown as { id: string; code: string; status: string; address: unknown }[]),
+    courierPositions: ((courierPositions ?? []) as { courier_id: string; lat: number; lng: number; atualizado_em: string; couriers: { name: string }[] }[])
+      .map((p) => ({ courierId: p.courier_id, nome: p.couriers[0]?.name ?? "", lat: p.lat, lng: p.lng, atualizadoEm: p.atualizado_em })),
   };
 }
 

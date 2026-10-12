@@ -111,3 +111,31 @@ export function usePanelLive(storeId: string | null, cbs: LiveCbs) {
     };
   }, [storeId]);
 }
+
+// Assina courier_positions da loja para o mapa ao vivo.
+export function useCouriersLive(
+  storeId: string | null,
+  onPosicao: (p: { courierId: string; lat: number; lng: number; atualizadoEm: string }) => void,
+) {
+  const ref = useRef(onPosicao);
+  ref.current = onPosicao;
+  useEffect(() => {
+    if (!storeId) return;
+    const sb = createClient();
+    const ch = sb
+      .channel(`couriers:${storeId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "courier_positions", filter: `store_id=eq.${storeId}` },
+        (p) => {
+          const row = p.new as { courier_id: string; lat: number; lng: number; atualizado_em: string };
+          if (!row?.courier_id) return;
+          ref.current({ courierId: row.courier_id, lat: row.lat, lng: row.lng, atualizadoEm: row.atualizado_em });
+        },
+      )
+      .subscribe();
+    return () => {
+      void sb.removeChannel(ch);
+    };
+  }, [storeId]);
+}

@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { getEntregas } from "@/lib/painel";
+import { getEntregas, getRealtimeContext } from "@/lib/painel";
 import { assignEntrega, criarMotoboy, encerrarRota } from "@/lib/painel-actions";
 import type { Courier, MapPoint } from "@/lib/deliveries";
+import { useCouriersLive } from "@/lib/painel-live";
 import type { PanelOrder } from "@/lib/painel-utils";
 
 const DeliveryMap = dynamic(() => import("@/components/delivery-map"), { ssr: false });
@@ -20,6 +21,7 @@ type EntregasData = {
   courierOnRoute: Set<string>;
   routeIdPorCourier: Record<string, string>;
   mapPoints: MapPoint[];
+  courierPositions: { courierId: string; nome: string; lat: number; lng: number; atualizadoEm: string }[];
 };
 
 export default function Entregas() {
@@ -29,12 +31,29 @@ export default function Entregas() {
   const [novoMotoboy, setNovoMotoboy] = useState(false);
   const [motoboyForm, setMotoboyForm] = useState({ name: "", phone: "", email: "", password: "" });
   const [salvando, setSalvando] = useState(false);
+  const [storeId, setStoreId] = useState<string | null>(null);
+  const [courierPositions, setCourierPositions] = useState<EntregasData["courierPositions"]>([]);
 
   const load = () => {
     getEntregas().then(setData).catch(() => setData(null));
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    getRealtimeContext().then((c) => setStoreId(c.storeId)).catch(() => {});
+    getEntregas().then((d) => { setData(d); setCourierPositions(d.courierPositions); }).catch(() => setData(null));
+  }, []);
+
+  useCouriersLive(storeId, (p) => {
+    setCourierPositions((prev) => {
+      const idx = prev.findIndex((c) => c.courierId === p.courierId);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = { ...next[idx], lat: p.lat, lng: p.lng, atualizadoEm: p.atualizadoEm };
+        return next;
+      }
+      return [...prev, { courierId: p.courierId, nome: "", lat: p.lat, lng: p.lng, atualizadoEm: p.atualizadoEm }];
+    });
+  });
 
   const doAssign = async (orderId: string, courierId: string) => {
     setError("");
@@ -116,7 +135,7 @@ export default function Entregas() {
 
       {data.mapPoints.length > 0 && (
         <div className="mt-4">
-          <DeliveryMap points={data.mapPoints} />
+          <DeliveryMap points={data.mapPoints} couriers={courierPositions} />
         </div>
       )}
 

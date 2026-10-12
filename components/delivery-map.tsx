@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { MapPoint } from "@/lib/deliveries";
+import { posicaoRecente } from "@/lib/couriers";
 
 type CourierPin = { courierId: string; nome: string; lat: number; lng: number; atualizadoEm: string };
 
@@ -15,10 +16,10 @@ const pinIcon = (label: string, color: string) =>
     iconAnchor: [13, 13],
   });
 
-const scooterIcon = (nome: string) =>
+const scooterIcon = (nome: string, opaco = false) =>
   L.divIcon({
     className: "",
-    html: `<div style="background:#1d4ed8;color:#fff;border-radius:9999px;padding:2px 8px;font-size:18px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)" title="${nome}">&#x1F6F5;</div>`,
+    html: `<div style="background:#1d4ed8;color:#fff;border-radius:9999px;padding:2px 8px;font-size:18px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);${opaco ? "opacity:0.3;" : ""}" title="${nome}">&#x1F6F5;</div>`,
     iconSize: [36, 36],
     iconAnchor: [18, 18],
   });
@@ -63,8 +64,9 @@ export default function DeliveryMap({
       latlngs.push([p.lat, p.lng]);
     }
     if (couriers) {
+      const agora = Date.now();
       for (const c of couriers) {
-        L.marker([c.lat, c.lng], { icon: scooterIcon(c.nome) })
+        L.marker([c.lat, c.lng], { icon: scooterIcon(c.nome, !posicaoRecente(c.atualizadoEm, agora)) })
           .addTo(layer)
           .bindPopup(`&#x1F6F5; ${c.nome}`);
         latlngs.push([c.lat, c.lng]);
