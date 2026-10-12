@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getHoje } from "@/lib/painel";
 import { setForceClosed } from "@/lib/painel-actions";
-import { PERIOD_KINDS, PERIOD_LABEL, type PeriodKind } from "@/lib/period";
+import { PERIOD_LABEL, type CustomRange, type PeriodKind } from "@/lib/period";
+import PeriodFilter from "@/components/ui/period-filter";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { StatCard } from "@/components/ui/StatCard";
 
@@ -59,7 +60,8 @@ export default function PainelHoje() {
   const [data, setData] = useState<Hoje | null>(null);
   const [failed, setFailed] = useState(false);
   const [period, setPeriod] = useState<PeriodKind>("today");
-  useEffect(() => { getHoje(period).then(setData).catch(() => setFailed(true)); }, [period]);
+  const [range, setRange] = useState<CustomRange>({});
+  useEffect(() => { getHoje(period, range).then(setData).catch(() => setFailed(true)); }, [period, range]);
   const [closed, setClosed] = useState(false);
   const [closedAt, setClosedAt] = useState("");
   useEffect(() => {
@@ -128,14 +130,9 @@ export default function PainelHoje() {
         </button>
       </div>
 
-      {/* controles de período */}
-      <div className="mt-4 inline-flex bg-[var(--surface)] border rounded-2xl p-1.5 gap-1 shadow-sm anim-rise" role="tablist">
-        {PERIOD_KINDS.map((k) => (
-          <button key={k} role="tab" aria-selected={period === k} onClick={() => setPeriod(k)}
-            className={`px-5 sm:px-8 py-2.5 rounded-xl text-sm font-extrabold transition-all ${period === k ? "bg-[var(--text)] text-white shadow" : "text-[var(--muted)] hover:text-[var(--text)]"}`}>
-            {PERIOD_LABEL[k]}
-          </button>
-        ))}
+      {/* controles de período (compartilhado: datepicker no "Personalizado") */}
+      <div className="mt-4">
+        <PeriodFilter period={period} range={range} onPeriod={setPeriod} onRange={setRange} />
       </div>
 
       {closed && (

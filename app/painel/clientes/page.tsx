@@ -21,12 +21,14 @@ export default async function Clientes({ searchParams }: { searchParams: Promise
   const selected = telefone ? customers.find((c) => c.phone === telefone) : undefined;
   const pedidos = selected ? (await getPedidosDoCliente(selected.phone)).orders.map((o) => toPanelOrder(o)) : [];
 
-  const count = (p: Customer["profile"]) => customers.filter((c) => c.profile === p).length;
+  // contagem por perfil numa passada (antes: 3 filter() sobre a mesma lista)
+  const porPerfil = { vip: 0, recorrente: 0, novo: 0 };
+  for (const c of customers) porPerfil[c.profile] += 1;
   const cards = [
     { label: "Todos", value: customers.length, sub: "clientes com pedido" },
-    { label: "VIP", value: count("vip"), sub: ">5 pedidos ou ≥ R$ 500" },
-    { label: "Recorrentes", value: count("recorrente"), sub: "2+ pedidos" },
-    { label: "Novos", value: count("novo"), sub: "1 pedido válido" },
+    { label: "VIP", value: porPerfil.vip, sub: ">5 pedidos ou ≥ R$ 500" },
+    { label: "Recorrentes", value: porPerfil.recorrente, sub: "2+ pedidos" },
+    { label: "Novos", value: porPerfil.novo, sub: "1 pedido válido" },
   ];
 
   return (

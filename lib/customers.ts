@@ -1,5 +1,5 @@
 // Clientes derivados de orders (design D3): sem tabela, sem sincronizacao.
-// Mesmos limiares do cardapio-digital (customers.ts:7-16), em centavos.
+// Limiares em centavos: VIP > 5 pedidos ou gasto >= R$ 500; Recorrente > 1.
 export type CustomerProfile = "vip" | "recorrente" | "novo";
 export const LIMITE_VIP_PEDIDOS = 5;
 export const LIMITE_VIP_GASTO_CENTS = 50_000; // R$ 500,00

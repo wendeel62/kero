@@ -8,7 +8,13 @@ create table if not exists sales_goals (
   primary key (store_id, period)
 );
 
-alter table sales_goals enable row level security;
+-- idempotente: enable RLS não tem `if not exists`, então checa o catálogo antes
+do $$
+begin
+  if not (select relrowsecurity from pg_class where oid = 'public.sales_goals'::regclass) then
+    alter table sales_goals enable row level security;
+  end if;
+end $$;
 
 drop policy if exists "lojista_all" on sales_goals;
 create policy "lojista_all" on sales_goals

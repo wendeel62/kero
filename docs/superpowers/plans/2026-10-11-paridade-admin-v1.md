@@ -32,7 +32,18 @@
 - **Nomes de ícone:** `NavIcon` (`app/painel/shell.tsx`) só conhece `hoje`, `pedidos`, `cardapio`, `config`. Tarefa 4 e 5 reusam esses nomes; **não inventar ícone novo** — sem case novo no `NavIcon`, o item renderiza vazio.
 - **`getAwaitingCount` continua "hoje".** Alimenta o badge da sidebar (`shell.tsx:173`), que é sobre agora, não sobre o período escolhido. Não passar o filtro para ele.
 - **Canal de escrita:** o conector Supabase (`RUN_READ_ONLY_QUERY`) é somente leitura — serve para **verificar**, não para aplicar. Aplicar migration é `npx supabase db push`; os passos que **provam uma rejeição** (Tarefa 6 passo 4, Tarefa 9 passo 6) precisam de canal de escrita e não podem usar o conector: usar o SQL Editor do painel Supabase ou `psql` com a connection string do pooler. Uma rejeição não deixa linha para trás, então não há limpeza a fazer.
-- **`npm run build` é obrigatório** em toda tarefa que cria página ou muda assinatura de função compartilhada (Tarefas 4, 5, 8, 9) — `lint` e `test` não pegam erro de tipo em rota nova.
+- **`npm run build` com o dev server de pé corrompe o `.next`.** Os dois escrevem no
+  mesmo diretório: o build sobrescreve o que o dev server está servindo, e o dev passa a
+  responder `500` com `MODULE_NOT_FOUND` em `.next/server/...`. Se precisar rodar os
+  dois, **mate o dev server, rode o build, e suba o dev de novo** (apagando `.next` se
+  já corrompeu). Sintoma: `/login` responde 500 e a página renderiza em branco.
+- **Dev server já de pé:** não suba outro. Se a porta 3000 estiver ocupada, o Next sobe
+  na 3001 e o login salvo no cofre (bound a `localhost:3000`) não preenche — a
+  verificação no browser falha por ambiente, não por código.
+- **Verificação no browser é passo de tarefa, não formalidade.** Ela pega uma classe de
+  defeito que nenhuma revisão de diff encontra: valor certo sob rótulo que o contradiz,
+  controle que não faz nada, `onClick` em Server Component que só explode no clique. Nas
+  Tarefas 2, 4 e 5 foi ela que provou (ou derrubou) o resultado.
 
 ## Review Focus
 
@@ -49,8 +60,11 @@ Os cinco modos de falha que a spec implica e nenhum teste de tarefa cobre sozinh
 ### Task 0: Reconciliar o histórico de migrations (bloqueia todas as outras)
 
 **Auditado em 2026-10-11 contra o projeto `ohcfnbaqorxcjmepsgct`** (via conector Supabase,
-somente leitura). O remoto tem **10 migrations aplicadas** cujos arquivos não existem em
-lugar nenhum — nem em `supabase/migrations/`, nem no git, nem em stash/branch/worktree:
+somente leitura). O remoto tem **10 migrations registradas** com o `version` em
+timestamp e nome descritivo (`001_schema` … `010_storefront_texts`); o repositório usa
+`NNN_nome.sql`. Nove delas são exatamente as `001`–`009` do repo — só o formato do
+`version` difere. A décima, **`010_storefront_texts`, não tem arquivo no repositório**
+(nem no git, nem em stash/branch/worktree):
 
 ```
 20261010004804  20261010005104  20261010005158  20261010005212  20261010005223
@@ -128,18 +142,20 @@ npx supabase migration repair --status applied 001 002 003 004 005 006 007 008 0
 Expected: `npx supabase migration list --linked` mostra cada linha com local == remoto
 (`001`↔`001` … `010`↔`010`), sem nenhuma linha só-remota ou só-local.
 
-**A confirmar com o dono:** este comando decide o formato do histórico daqui pra
-frente. Ver "Decisão de formato do histórico", no fim deste documento.
+**Decisão do dono (2026-10-11):** formato **(A)**, números do repo, série sequencial.
+Repair **autorizado**. Não perguntar de novo.
 
 - [ ] **Step 3: Confirmar que `db push` voltou a funcionar**
 
 Run: `npx supabase db push --linked --dry-run`
-Expected: sem `DbPushMissingLocalError`; a única pendente é a `013`.
+Expected: sem `DbPushMissingLocalError`. **Nada pendente** — local == remoto, porque a
+`010_storefront_texts` já está aplicada no banco e acabou de ser marcada como tal.
+(O `010` recém-criado é o arquivo **daquela** migration, não uma migration nova.)
 
-- [ ] **Step 4: Aplicar e verificar as colunas**
+- [ ] **Step 4: Verificar as colunas no remoto**
 
-Run: `npx supabase db push`
-Depois, pelo conector Supabase (somente leitura):
+`db push` não tem o que aplicar (passo 3). A verificação é a leitura do estado real,
+pelo conector Supabase (somente leitura):
 ```sql
 select column_name from information_schema.columns
  where table_schema = 'public' and table_name = 'stores'
@@ -199,20 +215,19 @@ create policy "lojista_all" on sales_goals
 Run: `npx supabase db push` (ou `npx supabase migration up` no ambiente local)
 Expected: `011_sales_goals.sql` aplicada sem erro.
 
-- [ ] **Step 3: Verificar tabela, RLS e policy**
+- [ ] **Step 3: Verificar tabela, RLS e policy no remoto**
 
-Run:
-```bash
-npx supabase db diff --schema public | grep -c sales_goals
-```
-Expected: `0` (sem drift — a migration reflete o banco).
+Ler o estado real pelo conector Supabase (somente leitura) — `db diff`/`db dump` exigem
+Docker, que não existe nesta máquina:
 
-Se `supabase db diff` não estiver disponível no ambiente, confirmar por SQL direto:
 ```sql
-select relrowsecurity from pg_class where relname = 'sales_goals';  -- t
-select policyname from pg_policies where tablename = 'sales_goals'; -- lojista_all
+select c.relname, c.relrowsecurity,
+       (select count(*) from pg_policies p
+         where p.schemaname='public' and p.tablename=c.relname) as policies
+  from pg_class c join pg_namespace n on n.oid=c.relnamespace
+ where n.nspname='public' and c.relname='sales_goals';
 ```
-Expected: `t` e uma linha `lojista_all`.
+Expected: uma linha — `sales_goals`, `relrowsecurity = true`, `policies = 1`.
 
 - [ ] **Step 4: Commit**
 
@@ -964,8 +979,6 @@ git commit -m "feat(painel): relatorios com periodo, mais vendidos e metas"
 
 - [ ] **Step 1: Escrever a migration**
 
-Conteúdo completo de `supabase/migrations/012_addon_groups.sql`:
-
 ```sql
 -- 012_addon_groups.sql — grupos de opcao (design D4).
 -- Grupo e o unico conceito; as OPCOES sao as linhas de product_addons com
@@ -1005,16 +1018,26 @@ create index if not exists idx_addons_group        on product_addons(group_id);
 Run: `npx supabase db push` (ou `npx supabase migration up` no local)
 Expected: `012_addon_groups.sql` aplicada sem erro.
 
-- [ ] **Step 3: Verificar tabela, coluna, FK, RLS e policy**
+- [ ] **Step 3: Verificar tabela, coluna, FK, RLS e policy no remoto**
+
+Ler o estado real pelo conector Supabase (somente leitura) — `db diff`/`db dump` exigem
+Docker, que não existe nesta máquina:
 
 ```sql
-select relrowsecurity from pg_class where relname = 'product_addon_groups';  -- t
-select policyname from pg_policies where tablename = 'product_addon_groups'; -- lojista_all
-select column_name, is_nullable from information_schema.columns
-  where table_name = 'product_addons' and column_name = 'group_id';          -- group_id | YES
-select conname from pg_constraint where conname = 'product_addons_group_fk'; -- 1 linha
+select c.relname, c.relrowsecurity,
+       (select count(*) from pg_policies p
+         where p.schemaname='public' and p.tablename=c.relname) as policies
+  from pg_class c join pg_namespace n on n.oid=c.relnamespace
+ where n.nspname='public' and c.relname='product_addon_groups';
 ```
-Expected: `t`, `lojista_all`, `YES`, 1 linha.
+Expected: uma linha — `product_addon_groups`, `relrowsecurity = true`, `policies = 1`.
+
+```sql
+select column_name, is_nullable from information_schema.columns
+ where table_schema='public' and table_name='product_addons' and column_name='group_id';
+select conname from pg_constraint where conname='product_addons_group_fk';
+```
+Expected: `group_id | YES` e uma linha `product_addons_group_fk`.
 
 - [ ] **Step 4: Confirmar que a FK composta rejeita grupo de outra loja**
 

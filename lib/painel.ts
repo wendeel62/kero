@@ -9,7 +9,7 @@ import type {
   PanelProduct, PanelRow, PanelSettings, PanelStatus,
 } from "./painel-utils";
 import { manausDayStartISO, toPanelOrder } from "./painel-utils";
-import { parsePeriodKind, resolvePeriod } from "./period";
+import { parsePeriodKind, resolvePeriod, type CustomRange } from "./period";
 import { minutesInStatus } from "./order-timing";
 import { aggregateCustomers, type Customer } from "./customers";
 import { goalProgress, windowFor, type GoalPeriod } from "./goals";
@@ -17,10 +17,10 @@ import type { AddonGroupRow } from "./addon-groups";
 
 const ORDER_COLS = "id,code,customer_name,type,payment_method,total_cents,status,created_at";
 
-export async function getHoje(period: string = "today") {
+export async function getHoje(period: string = "today", range: CustomRange = {}) {
   const { supabase, storeId } = await requireStore();
   const now = Date.now();
-  const { from, to } = resolvePeriod(parsePeriodKind(period));
+  const { from, to } = resolvePeriod(parsePeriodKind(period), range);
   const [{ data: store }, { data: rows }] = await Promise.all([
     supabase.from("stores").select("name,force_closed,force_closed_at").eq("id", storeId).single(),
     supabase.from("orders").select(ORDER_COLS).eq("store_id", storeId)
@@ -207,10 +207,10 @@ export async function getSettings(): Promise<{ settings: PanelSettings | null }>
 // Kanban (DS §8.7): pedidos criados no período escolhido + coluna "Anteriores"
 // (D7): não finalizados criados antes do início do período. Tempo no status atual
 // derivado de order_events (C1) — nunca gravado, sempre calculado.
-export async function getKanban(period: string = "today", type: string = "all") {
+export async function getKanban(period: string = "today", type: string = "all", range: CustomRange = {}) {
   const { supabase, storeId } = await requireStore();
   const now = Date.now();
-  const { from, to } = resolvePeriod(parsePeriodKind(period));
+  const { from, to } = resolvePeriod(parsePeriodKind(period), range);
 
   const cols = (q: ReturnType<typeof supabase.from>) => q.select(ORDER_COLS).eq("store_id", storeId);
   let periodo = cols(supabase.from("orders")).gte("created_at", from).lt("created_at", to);
@@ -229,7 +229,9 @@ export async function getKanban(period: string = "today", type: string = "all") 
   const orders = [...((rows ?? []) as PanelRow[])];
   const anteriores = ((antigos ?? []) as PanelRow[]);
 
-  const ids = orders.filter((o) => !["new", "delivered", "cancelled"].includes(o.status)).map((o) => o.id);
+  // eventos dos pedidos que mostram tempo-no-status (do período e anteriores)
+  const ids = [...orders, ...anteriores]
+    .filter((o) => !["new", "delivered", "cancelled"].includes(o.status)).map((o) => o.id);
   const { data: events, error: e3 } = ids.length
     ? await supabase.from("order_events").select("order_id,to_status,created_at").in("order_id", ids)
     : { data: [] as { order_id: string; to_status: string; created_at: string }[], error: null };
@@ -242,7 +244,12 @@ export async function getKanban(period: string = "today", type: string = "all") 
   );
   // `cancelled` NÃO é devolvido: a página deriva de `orders` (uma fonte só), e o
   // Realtime atualiza `orders` localmente — devolver o campo criaria duas fontes.
-  return { orders: mapped, anteriores: anteriores.map((o) => toPanelOrder(o, now)) };
+  return {
+    orders: mapped,
+    anteriores: anteriores.map((o) =>
+      toPanelOrder(o, now, minutesInStatus(byOrder.get(o.id) ?? [], o.status, o.created_at, now))
+    ),
+  };
 }
 
 // Clientes (design D3): agrega o histórico inteiro da loja. Teto de 1000 linhas
@@ -276,9 +283,9 @@ export async function getRealtimeContext() {
 
 // Relatorios (design C1): faturamento do periodo + mais vendidos + metas.
 // Uma passada em orders + uma em order_items; sem tabela derivada.
-export async function getRelatorios(period: string = "7d") {
+export async function getRelatorios(period: string = "7d", range: CustomRange = {}) {
   const { supabase, storeId } = await requireStore();
-  const { from, to } = resolvePeriod(parsePeriodKind(period));
+  const { from, to } = resolvePeriod(parsePeriodKind(period), range);
 
   const { data: orders, error: e1 } = await supabase.from("orders")
     .select("id,total_cents,status,created_at").eq("store_id", storeId)
@@ -289,10 +296,13 @@ export async function getRelatorios(period: string = "7d") {
   const revenueCents = validos.reduce((s, o) => s + o.total_cents, 0);
   const ticketCents = validos.length ? Math.round(revenueCents / validos.length) : 0;
 
-  const ids = validos.map((o) => o.id);
-  const { data: items, error: e2 } = ids.length
-    ? await supabase.from("order_items").select("name_snapshot,qty,unit_price_cents").in("order_id", ids)
-    : { data: [] as { name_snapshot: string; qty: number; unit_price_cents: number }[], error: null };
+  // order_items dos pedidos do período numa leitura só (o filtro vai no embed,
+  // não numa lista de ids — que estouraria a URL com muitos pedidos).
+  const { data: items, error: e2 } = await supabase.from("order_items")
+    .select("name_snapshot,qty,unit_price_cents,orders!inner(store_id,status,created_at)")
+    .eq("orders.store_id", storeId)
+    .neq("orders.status", "cancelled")
+    .gte("orders.created_at", from).lt("orders.created_at", to);
   if (e2) throw new Error(e2.message);
 
   const topMap = new Map<string, { qty: number; cents: number }>();

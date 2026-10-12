@@ -12,7 +12,13 @@ create table if not exists product_addon_groups (
   unique (id, store_id)
 );
 
-alter table product_addon_groups enable row level security;
+-- idempotente: enable RLS não tem `if not exists`, então checa o catálogo antes
+do $$
+begin
+  if not (select relrowsecurity from pg_class where oid = 'public.product_addon_groups'::regclass) then
+    alter table product_addon_groups enable row level security;
+  end if;
+end $$;
 
 drop policy if exists "lojista_all" on product_addon_groups;
 create policy "lojista_all" on product_addon_groups

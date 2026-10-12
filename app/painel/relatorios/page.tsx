@@ -4,7 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { getRelatorios } from "@/lib/painel";
 import { saveMeta } from "@/lib/painel-actions";
 import { GOAL_LABEL, GOAL_PERIODS } from "@/lib/goals";
-import { PERIOD_KINDS, PERIOD_LABEL, parsePeriodKind } from "@/lib/period";
+import { PERIOD_LABEL, parsePeriodKind, type CustomRange } from "@/lib/period";
+import PeriodFilter from "@/components/ui/period-filter";
+import { parseBRLToCents } from "@/lib/pricing";
 
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -13,16 +15,17 @@ type MetaPeriod = (typeof GOAL_PERIODS)[number];
 
 export default function Relatorios() {
   const [period, setPeriod] = useState<string>("7d");
+  const [range, setRange] = useState<CustomRange>({});
   const [data, setData] = useState<Relatorio | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<MetaPeriod | null>(null);
 
-  const load = useCallback(async (p: string) => {
+  const load = useCallback(async (p: string, r: CustomRange = {}) => {
     setLoading(true);
     setError(null);
     try {
-      setData(await getRelatorios(p));
+      setData(await getRelatorios(p, r));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -30,20 +33,24 @@ export default function Relatorios() {
     }
   }, []);
 
-  useEffect(() => { void load(period); }, [period, load]);
+  useEffect(() => { void load(period, range); }, [period, range, load]);
 
   const kind = parsePeriodKind(period);
   const periodoLabel = PERIOD_LABEL[kind];
 
   async function definirMeta(gp: MetaPeriod, fd: FormData) {
-    const v = Number(fd.get("target"));
-    if (!(v > 0)) return;
+    // o campo é em reais ("150,00"); parseBRLToCents devolve centavos
+    const cents = parseBRLToCents(String(fd.get("target") ?? ""));
+    if (!Number.isFinite(cents) || cents <= 0) {
+      setError("Informe um valor em reais (ex.: 150,00).");
+      return;
+    }
     setSaving(gp);
     setError(null);
     try {
-      const r = await saveMeta(gp, Math.round(v));
+      const r = await saveMeta(gp, cents);
       if (!r.ok) throw new Error(r.error ?? "Erro ao salvar meta.");
-      await load(period);
+      await load(period, range);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -58,18 +65,9 @@ export default function Relatorios() {
         <p className="text-xs text-[var(--muted)] mt-0.5">faturamento, mais vendidos e metas</p>
       </div>
 
-      {/* filtro de período */}
-      <div className="flex gap-1.5 mt-4 overflow-x-auto no-scrollbar">
-        {PERIOD_KINDS.map((k) => (
-          <button
-            key={k}
-            type="button"
-            onClick={() => setPeriod(k)}
-            className={`period-pill whitespace-nowrap text-[13px] font-bold px-3.5 py-1.5 rounded-full ${kind === k ? "is-active" : ""}`}
-          >
-            {PERIOD_LABEL[k]}
-          </button>
-        ))}
+      {/* filtro de período (compartilhado: datepicker no "Personalizado") */}
+      <div className="mt-4">
+        <PeriodFilter size="sm" period={kind} range={range} onPeriod={(k) => setPeriod(k)} onRange={setRange} />
       </div>
 
       {error && (
@@ -144,13 +142,12 @@ export default function Relatorios() {
                       action={(fd) => definirMeta(gp, fd)}
                     >
                       <input
-                        type="number"
+                        type="text"
                         name="target"
-                        min="1"
-                        step="1"
-                        defaultValue={meta ? meta.targetCents : ""}
-                        placeholder="centavos"
-                        className="w-24 px-2 py-1 text-sm rounded-lg border border-[var(--border)] bg-[var(--surface)]"
+                        inputMode="decimal"
+                        defaultValue={meta ? (meta.targetCents / 100).toFixed(2).replace(".", ",") : ""}
+                        placeholder="R$ 0,00"
+                        className="w-24 px-2 py-1 text-sm rounded-lg border border-[var(--border)] bg-[var(--surface)] tabular-nums"
                       />
                       <button
                         type="submit"

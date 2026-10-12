@@ -5,7 +5,8 @@ import Link from "next/link";
 import { getAwaitingCount, getKanban, getRealtimeContext } from "@/lib/painel";
 import { playNewOrderSound, updateFaviconBadge, usePanelLive } from "@/lib/painel-live";
 import type { PanelOrder } from "@/lib/painel-utils";
-import { PERIOD_KINDS, PERIOD_LABEL, type PeriodKind } from "@/lib/period";
+import { PERIOD_LABEL, type CustomRange, type PeriodKind } from "@/lib/period";
+import PeriodFilter from "@/components/ui/period-filter";
 import { StatusBadge } from "@/components/ui/status-badge";
 
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -42,9 +43,10 @@ export default function Kanban() {
   const [live, setLive] = useState(true);
   const [liveMsg, setLiveMsg] = useState("");
   const [period, setPeriod] = useState<PeriodKind>("today");
+  const [range, setRange] = useState<CustomRange>({});
   const [type, setType] = useState<TypeFilter>("all");
   useEffect(() => {
-    getKanban(period, type).then((k) => {
+    getKanban(period, type, range).then((k) => {
       setOrders(k.orders);
       setAnteriores(k.anteriores);
       updateFaviconBadge(k.orders.filter((o) => o.status === "new").length);
@@ -56,14 +58,18 @@ export default function Kanban() {
     getAwaitingCount().then((s) => updateFaviconBadge(s.awaiting)).catch(() => {});
   };
 
-  // Realtime (SPEC §9/§11): insere/atualiza sem reload; som+vozes só no novo
+  // Realtime (SPEC §9/§11): insere/atualiza sem reload; som+vozes só no novo.
+  // O filtro de tipo vale para o que o Realtime injeta — senão um pedido de
+  // retirada apareceria no kanban filtrado por "Entrega" até o próximo poll.
+  const passaFiltro = (o: PanelOrder) => type === "all" || o.type === type;
   usePanelLive(storeId, {
     onInsert: (o) => {
       setOrders((prev) => {
         if (!prev || prev.some((x) => x.id === o.id)) return prev;
+        if (!passaFiltro(o)) return prev;
         return [o, ...prev];
       });
-      if (o.status === "new") {
+      if (o.status === "new" && passaFiltro(o)) {
         playNewOrderSound();
         setLiveMsg(`Novo pedido #${o.code} de ${o.customer}`);
       }
@@ -72,9 +78,13 @@ export default function Kanban() {
     onUpdate: (o) => {
       setOrders((prev) => {
         if (!prev) return prev;
-        if (prev.some((x) => x.id === o.id)) return prev.map((x) => (x.id === o.id ? o : x));
+        if (prev.some((x) => x.id === o.id)) {
+          // saiu do filtro (não deveria mudar tipo, mas o status pode finalizar)
+          return passaFiltro(o) ? prev.map((x) => (x.id === o.id ? o : x)) : prev.filter((x) => x.id !== o.id);
+        }
         // fora da janela inicial (ex.: criado antes do load): entra se não finalizado
-        return ["new", "confirmed", "preparing", "ready", "out"].includes(o.status) ? [o, ...prev] : prev;
+        return passaFiltro(o) && ["new", "confirmed", "preparing", "ready", "out"].includes(o.status)
+          ? [o, ...prev] : prev;
       });
       refreshBadge();
     },
@@ -85,7 +95,7 @@ export default function Kanban() {
   useEffect(() => {
     if (live || !storeId) return;
     const t = setInterval(() => {
-      getKanban(period, type).then((k) => {
+      getKanban(period, type, range).then((k) => {
         setOrders(k.orders);
         setAnteriores(k.anteriores);
         updateFaviconBadge(k.orders.filter((o) => o.status === "new").length);
@@ -176,18 +186,7 @@ export default function Kanban() {
 
       {/* Filtros de período e tipo */}
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        <div className="flex gap-1">
-          {PERIOD_KINDS.map((k) => (
-            <button key={k} onClick={() => setPeriod(k)}
-              className={`px-3 py-1.5 rounded-full text-[12px] font-bold transition-colors ${
-                period === k
-                  ? "bg-[var(--text)] text-[var(--surface)]"
-                  : "bg-[var(--surface-2)] text-[var(--muted)] hover:text-[var(--text)]"
-              }`}>
-              {PERIOD_LABEL[k]}
-            </button>
-          ))}
-        </div>
+        <PeriodFilter size="sm" period={period} range={range} onPeriod={setPeriod} onRange={setRange} />
         <div className="flex gap-1 ml-auto">
           {(["all", "delivery", "pickup"] as const).map((t) => (
             <button key={t} onClick={() => setType(t)}

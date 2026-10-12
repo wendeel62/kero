@@ -12,6 +12,10 @@ export function parsePeriodKind(v: string | undefined | null): PeriodKind {
   return (PERIOD_KINDS as readonly string[]).includes(v ?? "") ? (v as PeriodKind) : "today";
 }
 
+// Range do período "custom" (YYYY-MM-DD). Opcional: sem as duas datas,
+// resolvePeriod cai em 7d — nunca devolve intervalo vazio em silêncio.
+export type CustomRange = { fromIso?: string; toIso?: string };
+
 const DAY_MS = 86_400_000;
 // "2026-10-01" → meia-noite de Manaus daquele dia (ISO UTC).
 // Meio-dia UTC garante que o instante cai no dia certo em Manaus (UTC-4).

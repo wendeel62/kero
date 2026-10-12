@@ -44,3 +44,20 @@ test("resolvePeriod sempre devolve from < to", () => {
     expect(new Date(p.from).getTime()).toBeLessThan(new Date(p.to).getTime());
   }
 });
+
+test("resolvePeriod sempre devolve from < to, inclusive custom", () => {
+  // custom válido: o intervalo tem que ser não-vazio
+  const valido = resolvePeriod("custom", { fromIso: "2026-09-01", toIso: "2026-09-30", now: NOW });
+  expect(new Date(valido.from).getTime()).toBeLessThan(new Date(valido.to).getTime());
+
+  // custom inválido cai em 7d — que também tem from < to
+  for (const opts of [
+    { fromIso: "2026-10-05", toIso: "2026-10-01" }, // invertido
+    { fromIso: "ontem", toIso: "2026-10-03" },       // lixo
+    { fromIso: "2026-10-01", toIso: "2026-10-01" },  // mesmo dia (to exclusivo → 1 dia)
+    {},                                               // sem datas
+  ]) {
+    const p = resolvePeriod("custom", { ...opts, now: NOW });
+    expect(new Date(p.from).getTime()).toBeLessThan(new Date(p.to).getTime());
+  }
+});
