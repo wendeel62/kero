@@ -26,7 +26,7 @@ type BrasilApiCep = {
   logradouro?: string;
   localidade?: string;
   uf?: string;
-  location?: { coordinates?: { latitude?: number; longitude?: number } };
+  location?: { coordinates?: { latitude?: string | number; longitude?: string | number } };
 };
 
 type LocationIqResult = { lat: string; lon: string }[];
@@ -76,10 +76,10 @@ export async function geocodeExternal(
     }
   }
 
-  // 3. Fallback: coordenada do CEP
-  const lat = brasilData?.location?.coordinates?.latitude;
-  const lng = brasilData?.location?.coordinates?.longitude;
-  if (lat != null && lng != null && posicaoValida(lat, lng)) return { lat, lng };
+  // 3. Fallback: coordenada do CEP (BrasilAPI retorna string — parseFloat necessário)
+  const lat = parseFloat(String(brasilData?.location?.coordinates?.latitude ?? ""));
+  const lng = parseFloat(String(brasilData?.location?.coordinates?.longitude ?? ""));
+  if (posicaoValida(lat, lng)) return { lat, lng };
 
   // 4. Sem coordenada
   return null;
