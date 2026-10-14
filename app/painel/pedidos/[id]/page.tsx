@@ -105,9 +105,9 @@ export default function PedidoDetalhe() {
           <span className="ml-auto text-xs text-[var(--muted)] tabular-nums">há {order.minutesAgo} min</span>
         </div>
         <div className="mt-3 flex flex-wrap gap-1.5 text-[11px] font-bold">
-          <span className="bg-[var(--surface-2)] rounded-full px-2.5 py-1">{order.type === "delivery" ? "Entrega" : "Retirada"}</span>
-          <span className="bg-[var(--surface-2)] rounded-full px-2.5 py-1">{order.payment}</span>
-          <span className="bg-[var(--surface-2)] rounded-full px-2.5 py-1 tabular-nums">{brl(subtotal + fee)}</span>
+          <span className="bg-[var(--surface-2)] text-[var(--text)] rounded-full px-2.5 py-1">{order.type === "delivery" ? "Entrega" : "Retirada"}</span>
+          <span className="bg-[var(--surface-2)] text-[var(--text)] rounded-full px-2.5 py-1">{order.payment}</span>
+          <span className="bg-[var(--surface-2)] text-[var(--text)] rounded-full px-2.5 py-1 tabular-nums">{brl(subtotal + fee)}</span>
         </div>
       </div>
 
@@ -159,7 +159,7 @@ export default function PedidoDetalhe() {
           </ul>
           <div className="mt-2 pt-2 border-t border-dashed text-sm space-y-1">
             <div className="flex justify-between text-[var(--muted)]"><span>Subtotal</span><span className="tabular-nums">{brl(subtotal)}</span></div>
-            <div className="flex justify-between text-[var(--muted)]"><span>Entrega</span><span className="tabular-nums">{order.type === "delivery" ? brl(fee) : "grátis"}</span></div>
+            {order.type === "delivery" && <div className="flex justify-between text-[var(--muted)]"><span>Entrega</span><span className="tabular-nums">{brl(fee)}</span></div>}
             <div className="flex justify-between font-extrabold text-lg"><span>Total</span><span className="tabular-nums">{brl(subtotal + fee)}</span></div>
           </div>
         </section>
