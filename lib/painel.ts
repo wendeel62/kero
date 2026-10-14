@@ -8,7 +8,7 @@ import type {
   FichaData, PanelAddon, PanelAddress, PanelDetail,
   PanelProduct, PanelRow, PanelSettings, PanelStatus,
 } from "./painel-utils";
-import { manausDayStartISO, toPanelOrder } from "./painel-utils";
+import { manausDayStartISO, toPanelOrder, addonIdsByProduct } from "./painel-utils";
 import { parsePeriodKind, resolvePeriod, type CustomRange } from "./period";
 import { minutesInStatus } from "./order-timing";
 import { aggregateCustomers, type Customer } from "./customers";
@@ -126,7 +126,6 @@ export async function getCardapio() {
       .eq("store_id", storeId).order("sort_order"),
   ]);
   const byCat = new Map<string, PanelProduct[]>();
-  const addonIdsByProduct = new Map<string, string[]>();
   for (const p of (prods ?? []) as (PanelProduct & { category_id: string })[]) {
     const list = byCat.get(p.category_id) ?? [];
     list.push({
@@ -135,11 +134,7 @@ export async function getCardapio() {
     });
     byCat.set(p.category_id, list);
   }
-  for (const a of (prodAddons ?? []) as { id: string; product_id: string }[]) {
-    const list = addonIdsByProduct.get(a.product_id) ?? [];
-    list.push(a.id);
-    addonIdsByProduct.set(a.product_id, list);
-  }
+  const prodAddonIds = addonIdsByProduct((prodAddons ?? []) as { id: string; product_id: string }[]);
   return {
     storeId,
     categories: ((cats ?? []) as { id: string; name: string; active: boolean; sort_order: number }[]).map((c) => ({
@@ -147,7 +142,7 @@ export async function getCardapio() {
     })),
     addons: ((addons ?? []) as (PanelAddon & { group_id: string | null })[]).map((a) => ({ ...a })),
     groups: ((groups ?? []) as AddonGroupRow[]),
-    addonIdsByProduct,
+    addonIdsByProduct: prodAddonIds,
   };
 }
 
@@ -368,9 +363,12 @@ export async function getRelatorios(period: string = "7d", range: CustomRange = 
 // PDV (recon §3): products ativos, addons, mesas e pedidos não finalizados.
 export async function getPdv() {
   const { supabase, storeId } = await requireStore();
-  const [{ data: prods }, { data: addons }, { data: tables }, { data: orders }] = await Promise.all([
+  // shortcut: query de links duplicada da getCardapio (extrair leitura compartilhada não compensa);
+  // .eq("active") a mais porque o RPC pdv_create_order rejeita adicional inativo no item.
+  const [{ data: prods }, { data: addons }, { data: links }, { data: tables }, { data: orders }] = await Promise.all([
     supabase.from("products").select("id,name,price_cents").eq("store_id", storeId).eq("active", true).order("sort_order"),
     supabase.from("product_addons").select("id,name,price_cents").eq("store_id", storeId).eq("active", true),
+    supabase.from("product_addons").select("id,product_id").eq("store_id", storeId).eq("active", true).not("product_id", "is", null),
     supabase.from("dine_tables").select("id,number,label,active").eq("store_id", storeId).order("number"),
     supabase.from("orders").select("table_id,status").eq("store_id", storeId)
       .in("status", ["new", "confirmed", "preparing", "ready", "out"])
@@ -384,6 +382,7 @@ export async function getPdv() {
   return {
     products: (prods ?? []) as { id: string; name: string; price_cents: number }[],
     addons: (addons ?? []) as { id: string; name: string; price_cents: number }[],
+    addonIdsByProduct: addonIdsByProduct((links ?? []) as { id: string; product_id: string }[]),
     tables: (tables ?? []) as { id: string; number: string; label: string | null; active: boolean }[],
     activeByTable,
   };

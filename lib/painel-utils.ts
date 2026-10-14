@@ -62,6 +62,20 @@ export type CardapioData = {
   storeId: string; categories: PanelCategory[]; addons: PanelAddon[]; addonIdsByProduct: Map<string, string[]>;
 };
 
+// Linhas espelhadas de product_addons (product_id preenchido) → mapa
+// produto→ids dos complementos vinculados. Usado por getCardapio e getPdv.
+export const addonIdsByProduct = (
+  rows: { id: string; product_id: string }[]
+): Map<string, string[]> => {
+  const map = new Map<string, string[]>();
+  for (const a of rows) {
+    const list = map.get(a.product_id) ?? [];
+    list.push(a.id);
+    map.set(a.product_id, list);
+  }
+  return map;
+};
+
 export type FichaData = {
   storeId: string;
   categories: { id: string; name: string }[];

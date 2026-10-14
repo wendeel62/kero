@@ -30,11 +30,13 @@ export async function setForceClosed(closed: boolean): Promise<{ ok: boolean; at
 
 type R = { ok: boolean; error?: string };
 
-async function mutate(path: string, fn: () => Promise<{ error: unknown; id?: string }>): Promise<R & { id?: string }> {
+// path null = não revalida: página 100% client que recarrega dados por conta
+// própria (o revalidatePath remonta a rota com RSC novo e apaga o estado local).
+async function mutate(path: string | null, fn: () => Promise<{ error: unknown; id?: string }>): Promise<R & { id?: string }> {
   try {
     const { error, id } = await fn();
     if (error) throw error;
-    revalidatePath(path);
+    if (path) revalidatePath(path);
     return { ok: true, id };
   } catch (e) {
     const m = err(e);
@@ -415,7 +417,9 @@ export async function pdvCriarPedido(input: {
   items: { id: string; qty: number; addons: string[]; notes?: string }[];
 }): Promise<R> {
   const { supabase, storeId } = await requireStore();
-  return mutate("/painel/pdv", async () => {
+  // PDV é todo client e recarrega mesas via getPdv: sem revalidatePath, que
+  // remonta a página (RSC novo) e apaga a confirmação "Pedido criado!".
+  return mutate(null, async () => {
     const { data, error } = await supabase.rpc("pdv_create_order", {
       p_store_id: storeId,
       p_type: input.type,

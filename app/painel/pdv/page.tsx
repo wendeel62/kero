@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getPdv } from "@/lib/painel";
 import { pdvCriarPedido } from "@/lib/painel-actions";
 import { pdvTotal, type PdvLine } from "@/lib/pdv";
@@ -13,6 +13,7 @@ export default function PdvPage() {
   const [data, setData] = useState<{
     products: { id: string; name: string; price_cents: number }[];
     addons: { id: string; name: string; price_cents: number }[];
+    addonIdsByProduct: Map<string, string[]>;
     tables: { id: string; number: number; label: string | null; active: boolean }[];
     activeByTable: (string | null)[];
   } | null>(null);
@@ -24,12 +25,15 @@ export default function PdvPage() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const cartRef = useRef<HTMLDivElement>(null);
+  const successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     getPdv().then((data) =>
       setData({
         products: data.products,
         addons: data.addons,
+        addonIdsByProduct: data.addonIdsByProduct,
         tables: data.tables.map((t) => ({ ...t, number: Number(t.number) })),
         activeByTable: data.activeByTable,
       })
@@ -40,6 +44,8 @@ export default function PdvPage() {
     () => pdvTotal(cart, data?.products ?? [], data?.addons ?? []),
     [cart, data]
   );
+
+  const itemCount = cart.reduce((s, l) => s + l.qty, 0);
 
   const addToCart = (productId: string) => {
     setCart((prev) => {
@@ -96,6 +102,8 @@ export default function PdvPage() {
       return;
     }
     setSuccess("Pedido criado!");
+    if (successTimer.current) clearTimeout(successTimer.current);
+    successTimer.current = setTimeout(() => setSuccess(""), 4000);
     setCart([]);
     setCustomerName("");
     setCustomerPhone("");
@@ -104,6 +112,7 @@ export default function PdvPage() {
       setData({
         products: data.products,
         addons: data.addons,
+        addonIdsByProduct: data.addonIdsByProduct,
         tables: data.tables.map((t) => ({ ...t, number: Number(t.number) })),
         activeByTable: data.activeByTable,
       })
@@ -119,7 +128,7 @@ export default function PdvPage() {
   }
 
   return (
-    <main className="admin-content">
+    <main className="admin-content" style={cart.length > 0 ? { paddingBottom: 112 } : undefined}>
       <h1 className="text-xl font-extrabold">PDV</h1>
 
       {/* Tipo */}
@@ -178,12 +187,13 @@ export default function PdvPage() {
 
       {/* Carrinho */}
       {cart.length > 0 && (
-        <div className="mt-6">
+        <div ref={cartRef} className="mt-6">
           <p className="text-xs font-bold text-[var(--muted)] mb-2">Carrinho</p>
           <div className="space-y-2">
             {cart.map((line, idx) => {
               const prod = data.products.find((p) => p.id === line.id);
               if (!prod) return null;
+              const lineAddonIds = data.addonIdsByProduct.get(line.id) ?? [];
               return (
                 <div key={line.id} className="card p-3">
                   <div className="flex items-center gap-2">
@@ -201,9 +211,11 @@ export default function PdvPage() {
                     <button onClick={() => setCart((prev) => prev.map((l, i) => i === idx ? { ...l, qty: Math.min(20, l.qty + 1) } : l))}
                       className="w-7 h-7 rounded-lg border border-[var(--border)] text-sm font-bold">+</button>
                   </div>
-                  {data.addons.length > 0 && (
+                  {lineAddonIds.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-2">
-                      {data.addons.map((a) => {
+                      {lineAddonIds.map((aid) => {
+                        const a = data.addons.find((x) => x.id === aid);
+                        if (!a) return null;
                         const checked = line.addons.includes(a.id);
                         return (
                           <button key={a.id} onClick={() => toggleAddon(idx, a.id)}
@@ -255,6 +267,21 @@ export default function PdvPage() {
           Criar pedido
         </button>
       </div>
+
+      {/* Barra fixa: feedback imediato — o carrinho fica abaixo da dobra */}
+      {cart.length > 0 && (
+        <div className="fixed bottom-0 inset-x-0 z-40 px-4 pb-4 pointer-events-none">
+          <div className="card pointer-events-auto flex items-center justify-between gap-3">
+            <span className="text-sm font-bold truncate">
+              🛒 {itemCount} {itemCount === 1 ? "item" : "itens"} · Total {brl(total)}
+            </span>
+            <button onClick={() => cartRef.current?.scrollIntoView({ behavior: "smooth" })}
+              className="btn btn--primary shrink-0">
+              Ver carrinho
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
