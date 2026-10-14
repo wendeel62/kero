@@ -221,8 +221,9 @@ export async function getSettings(): Promise<{ settings: PanelSettings | null }>
     },
   };
 }
-// Kanban (DS §8.7): pedidos criados no período escolhido + coluna "Anteriores"
-// (D7): não finalizados criados antes do início do período. Tempo no status atual
+// Kanban (DS §8.7): pedidos do período + não finalizados de qualquer dia nas
+// colunas de status (o subtítulo promete "não finalizados + período"); coluna
+// "Anteriores" (D7): finalizados/cancelados antigos. Tempo no status atual
 // derivado de order_events (C1) — nunca gravado, sempre calculado.
 export async function getKanban(period: string = "today", type: string = "all", range: CustomRange = {}) {
   const { supabase, storeId } = await requireStore();
@@ -235,16 +236,28 @@ export async function getKanban(period: string = "today", type: string = "all", 
   const { data: rows, error: e1 } = await periodo.order("created_at", { ascending: true });
   if (e1) throw new Error(e1.message); // design C5: nunca engolir
 
-  // "Anteriores" (D7): não finalizados criados ANTES do início do período.
+  // não finalizados criados ANTES do período: entram nas colunas de status.
   const NAO_FINALIZADOS = "new,confirmed,preparing,ready,out";
   let antigosQ = cols(supabase.from("orders"))
     .lt("created_at", from).in("status", NAO_FINALIZADOS.split(","));
   if (type === "delivery" || type === "pickup") antigosQ = antigosQ.eq("type", type);
-  const { data: antigos, error: e2 } = await antigosQ.order("created_at", { ascending: true });
+  const { data: antigosNaoFinalizados, error: e2 } = await antigosQ.order("created_at", { ascending: true });
   if (e2) throw new Error(e2.message);
 
-  const orders = [...((rows ?? []) as PanelRow[])];
-  const anteriores = ((antigos ?? []) as PanelRow[]);
+  // "Anteriores": finalizados/cancelados antigos, mais recentes primeiro.
+  // ponytail: teto de 30 recentes — é referência rápida, não histórico; paginação se precisar.
+  let antigosFinalizadosQ = cols(supabase.from("orders"))
+    .lt("created_at", from).in("status", ["delivered", "cancelled"]);
+  if (type === "delivery" || type === "pickup") antigosFinalizadosQ = antigosFinalizadosQ.eq("type", type);
+  const { data: antigosFinalizados, error: e2b } = await antigosFinalizadosQ
+    .order("created_at", { ascending: false }).limit(30);
+  if (e2b) throw new Error(e2b.message);
+
+  const orders = [
+    ...((antigosNaoFinalizados ?? []) as PanelRow[]),
+    ...((rows ?? []) as PanelRow[]),
+  ];
+  const anteriores = ((antigosFinalizados ?? []) as PanelRow[]);
 
   // eventos dos pedidos que mostram tempo-no-status (do período e anteriores)
   const ids = [...orders, ...anteriores]
@@ -376,18 +389,21 @@ export async function getPdv() {
   };
 }
 
-// Entregas (recon §4, sem mapa): prontas/em rota/concluídas hoje + couriers ativos.
+// Entregas (recon §4, sem mapa): não finalizadas (ready/out) de qualquer dia —
+// mesma janela do KPI e do kanban — + concluídas de hoje + couriers ativos.
 export async function getEntregas() {
   const { supabase, storeId } = await requireStore();
-  const [{ data: orders }, { data: couriers }, { data: routes }, { data: courierPositions }, { data: lojaRow }] = await Promise.all([
+  const [{ data: naoFinalizadas }, { data: concluidasHoje }, { data: couriers }, { data: routes }, { data: courierPositions }, { data: lojaRow }] = await Promise.all([
     supabase.from("orders").select(ORDER_COLS + ",address").eq("store_id", storeId)
-      .in("status", ["ready", "out", "delivered"])
-      .gte("created_at", manausDayStartISO()).order("created_at", { ascending: false }),
+      .in("status", ["ready", "out"]).order("created_at", { ascending: false }),
+    supabase.from("orders").select(ORDER_COLS + ",address").eq("store_id", storeId)
+      .eq("status", "delivered").gte("created_at", manausDayStartISO()).order("created_at", { ascending: false }),
     supabase.from("couriers").select("id,name,phone,active,user_id").eq("store_id", storeId).eq("active", true).order("name"),
     supabase.from("routes").select("id,courier_id,status").eq("store_id", storeId).eq("status", "open"),
     supabase.from("courier_positions").select("courier_id,lat,lng,atualizado_em,couriers(name)").eq("store_id", storeId),
     supabase.from("stores").select("lat,lng").eq("id", storeId).single(),
   ]);
+  const orders = [...(naoFinalizadas ?? []), ...(concluidasHoje ?? [])] as unknown as PanelRow[];
   const now = Date.now();
   const routesList = (routes ?? []) as { id: string; courier_id: string; status: string }[];
   const routeIds = routesList.map((r) => r.id);

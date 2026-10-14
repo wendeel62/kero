@@ -32,6 +32,7 @@ export default function Entregas() {
   const [novoMotoboy, setNovoMotoboy] = useState(false);
   const [motoboyForm, setMotoboyForm] = useState({ name: "", phone: "", email: "", password: "" });
   const [salvando, setSalvando] = useState(false);
+  const [motoboyError, setMotoboyError] = useState("");
   const [storeId, setStoreId] = useState<string | null>(null);
   const [courierPositions, setCourierPositions] = useState<EntregasData["courierPositions"]>([]);
 
@@ -114,7 +115,7 @@ export default function Entregas() {
           </article>
         ))}
         {orders.length === 0 && (
-          <p className="text-center text-xs text-[var(--muted)] py-6">coluna zerada ✓</p>
+          <p className="text-center text-xs text-[var(--pill-ink)] py-6">coluna zerada ✓</p>
         )}
       </div>
     </section>
@@ -125,9 +126,9 @@ export default function Entregas() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-extrabold">Entregas</h1>
-          <p className="text-xs text-[var(--muted)] mt-0.5">Prontas, em rota e concluídas hoje.</p>
+          <p className="text-xs text-[var(--muted)] mt-0.5">Prontas e em rota: não finalizadas, qualquer dia · concluídas: hoje.</p>
         </div>
-        <button onClick={() => { setNovoMotoboy(true); setError(""); }}
+        <button onClick={() => { setNovoMotoboy(true); setError(""); setMotoboyError(""); }}
           className="btn btn--primary !min-h-0 px-4 py-2 text-[13px] font-extrabold shrink-0">
           Novo motoboy
         </button>
@@ -138,6 +139,13 @@ export default function Entregas() {
       {data.mapPoints.length > 0 && !assignId && (
         <div className="mt-4">
           <DeliveryMap points={data.mapPoints} couriers={courierPositions} loja={data.loja} />
+        </div>
+      )}
+      {data.mapPoints.length === 0 && (
+        <div className="mt-4 card py-10 text-center anim-rise">
+          <p className="text-2xl" aria-hidden>🗺️</p>
+          <p className="text-sm font-bold mt-1.5">Nenhuma entrega no mapa agora</p>
+          <p className="text-xs text-[var(--pill-ink)] mt-0.5">Pedidos em rota aparecem aqui automaticamente.</p>
         </div>
       )}
 
@@ -186,16 +194,17 @@ export default function Entregas() {
               <input value={motoboyForm.password} onChange={(e) => setMotoboyForm({ ...motoboyForm, password: e.target.value })}
                 placeholder="Senha (mín. 8 caracteres)" type="password" className="input w-full" />
             </div>
+            {motoboyError && <p className="text-xs font-bold text-[var(--red)] mt-1.5">{motoboyError}</p>}
             <button onClick={() => {
-              const f = motoboyForm;
-              setMotoboyForm({ name: "", phone: "", email: "", password: "" });
-              setNovoMotoboy(false);
+              setMotoboyError("");
               setSalvando(true);
-              void criarMotoboy(f).then((r) => {
+              void criarMotoboy(motoboyForm).then((r) => {
                 setSalvando(false);
-                if (!r.ok) { setError(r.error ?? "Erro ao cadastrar."); return; }
+                if (!r.ok) { setMotoboyError(r.error ?? "Erro ao cadastrar."); return; }
+                setMotoboyForm({ name: "", phone: "", email: "", password: "" });
+                setNovoMotoboy(false);
                 load();
-              });
+              }).catch(() => { setSalvando(false); setMotoboyError("Erro ao cadastrar. Tente de novo."); });
             }} disabled={salvando}
               className="btn btn--primary w-full mt-4 py-3 text-sm font-extrabold disabled:opacity-50">
               {salvando ? "Salvando…" : "Cadastrar motoboy"}

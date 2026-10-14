@@ -173,7 +173,7 @@ export default function Kanban() {
       <div className="flex flex-wrap items-end gap-3 anim-rise">
         <p className="text-xs text-[var(--muted)] mt-0.5 flex items-center gap-1.5">
           <span className={`w-1.5 h-1.5 rounded-full ${live ? "bg-[var(--green)] live-dot" : "bg-[var(--amber)] animate-pulse"}`} />
-          {live ? "tempo real · não finalizados + hoje" : "Reconectando… (atualizando a cada 30s)"}
+          {live ? `tempo real · não finalizados + ${periodLabel.toLowerCase()}` : "Reconectando… (atualizando a cada 30s)"}
           {awaiting > 0 && <b className="text-[var(--red)]">· {awaiting} aguardando ação</b>}
         </p>
       </div>
@@ -253,14 +253,14 @@ export default function Kanban() {
                   );
                 })}
                 {list.length === 0 && (
-                  <p className="text-center text-xs text-[var(--muted)] py-6">coluna zerada ✓</p>
+                  <p className="text-center text-xs text-[var(--pill-ink)] py-6">coluna zerada ✓</p>
                 )}
               </div>
             </section>
           );
         })}
 
-        {/* Coluna "Anteriores" (D7): não finalizados criados antes do período */}
+        {/* Coluna "Anteriores": finalizados/cancelados criados antes do período */}
         {anteriores.length > 0 && (
           <section className="anim-rise snap-start shrink-0 w-[280px] rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-2)] p-2.5">
             <header className="flex items-center gap-2 px-1.5 py-1.5">

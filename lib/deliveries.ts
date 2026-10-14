@@ -1,5 +1,5 @@
-// Entregas (recon §4, sem mapa): prontas, em rota, concluídas hoje.
-// Motoboy "em rota" = rota aberta; assign reusa set_order_status (Trava A).
+// Entregas (recon §4, sem mapa): não finalizadas (ready/out) de qualquer dia
+// + concluídas de hoje. Motoboy "em rota" = rota aberta; assign reusa set_order_status (Trava A).
 import { distanciaLojaCliente, posicaoValida, type Coords } from "./geocode";
 
 export type Courier = { id: string; name: string; phone: string; active: boolean; vinculado: boolean };
