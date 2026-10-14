@@ -11,7 +11,7 @@ export const PAYMENT_PT: Record<string, string> = { cash: "Dinheiro", pix: "Pix"
 export type PanelOrder = {
   id: string; code: string; customer: string; minutesAgo: number;
   type: PanelType; payment: string; total_cents: number; status: PanelStatus;
-  statusMinutes: number;
+  statusMinutes: number; courierId?: string; distKm?: string;
 };
 
 // meia-noite de Manaus em ISO UTC (Manaus = UTC-4 fixo, sem horário de verão)
@@ -29,12 +29,13 @@ export type PanelRow = {
   payment_method: string; total_cents: number; status: PanelStatus; created_at: string;
 };
 
-export const toPanelOrder = (o: PanelRow, now = Date.now(), statusMinutes?: number): PanelOrder => ({
+export const toPanelOrder = (o: PanelRow, now = Date.now(), statusMinutes?: number, courierId?: string): PanelOrder => ({
   id: o.id, code: o.code, customer: o.customer_name,
   minutesAgo: Math.max(0, Math.round((now - new Date(o.created_at).getTime()) / 60000)),
   type: o.type, payment: PAYMENT_PT[o.payment_method] ?? o.payment_method,
   total_cents: o.total_cents, status: o.status,
   statusMinutes: statusMinutes ?? Math.max(0, Math.round((now - new Date(o.created_at).getTime()) / 60000)),
+  ...(courierId ? { courierId } : {}),
 });
 
 export type PanelItem = { name: string; qty: number; unit: number; addons: string[]; notes: string };
@@ -77,6 +78,7 @@ export type PanelSettings = {
   name: string; whatsapp: string; description: string; pix_key: string; logo_url: string | null;
   marquee_text: string; cover_url: string | null;
   min_order_cents: number; prep_time_min: number | null; prep_time_max: number | null;
+  lat: number | null; lng: number | null;
   open_hours: Record<string, [string, string][]>;
   hoods: { id: string; name: string; fee_cents: number; active: boolean }[];
   tables: { id: string; number: number; label: string; active: boolean }[];

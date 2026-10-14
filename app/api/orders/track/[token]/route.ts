@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { apiError, mapStatusError } from "@/lib/api-errors";
+import { distanciaLojaCliente } from "@/lib/geocode";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // Acompanhamento público do pedido (SPEC §12): cliente anônimo com o token.
@@ -32,6 +33,11 @@ export async function GET(
     .select("name_snapshot,unit_price_cents,qty,addons,notes")
     .eq("order_id", order.id);
 
+  // distância loja → cliente: só o número formatado sai daqui, nunca a
+  // coordenada da loja (a rota é pública p/ quem tem o token).
+  const { data: store } = await db.from("stores").select("lat,lng").eq("id", order.store_id).single();
+  const loja = store && store.lat != null && store.lng != null ? { lat: store.lat, lng: store.lng } : null;
+
   return NextResponse.json({
     code: order.code,
     status: order.status,
@@ -39,6 +45,7 @@ export async function GET(
     customer_name: order.customer_name,
     phone_masked: maskPhone(order.customer_phone),
     neighborhood: maskAddress(order.address),
+    distancia: distanciaLojaCliente(loja, order.address),
     notes: order.notes,
     items: (items ?? []).map((i) => ({
       name: i.name_snapshot,

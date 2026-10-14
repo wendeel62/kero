@@ -26,7 +26,14 @@ export default function PdvPage() {
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
-    getPdv().then(setData).catch(() => setError("Não foi possível carregar o PDV."));
+    getPdv().then((data) =>
+      setData({
+        products: data.products,
+        addons: data.addons,
+        tables: data.tables.map((t) => ({ ...t, number: Number(t.number) })),
+        activeByTable: data.activeByTable,
+      })
+    ).catch(() => setError("Não foi possível carregar o PDV."));
   }, []);
 
   const total = useMemo(
@@ -93,7 +100,14 @@ export default function PdvPage() {
     setCustomerName("");
     setCustomerPhone("");
     // recarrega mesas (a mesa escolhida fica ocupada)
-    getPdv().then(setData).catch(() => {});
+    getPdv().then((data) =>
+      setData({
+        products: data.products,
+        addons: data.addons,
+        tables: data.tables.map((t) => ({ ...t, number: Number(t.number) })),
+        activeByTable: data.activeByTable,
+      })
+    ).catch(() => {});
   };
 
   if (!data) {

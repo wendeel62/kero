@@ -30,3 +30,11 @@ test("mapPoints: extrai coords válidas e ignora as inválidas", () => {
   ]);
   expect(pts).toEqual([{ id: "a", code: "1", status: "out", lat: -3.1, lng: -60.0 }]);
 });
+
+test("mapPoints: com a loja, cada ponto ganha a distância loja → cliente", () => {
+  const pts = mapPoints(
+    [{ id: "a", code: "1", status: "out", address: { lat: -3.2, lng: -60.0 } }],
+    { lat: -3.1, lng: -60.0 },
+  );
+  expect(pts[0].distKm).toBe("11 km");
+});

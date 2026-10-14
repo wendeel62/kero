@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import "./_sidebar.css";
 import { getAwaitingCount, getStoreName } from "@/lib/painel";
-import Topbar from "./topbar";
 import RouteTransition from "@/components/route-transition";
 
 // Grupos no mesmo espírito do cardápio-digital (Operação / Gestão)
@@ -25,7 +24,6 @@ const GRUPOS = [
       { href: "/painel/cardapio", label: "Cardápio", icon: "cardapio" },
       { href: "/painel/clientes", label: "Clientes", icon: "pedidos" },
       { href: "/painel/configuracoes", label: "Config", icon: "config" },
-      { href: "/painel/relatorios", label: "Relatórios", icon: "hoje" },
       { href: "/painel/financeiro", label: "Financeiro", icon: "hoje" },
     ],
   },
@@ -190,7 +188,6 @@ export default function PainelShell({ children }: { children: React.ReactNode })
         </nav>
       </div>
       <div className="flex-1 min-w-0 flex flex-col">
-        <div className="hidden lg:block"><Topbar /></div>
         <RouteTransition>{children}</RouteTransition>
       </div>
     </div>

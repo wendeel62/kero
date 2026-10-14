@@ -35,6 +35,8 @@ const TABLE: Record<string, { status: number; message: string; code?: string }> 
   TOO_MANY_LINES: { status: 400, message: "Dados do pedido inválidos." },
   NOTES_TOO_LONG: { status: 400, message: "Dados do pedido inválidos." },
   CODE_EXHAUSTED: { status: 500, message: "Não foi possível gerar o código do pedido. Tente de novo." },
+  // promise_time lança quando a loja não definiu tempo de preparo (002 l.31)
+  STORE_NOT_CONFIGURED: { status: 503, message: "A loja ainda não está pronta para receber pedidos. Tente mais tarde." },
 };
 
 const isUuid = (s: string) =>

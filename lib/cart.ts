@@ -75,3 +75,30 @@ export function loadLastToken(slug: string): string | null {
     return null;
   }
 }
+
+// Dados do checkout por slug (sem conta de cliente): o próximo pedido vem
+// pré-preenchido. Só nome/telefone/endereço — nada de pagamento.
+export type CheckoutInfo = {
+  name: string; phone: string; street: string; number: string;
+  complement: string; cep: string; hoodId: string;
+};
+
+const infoKey = (slug: string) => `kero:info:v1:${slug}`;
+
+export function loadInfo(slug: string): Partial<CheckoutInfo> {
+  try {
+    const raw = localStorage.getItem(infoKey(slug));
+    const parsed = raw ? (JSON.parse(raw) as Partial<CheckoutInfo>) : null;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+export function saveInfo(slug: string, info: CheckoutInfo): void {
+  try {
+    localStorage.setItem(infoKey(slug), JSON.stringify(info));
+  } catch {
+    // storage cheio/bloqueado: segue sem salvar os dados do cliente
+  }
+}

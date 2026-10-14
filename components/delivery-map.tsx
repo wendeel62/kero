@@ -24,12 +24,22 @@ const scooterIcon = (nome: string, opaco = false) =>
     iconAnchor: [18, 18],
   });
 
+// ponto fixo da loja — a origem das entregas no mapa
+const lojaIcon = L.divIcon({
+  className: "",
+  html: '<div style="background:#111827;color:#fff;border-radius:9999px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:15px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)" title="Loja">&#x1F3EA;</div>',
+  iconSize: [30, 30],
+  iconAnchor: [15, 15],
+});
+
 export default function DeliveryMap({
   points,
   couriers,
+  loja,
 }: {
   points: MapPoint[];
   couriers?: CourierPin[];
+  loja?: { lat: number; lng: number } | null;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -37,7 +47,7 @@ export default function DeliveryMap({
 
   useEffect(() => {
     if (!ref.current || mapRef.current) return;
-    const map = L.map(ref.current, { center: [-3.10, -60.00], zoom: 13 });
+    const map = L.map(ref.current, { center: loja ? [loja.lat, loja.lng] : [-3.1, -60.0], zoom: loja ? 15 : 13 });
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
@@ -47,6 +57,7 @@ export default function DeliveryMap({
       mapRef.current = null;
       layerRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -57,10 +68,14 @@ export default function DeliveryMap({
     layerRef.current = layer;
 
     const latlngs: L.LatLngExpression[] = [];
+    if (loja) {
+      L.marker([loja.lat, loja.lng], { icon: lojaIcon }).addTo(layer).bindPopup("&#x1F3EA; Loja (origem)");
+      latlngs.push([loja.lat, loja.lng]);
+    }
     for (const p of points) {
       L.marker([p.lat, p.lng], { icon: pinIcon(p.code, "#d97706") })
         .addTo(layer)
-        .bindPopup(`#${p.code} — ${p.status}`);
+        .bindPopup(`#${p.code} — ${p.status}${p.distKm ? ` · ${p.distKm} da loja` : ""}`);
       latlngs.push([p.lat, p.lng]);
     }
     if (couriers) {
@@ -75,7 +90,7 @@ export default function DeliveryMap({
     if (latlngs.length > 0) {
       map.fitBounds(L.latLngBounds(latlngs).pad(0.15));
     }
-  }, [points, couriers]);
+  }, [points, couriers, loja]);
 
   return <div ref={ref} style={{ height: 320, borderRadius: 12 }} />;
 }

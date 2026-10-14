@@ -1,12 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { getSettings } from "@/lib/painel";
 import type { PanelSettings } from "@/lib/painel-utils";
-import { saveEntrega, saveHorarios, saveLoja, saveTables, saveTracking, setCoverUrl, setLogoUrl } from "@/lib/painel-actions";
+import { saveEntrega, saveHorarios, saveLocalizacaoLoja, saveLoja, saveTables, saveTracking, setCoverUrl, setLogoUrl } from "@/lib/painel-actions";
 import { createClient } from "@/lib/supabase/client";
 import { parseBRLToCents } from "@/lib/pricing";
 import ImageUploader from "@/components/ui/image-uploader";
+
+// mesmo pino arrastável do checkout, para marcar o ponto fixo da loja
+const CheckoutMap = dynamic(() => import("@/components/checkout-map"), {
+  ssr: false,
+  loading: () => <div style={{ height: 260 }} />,
+});
 
 type Tab = "loja" | "horarios" | "entrega" | "salao" | "rastreamento";
 type Range = { from: string; to: string };
@@ -44,6 +51,8 @@ export default function Configuracoes() {
   const [minOrder, setMinOrder] = useState("");
   const [prepMin, setPrepMin] = useState("");
   const [prepMax, setPrepMax] = useState("");
+  const [lojaCoords, setLojaCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoBusy, setGeoBusy] = useState(false);
   const [fbPixel, setFbPixel] = useState("");
   const [ga4Id, setGa4Id] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
@@ -69,6 +78,7 @@ export default function Configuracoes() {
       setMinOrder(centsStr(s.min_order_cents));
       setPrepMin(String(s.prep_time_min ?? ""));
       setPrepMax(String(s.prep_time_max ?? ""));
+      setLojaCoords(s.lat != null && s.lng != null ? { lat: s.lat, lng: s.lng } : null);
       setFbPixel(s.fb_pixel_id ?? "");
       setGa4Id(s.ga4_id ?? "");
     }).catch(() => setSettings(null));
@@ -150,6 +160,21 @@ export default function Configuracoes() {
       if (d.open && d.ranges.length > 0) open_hours[String(i)] = d.ranges.map((r) => [r.from, r.to]);
     });
     done("horarios", await saveHorarios(open_hours));
+  };
+
+  const usarMinhaLocalizacao = () => {
+    if (!navigator.geolocation) { setErrors(["Este navegador não expõe localização."]); return; }
+    setGeoBusy(true);
+    navigator.geolocation.getCurrentPosition(
+      (p) => { setGeoBusy(false); setLojaCoords({ lat: p.coords.latitude, lng: p.coords.longitude }); },
+      () => { setGeoBusy(false); setErrors(["Não conseguimos pegar sua localização — arraste o pino no mapa."]); },
+      { enableHighAccuracy: true, timeout: 15000 },
+    );
+  };
+
+  const saveLocalizacaoTab = async () => {
+    setSaving(true);
+    done("localizacao", await saveLocalizacaoLoja(lojaCoords?.lat ?? null, lojaCoords?.lng ?? null));
   };
 
   const saveEntregaTab = async () => {
@@ -350,6 +375,39 @@ export default function Configuracoes() {
 
       {tab === "entrega" && (
         <div className="mt-3 space-y-4">
+          <section className="bg-[var(--surface)] border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise">
+            <h2 className="font-extrabold">Localização da loja</h2>
+            <p className="text-xs text-[var(--muted)] mt-1">
+              Ponto fixo das entregas: é a origem da distância (painel, motoboy e cliente) e o pino de saída no mapa.
+              Sem ele o sistema não calcula distância. Arraste o pino ou use sua localização estando na loja.
+            </p>
+            <div className="mt-3">
+              <CheckoutMap
+                lat={lojaCoords?.lat ?? -3.1}
+                lng={lojaCoords?.lng ?? -60.0}
+                onChange={(la, ln) => setLojaCoords({ lat: la, lng: ln })}
+              />
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button onClick={usarMinhaLocalizacao} disabled={geoBusy}
+                className="border rounded-xl px-4 py-2 text-[13px] font-extrabold hover:bg-[var(--surface-2)] transition-colors disabled:opacity-50">
+                {geoBusy ? "Localizando…" : "Usar minha localização"}
+              </button>
+              {lojaCoords && (
+                <button onClick={() => setLojaCoords(null)}
+                  className="text-[13px] font-extrabold text-[var(--muted)] hover:text-[var(--red)] underline underline-offset-4 transition-colors">
+                  Limpar ponto
+                </button>
+              )}
+              <span className="text-xs text-[var(--muted)] tabular-nums ml-auto">
+                {lojaCoords ? `${lojaCoords.lat.toFixed(5)}, ${lojaCoords.lng.toFixed(5)}` : "sem ponto definido"}
+              </span>
+            </div>
+            <button onClick={saveLocalizacaoTab} disabled={saving} className="mt-4 w-full sm:w-auto bg-[var(--text)] hover:bg-[var(--pill-active-bg)] text-white font-extrabold rounded-2xl px-8 py-3 transition-all active:scale-[0.99] disabled:opacity-50">
+              {saving ? "Salvando…" : "Salvar localização"}
+            </button>
+          </section>
+
           <section className="bg-[var(--surface)] border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise">
             <h2 className="font-extrabold">Bairros e taxas</h2>
             {activeCount === 0 && (

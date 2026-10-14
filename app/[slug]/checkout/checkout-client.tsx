@@ -5,8 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { brl, type Addon, type Category, type Neighborhood, type Product, type Store } from "../menu-data";
-import { loadCart, saveCart, saveLastToken, type CartLine } from "@/lib/cart";
-import { lineTotal, meetsMinimum, subtotal as calcSubtotal, total as calcTotal, unitPrice, validateChange } from "@/lib/pricing";
+import { loadCart, loadInfo, saveCart, saveInfo, saveLastToken, type CartLine } from "@/lib/cart";
+import { lineTotal, meetsMinimum, resolveChangeCents, subtotal as calcSubtotal, total as calcTotal, unitPrice, validateChange } from "@/lib/pricing";
+import type { AddressSuggestion } from "@/lib/geocode";
 import { waLink } from "@/lib/wa";
 import PriceChangeDialog from "@/components/ui/price-change-dialog";
 
@@ -28,10 +29,6 @@ type OrderResult = {
 
 const MAX_NOTES = 300; // spec: obs do pedido ≤300 chars
 const onlyDigits = (s: string) => s.replace(/\D/g, "");
-const reaisToCents = (s: string) => {
-  const n = Number(s.replace(/\./g, "").replace(",", "."));
-  return Number.isFinite(n) ? Math.round(n * 100) : NaN;
-};
 
 export default function CheckoutClient({ store, storeId, categories, neighborhoods, addons, isOpen, opensAt }: {
   store: Store; storeId: string; categories: Category[]; neighborhoods: Neighborhood[]; addons: Addon[];
@@ -60,9 +57,21 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
   const [priceDiff, setPriceDiff] = useState<PriceDiff | null>(null);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [pinoConfirmado, setPinoConfirmado] = useState(false);
+  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     setLines(loadCart(store.slug));
+    // one-click: reaproveita os dados do último pedido feito neste aparelho
+    const info = loadInfo(store.slug);
+    if (info.name) setName(info.name);
+    if (info.phone) setPhone(info.phone);
+    if (info.street) setStreet(info.street);
+    if (info.number) setNumber(info.number);
+    if (info.complement) setComplement(info.complement);
+    if (info.cep) setCep(info.cep);
+    if (info.hoodId && neighborhoods.some((n) => n.id === info.hoodId && n.active)) setHoodId(info.hoodId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store.slug]);
 
   // Geocodifica endereço com debounce de 700ms — não dispara se o cliente já arrastou o pino
@@ -83,6 +92,38 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
     }, 700);
     return () => clearTimeout(timer);
   }, [cep, street, number, pinoConfirmado, hoodId]);
+
+  // Sugestões de rua enquanto digita (debounce 300ms). Os bairros da loja
+  // enviesam a busca p/ a região — sem isso viriam ruas de todo o Brasil.
+  useEffect(() => {
+    if (street.trim().length < 3) {
+      setSuggestions([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const hoods = activeHoods.map((n) => n.name).join(" ");
+        const res = await fetch(`/api/geo/autocomplete?q=${encodeURIComponent(street)}&hood=${encodeURIComponent(hoods)}`);
+        if (!res.ok) return;
+        const data = (await res.json()) as { suggestions?: AddressSuggestion[] };
+        setSuggestions(data.suggestions ?? []);
+      } catch {
+        // rede falhou — segue sem sugestões
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [street]);
+
+  const pickSuggestion = (s: AddressSuggestion) => {
+    setStreet(s.street || street);
+    if (s.number) setNumber(s.number);
+    if (s.cep.length === 8) setCep(s.cep);
+    const hood = activeHoods.find((h) => h.name.toLowerCase() === s.neighborhood.toLowerCase());
+    if (hood) setHoodId(hood.id);
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
 
   const addonPrice = useMemo(() => new Map(addons.map((a) => [a.id, a.price_cents] as const)), [addons]);
   const pricesOf = (ids: string[]) => ids.map((id) => addonPrice.get(id) ?? 0);
@@ -117,7 +158,7 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
       customer_phone: onlyDigits(phone),
       type: fulfillment,
       payment_method: payment,
-      change_for_cents: payment === "cash" ? reaisToCents(changeFor) : null,
+      change_for_cents: payment === "cash" ? resolveChangeCents(changeFor, totalCents) : null,
       notes: notes || null,
       address: fulfillment === "delivery"
         ? {
@@ -158,6 +199,7 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
       const body = (await res.json().catch(() => null)) as OrderResult | null;
       if (res.status === 201 && body?.tracking_token) {
         saveCart(store.slug, []);
+        saveInfo(store.slug, { name, phone, street, number, complement, cep, hoodId });
         saveLastToken(store.slug, body.tracking_token);
         router.push(`/${store.slug}/pedido/${body.tracking_token}`);
         return;
@@ -207,8 +249,8 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
       if (onlyDigits(cep).length !== 8) errs.push("CEP obrigatório com 8 dígitos.");
       if (!coords) errs.push("Confirme o ponto de entrega no mapa.");
     }
-    if (payment === "cash") {
-      const cf = reaisToCents(changeFor);
+    if (payment === "cash" && changeFor.trim() !== "") {
+      const cf = resolveChangeCents(changeFor, total);
       if (!Number.isFinite(cf)) errs.push("Troco: digite o valor em R$.");
       else if (!validateChange(payment, cf, total).ok) errs.push("TROCO_INSUFICIENTE — o troco precisa cobrir o total.");
     }
@@ -296,9 +338,25 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
               {fulfillment === "delivery" && (
                 <div className="grid sm:grid-cols-2 gap-3 mt-3">
                   <div className="sm:col-span-2 grid grid-cols-[1fr_110px] gap-3">
-                    <div>
+                    <div className="relative">
                       <label htmlFor="rua" className={label}>Rua / Avenida</label>
-                      <input id="rua" value={street} onChange={(e) => setStreet(e.target.value)} placeholder="Rua das Flores" className={`${input} mt-1`} />
+                      <input id="rua" value={street} onChange={(e) => { setStreet(e.target.value); setShowSuggestions(true); }}
+                        onFocus={() => setShowSuggestions(suggestions.length > 0)}
+                        onBlur={() => setShowSuggestions(false)}
+                        placeholder="Rua das Flores" autoComplete="off" className={`${input} mt-1`} />
+                      {showSuggestions && suggestions.length > 0 && (
+                        <ul className="absolute z-30 left-0 right-0 mt-1 bg-white border rounded-xl shadow-lg max-h-60 overflow-y-auto text-sm">
+                          {suggestions.map((s, i) => (
+                            <li key={`${s.label}-${i}`}>
+                              <button type="button" onMouseDown={(e) => { e.preventDefault(); pickSuggestion(s); }}
+                                className="w-full text-left px-3 py-2 hover:bg-stone-50 border-b last:border-b-0">
+                                <span className="font-bold">{s.street || s.label}</span>
+                                <span className="block text-[11px] text-stone-500">{s.label}{s.cep && ` · CEP ${s.cep}`}</span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                     <div>
                       <label htmlFor="num" className={label}>Número</label>
@@ -328,6 +386,7 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
                         lat={coords?.lat ?? -3.10}
                         lng={coords?.lng ?? -60.00}
                         onChange={(la, ln) => { setCoords({ lat: la, lng: ln }); setPinoConfirmado(true); }}
+                        onInteract={() => setPinoConfirmado(true)}
                       />
                     </div>
                   </div>
@@ -354,7 +413,7 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
                   <label htmlFor="troco" className={label}>Troco para quanto? (R$)</label>
                   <input id="troco" value={changeFor} onChange={(e) => setChangeFor(e.target.value)} placeholder="Ex: 100,00" inputMode="decimal"
                     className={`${input} mt-1 max-w-[200px]`} />
-                  <p className="text-[11px] text-stone-400 mt-1">Precisa cobrir o total de {brl(total)}.</p>
+                  <p className="text-[11px] text-stone-400 mt-1">Em branco = valor exato ({brl(total)}). Com nota, informe um valor ≥ esse.</p>
                 </div>
               )}
             </section>

@@ -11,6 +11,7 @@ import { waLink } from "@/lib/wa";
 type TrackOrder = {
   code: string; status: OrderStatus; type: "delivery" | "pickup";
   customer_name: string; phone_masked: string; neighborhood: string | null; notes: string | null;
+  distancia: string | null;
   items: { name: string; qty: number; unit_price_cents: number; addons: { name: string; price_cents: number }[]; notes: string | null }[];
   subtotal_cents: number; delivery_fee_cents: number; total_cents: number;
   payment_method: string; change_for_cents: number | null;
@@ -180,7 +181,7 @@ export default function PedidoClient({ store, token }: { store: Store; token: st
         <section className="mt-4 bg-white border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise" style={{ animationDelay: "120ms" }}>
           <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
             <p><span className="text-stone-400">Quem recebe:</span> <b>{order.customer_name}</b> <span className="text-stone-400">{order.phone_masked}</span></p>
-            <p><span className="text-stone-400">{order.type === "delivery" ? "Entrega em:" : "Retirada ·"}</span> <b>{order.type === "delivery" ? (order.neighborhood ?? "—") : store.name}</b></p>
+            <p><span className="text-stone-400">{order.type === "delivery" ? "Entrega em:" : "Retirada ·"}</span> <b>{order.type === "delivery" ? (order.neighborhood ?? "—") : store.name}</b>{order.type === "delivery" && order.distancia && <span className="text-stone-500"> · {order.distancia} da loja</span>}</p>
             <p><span className="text-stone-400">Pagamento:</span> <b>{PAY[order.payment_method] ?? order.payment_method}</b>{changeLabel && <span className="text-stone-500"> ({changeLabel})</span>}</p>
             <p><span className="text-stone-400">Total:</span> <b className="tabular-nums">{brl(order.total_cents)}</b></p>
           </div>

@@ -9,6 +9,7 @@ import { requireStore } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { GoalPeriod } from "./goals";
 import { sanitizeTrackingId } from "./tracking";
+import { posicaoValida } from "./geocode";
 
 
 const err = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -248,6 +249,19 @@ export async function saveLoja(input: {
       description: input.description.trim() || null, pix_key: input.pix_key.trim() || null,
       marquee_text: input.marquee_text.trim() || null,
     }).eq("id", storeId);
+    return { error };
+  });
+}
+
+// Localização da loja (ponto fixo das entregas). null nos dois limpa o pino.
+export async function saveLocalizacaoLoja(lat: number | null, lng: number | null): Promise<R> {
+  if ((lat === null) !== (lng === null)) return { ok: false, error: "Informe latitude e longitude juntas." };
+  if (lat !== null && lng !== null && !posicaoValida(lat, lng)) {
+    return { ok: false, error: "Coordenada fora do range válido." };
+  }
+  const { supabase, storeId } = await requireStore();
+  return mutate("/painel/configuracoes", async () => {
+    const { error } = await supabase.from("stores").update({ lat, lng }).eq("id", storeId);
     return { error };
   });
 }

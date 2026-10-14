@@ -17,6 +17,7 @@ import type { AddonGroupRow } from "./addon-groups";
 import { activeTableOrder } from "./pdv";
 import { entregasEmAndamento } from "./kpis";
 import { boardColumns, courierOnRoute, mapPoints } from "./deliveries";
+import { distanciaLojaCliente, type Coords } from "./geocode";
 
 const ORDER_COLS = "id,code,customer_name,type,payment_method,total_cents,status,created_at";
 
@@ -187,7 +188,7 @@ export async function getFicha(id: string): Promise<{ ficha: FichaData | null }>
 export async function getSettings(): Promise<{ settings: PanelSettings | null }> {
   const { supabase, storeId } = await requireStore();
   const [{ data: store }, { data: hoods }, { data: tables }, { data: busyOrders }, { data: tracking }] = await Promise.all([
-    supabase.from("stores").select("name,whatsapp,description,pix_key,logo_url,marquee_text,cover_url,min_order_cents,prep_time_min,prep_time_max,open_hours")
+    supabase.from("stores").select("name,whatsapp,description,pix_key,logo_url,marquee_text,cover_url,min_order_cents,prep_time_min,prep_time_max,lat,lng,open_hours")
       .eq("id", storeId).single(),
     supabase.from("neighborhoods").select("id,name,fee_cents,active").eq("store_id", storeId).order("name"),
     supabase.from("dine_tables").select("id,number,label,active").eq("store_id", storeId).order("number"),
@@ -209,6 +210,8 @@ export async function getSettings(): Promise<{ settings: PanelSettings | null }>
       min_order_cents: (store.min_order_cents as number) ?? 0,
       prep_time_min: (store.prep_time_min as number | null) ?? null,
       prep_time_max: (store.prep_time_max as number | null) ?? null,
+      lat: (store.lat as number | null) ?? null,
+      lng: (store.lng as number | null) ?? null,
       open_hours: (store.open_hours as PanelSettings["open_hours"]) ?? {},
       hoods: ((hoods ?? []) as PanelSettings["hoods"]).map((h) => ({ ...h })),
       tables: ((tables ?? []) as PanelSettings["tables"]).map((t) => ({ ...t })),
@@ -376,13 +379,14 @@ export async function getPdv() {
 // Entregas (recon §4, sem mapa): prontas/em rota/concluídas hoje + couriers ativos.
 export async function getEntregas() {
   const { supabase, storeId } = await requireStore();
-  const [{ data: orders }, { data: couriers }, { data: routes }, { data: courierPositions }] = await Promise.all([
+  const [{ data: orders }, { data: couriers }, { data: routes }, { data: courierPositions }, { data: lojaRow }] = await Promise.all([
     supabase.from("orders").select(ORDER_COLS + ",address").eq("store_id", storeId)
       .in("status", ["ready", "out", "delivered"])
       .gte("created_at", manausDayStartISO()).order("created_at", { ascending: false }),
     supabase.from("couriers").select("id,name,phone,active,user_id").eq("store_id", storeId).eq("active", true).order("name"),
     supabase.from("routes").select("id,courier_id,status").eq("store_id", storeId).eq("status", "open"),
     supabase.from("courier_positions").select("courier_id,lat,lng,atualizado_em,couriers(name)").eq("store_id", storeId),
+    supabase.from("stores").select("lat,lng").eq("id", storeId).single(),
   ]);
   const now = Date.now();
   const routesList = (routes ?? []) as { id: string; courier_id: string; status: string }[];
@@ -394,7 +398,21 @@ export async function getEntregas() {
       if (s.route_id === r.id) orderCourier.set(s.order_id, r.courier_id);
     }
   }
-  const panelOrders = ((orders ?? []) as unknown as PanelRow[]).map((o) => toPanelOrder(o, now, undefined, orderCourier.get(o.id)));
+  // ponto fixo da loja (origem das entregas): sem ele não há distância a mostrar
+  const loja: Coords | null =
+    lojaRow && lojaRow.lat != null && lojaRow.lng != null
+      ? { lat: lojaRow.lat as number, lng: lojaRow.lng as number }
+      : null;
+  const distById = new Map<string, string>();
+  if (loja) {
+    for (const o of (orders ?? []) as unknown as { id: string; address: unknown }[]) {
+      const d = distanciaLojaCliente(loja, o.address);
+      if (d) distById.set(o.id, d);
+    }
+  }
+  const panelOrders = ((orders ?? []) as unknown as PanelRow[]).map((o) => ({
+    ...toPanelOrder(o, now, undefined, orderCourier.get(o.id)), distKm: distById.get(o.id),
+  }));
   const cols = boardColumns(panelOrders);
   const onRoute = courierOnRoute(
     (couriers ?? []) as { id: string }[],
@@ -411,7 +429,8 @@ export async function getEntregas() {
     couriers: ((couriers ?? []) as { id: string; name: string; phone: string; active: boolean; user_id: string | null }[]).map((c) => ({ ...c, vinculado: c.user_id != null })),
     courierOnRoute: onRoute,
     routeIdPorCourier,
-    mapPoints: mapPoints(outOrders as unknown as { id: string; code: string; status: string; address: unknown }[]),
+    loja,
+    mapPoints: mapPoints(outOrders as unknown as { id: string; code: string; status: string; address: unknown }[], loja),
     courierPositions: ((courierPositions ?? []) as { courier_id: string; lat: number; lng: number; atualizado_em: string; couriers: { name: string }[] }[])
       .map((p) => ({ courierId: p.courier_id, nome: p.couriers[0]?.name ?? "", lat: p.lat, lng: p.lng, atualizadoEm: p.atualizado_em })),
   };

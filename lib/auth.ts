@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { createClient } from "./supabase/server";
-import { createClient as createBrowserClient } from "@/lib/supabase/client";
 
 type Profile = { role: "loja" | "admin"; store_id: string | null };
 
@@ -60,9 +59,10 @@ export async function requireAdminApi() {
   return { supabase, userId: user.id };
 }
 
-// Guard do painel do motoboy (client-side; usa browser client p/ auth em rota pública).
+// Guard do painel do motoboy. Roda no SERVER (Server Component), então precisa do
+// server client — o browser client não lê cookies no servidor e getUser() volta null.
 export async function requireCourier() {
-  const supabase = await createBrowserClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

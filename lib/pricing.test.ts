@@ -1,7 +1,7 @@
 // R$ → centavos int (nunca float) — usado por price-input e config.
 import { expect, test } from "vitest";
 
-import { parseBRLToCents } from "./pricing";
+import { parseBRLToCents, resolveChangeCents } from "./pricing";
 
 test("parseBRLToCents: vírgula decimal, ponto de milhar", () => {
   expect(parseBRLToCents("49,90")).toBe(4990);
@@ -14,4 +14,12 @@ test("parseBRLToCents: inválido → NaN", () => {
   expect(parseBRLToCents("")).toBeNaN();
   expect(parseBRLToCents("abc")).toBeNaN();
   expect(parseBRLToCents("-5,00")).toBeNaN();
+});
+
+// troco em branco = cliente paga o valor exato (change_for = total)
+test("resolveChangeCents: em branco → total; preenchido → centavos; lixo → NaN", () => {
+  expect(resolveChangeCents("", 15470)).toBe(15470);
+  expect(resolveChangeCents("   ", 15470)).toBe(15470);
+  expect(resolveChangeCents("100,00", 15470)).toBe(10000);
+  expect(resolveChangeCents("abc", 15470)).toBeNaN();
 });

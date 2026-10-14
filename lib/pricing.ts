@@ -32,6 +32,12 @@ export function parseBRLToCents(raw: string): number {
   return Math.round(n * 100);
 }
 
+// Campo de troco em branco = cliente paga o valor exato: resolve p/ o total
+// (change_for = total ⇒ troco 0). Preenchido → centavos (inválido → NaN).
+export function resolveChangeCents(raw: string, totalCents: number): number {
+  return raw.trim() === "" ? totalCents : parseBRLToCents(raw);
+}
+
 // Troco (SPEC §2.30): cash exige change_for ≥ total; demais métodos → null. Echo do valor p/ manter o campo na UI.
 export function validateChange(
   paymentMethod: string,

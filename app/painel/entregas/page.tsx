@@ -21,6 +21,7 @@ type EntregasData = {
   courierOnRoute: Set<string>;
   routeIdPorCourier: Record<string, string>;
   mapPoints: MapPoint[];
+  loja: { lat: number; lng: number } | null;
   courierPositions: { courierId: string; nome: string; lat: number; lng: number; atualizadoEm: string }[];
 };
 
@@ -89,6 +90,7 @@ export default function Entregas() {
             <div className="flex flex-wrap gap-1 mt-1.5">
               <span className="text-[11px] font-bold bg-[var(--pill-bg)] rounded-full px-2 py-0.5">{o.type === "delivery" ? "Entrega" : "Retirada"}</span>
               <span className="text-[11px] font-bold bg-[var(--pill-bg)] rounded-full px-2 py-0.5">{o.payment}</span>
+              {o.distKm && <span className="text-[11px] font-bold bg-[var(--pill-bg)] rounded-full px-2 py-0.5">📍 {o.distKm} da loja</span>}
             </div>
             <p className="font-extrabold tabular-nums mt-1.5">{brl(o.total_cents)}</p>
             {o.status === "out" && (() => {
@@ -135,7 +137,7 @@ export default function Entregas() {
 
       {data.mapPoints.length > 0 && !assignId && (
         <div className="mt-4">
-          <DeliveryMap points={data.mapPoints} couriers={courierPositions} />
+          <DeliveryMap points={data.mapPoints} couriers={courierPositions} loja={data.loja} />
         </div>
       )}
 

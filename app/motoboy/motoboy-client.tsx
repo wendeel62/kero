@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { posicaoValida } from "@/lib/geocode";
+import { posicaoValida, distanciaLojaCliente } from "@/lib/geocode";
 
 type Address = {
   street?: string;
@@ -32,9 +32,10 @@ type Props = {
   storeId: string;
   route: Route | null;
   stops: Stop[];
+  loja: { lat: number; lng: number } | null;
 };
 
-export default function MotoboyClient({ courierId, storeId, route, stops }: Props) {
+export default function MotoboyClient({ courierId, storeId, route, stops, loja }: Props) {
   const [tracking, setTracking] = useState(false);
   const [gpsBadge, setGpsBadge] = useState<"on" | "off" | "denied">("off");
   const [error, setError] = useState("");
@@ -168,6 +169,7 @@ export default function MotoboyClient({ courierId, storeId, route, stops }: Prop
                 const lat = addr?.lat;
                 const lng = addr?.lng;
                 const hasCoords = posicaoValida(lat ?? NaN, lng ?? NaN);
+                const dist = distanciaLojaCliente(loja, addr);
                 const label = [
                   addr?.street,
                   addr?.number,
@@ -183,10 +185,13 @@ export default function MotoboyClient({ courierId, storeId, route, stops }: Prop
                       {addr?.reference && (
                         <p className="text-[11px] text-stone-500">Ref: {addr.reference}</p>
                       )}
+                      {dist && (
+                        <p className="text-[11px] text-stone-500">📍 {dist} da loja</p>
+                      )}
                     </div>
                     {hasCoords && (
                       <a
-                        href={`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`}
+                        href={`https://www.google.com/maps/dir/?api=1${loja ? `&origin=${loja.lat},${loja.lng}` : ""}&destination=${lat},${lng}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[12px] font-bold text-red-600 hover:text-red-700 underline"

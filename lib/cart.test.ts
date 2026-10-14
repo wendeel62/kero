@@ -2,8 +2,8 @@
 import { expect, test } from "vitest";
 
 import {
-  addLine, countItems, loadCart, loadLastToken, MAX_LINES, removeLine, saveCart,
-  saveLastToken, setQty, type CartLine,
+  addLine, countItems, loadCart, loadInfo, loadLastToken, MAX_LINES, removeLine, saveCart,
+  saveInfo, saveLastToken, setQty, type CartLine,
 } from "./cart";
 
 const line = (over: Partial<CartLine> = {}): CartLine => ({
@@ -44,4 +44,11 @@ test("sem localStorage (SSR): load [] e save no-op", () => {
 test("sem localStorage (SSR): token do último pedido null e save no-op", () => {
   expect(loadLastToken("x")).toBeNull();
   expect(() => saveLastToken("x", "tok")).not.toThrow();
+});
+
+test("sem localStorage (SSR): dados do checkout {} e save no-op", () => {
+  expect(loadInfo("x")).toEqual({});
+  expect(() =>
+    saveInfo("x", { name: "A", phone: "9299", street: "Rua A", number: "10", complement: "", cep: "69000000", hoodId: "h1" }),
+  ).not.toThrow();
 });
