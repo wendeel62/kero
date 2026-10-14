@@ -389,7 +389,7 @@ export async function getPdv() {
 }
 
 // Entregas (recon §4, sem mapa): não finalizadas (ready/out) de qualquer dia —
-// mesma janela do KPI e do kanban — + concluídas de hoje + couriers ativos.
+// mesma janela do kanban (a do KPI é a do período/hoje) — + concluídas de hoje + couriers ativos.
 export async function getEntregas() {
   const { supabase, storeId } = await requireStore();
   const [{ data: naoFinalizadas }, { data: concluidasHoje }, { data: couriers }, { data: routes }, { data: courierPositions }, { data: lojaRow }] = await Promise.all([

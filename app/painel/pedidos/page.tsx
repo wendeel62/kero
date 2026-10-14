@@ -270,17 +270,11 @@ export default function Kanban() {
             </header>
             <div className="space-y-2">
               {anteriores.map((o) => {
-                const late = o.status === "new" ? o.statusMinutes > 10 : o.statusMinutes > 30;
                 const next = nextStatus(o);
                 return (
-                  <article key={`${o.id}-${o.status}`} className={`card p-3.5 ${late ? "border-[var(--red)]" : ""}`}>
+                  <article key={`${o.id}-${o.status}`} className="card p-3.5">
                     <div className="flex items-center gap-2">
                       <span className="font-extrabold text-sm bg-[var(--pill-bg)] rounded-lg px-2 py-0.5">#{o.code}</span>
-                      {late ? (
-                        <span className="text-[11px] font-extrabold text-[var(--red)]">há {o.statusMinutes} min 🔴</span>
-                      ) : (
-                        <span className="text-[11px] font-medium text-[var(--muted)] tabular-nums">há {o.statusMinutes} min</span>
-                      )}
                       <Link href={`/painel/pedidos/${o.id}`} aria-label={`Detalhe do pedido ${o.code}`}
                         className="ml-auto text-[var(--muted)] hover:text-[var(--text)] font-bold transition-colors">›</Link>
                     </div>

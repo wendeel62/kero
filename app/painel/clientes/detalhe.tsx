@@ -17,6 +17,15 @@ const PROFILE_TINT: Record<Customer["profile"], string> = {
 
 const daysAgo = (iso: string) => Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000));
 
+// mesmos helpers da lista (clientes/page.tsx) — drawer e lista coerentes
+const fmtPhone = (p: string) =>
+  p.length === 11 ? `(${p.slice(0, 2)}) ${p.slice(2, 7)}-${p.slice(7)}`
+  : p.length === 10 ? `(${p.slice(0, 2)}) ${p.slice(2, 6)}-${p.slice(6)}` : p;
+const ultimoPedido = (iso: string) => {
+  const d = daysAgo(iso);
+  return d === 0 ? "último: hoje" : `último há ${d} ${d === 1 ? "dia" : "dias"}`;
+};
+
 export default function ClienteDetalhe({ customer, pedidos }: { customer: Customer; pedidos: PanelOrder[] }) {
   const router = useRouter();
 
@@ -38,7 +47,7 @@ export default function ClienteDetalhe({ customer, pedidos }: { customer: Custom
           </span>
           <div className="min-w-0 flex-1">
             <p className="font-extrabold truncate">{customer.name}</p>
-            <p className="text-xs text-[var(--muted)]">{customer.phone}</p>
+            <p className="text-xs text-[var(--muted)]">{fmtPhone(customer.phone)}</p>
           </div>
           <span className={`text-[10px] font-extrabold rounded-full px-2 py-0.5 ${PROFILE_TINT[customer.profile]}`}>{PROFILE_LABEL[customer.profile]}</span>
           <button
@@ -58,7 +67,7 @@ export default function ClienteDetalhe({ customer, pedidos }: { customer: Custom
             <p className="text-[10px] text-[var(--muted)]">total gasto</p>
           </div>
           <div className="rounded-xl border border-[var(--border)] p-2.5 text-center">
-            <p className="font-extrabold tabular-nums">{daysAgo(customer.lastOrderAt)} d</p>
+            <p className="font-extrabold tabular-nums">{ultimoPedido(customer.lastOrderAt)}</p>
             <p className="text-[10px] text-[var(--muted)]">último pedido</p>
           </div>
         </div>

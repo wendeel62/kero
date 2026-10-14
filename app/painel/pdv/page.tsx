@@ -270,7 +270,7 @@ export default function PdvPage() {
 
       {/* Barra fixa: feedback imediato — o carrinho fica abaixo da dobra */}
       {cart.length > 0 && (
-        <div className="fixed bottom-0 inset-x-0 z-40 px-4 pb-4 pointer-events-none">
+        <div className="fixed bottom-0 inset-x-0 lg:left-14 z-40 px-4 pb-4 pointer-events-none">
           <div className="card pointer-events-auto flex items-center justify-between gap-3">
             <span className="text-sm font-bold truncate">
               🛒 {itemCount} {itemCount === 1 ? "item" : "itens"} · Total {brl(total)}

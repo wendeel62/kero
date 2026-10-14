@@ -169,7 +169,7 @@ export default function Financeiro() {
 
       <div className="mt-4 flex items-center gap-2">
         <PeriodFilter size="sm" period={kind} range={range} onPeriod={(k) => setPeriod(k)} onRange={setRange} />
-        {loading && <span className="text-xs text-[var(--muted)]">atualizando…</span>}
+        {loading && data && <span className="text-xs text-[var(--muted)]">atualizando…</span>}
       </div>
 
       {error && <div className="card mt-4 p-4 text-sm text-[var(--red)]">{error}</div>}
