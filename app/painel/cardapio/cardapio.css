@@ -539,6 +539,8 @@
 @media (max-width: 1024px) {
   .cfg-layout {
     flex-direction: column;
+    /* neutraliza o align-items:start da base para o painel ocupar a largura total em coluna */
+    align-items: stretch;
   }
   .cfg-subnav {
     width: 100%;

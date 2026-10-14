@@ -440,20 +440,25 @@ function CategoriaSidebar({
 
   const salvar = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (nome.trim().length < 2 || salvando) return;
+    if (nome.trim().length < 2 || salvando) {
+      setErro("Nome com pelo menos 2 letras.");
+      return;
+    }
     setSalvando(true);
     setErro("");
     try {
       if (mode.type === "editar-categoria") {
         const r = await updateCategory(mode.cat.id, { name: nome.trim(), ativo, ordem: parseInt(ordem) || 0 });
-        if (!r.ok) { setErro(r.error ?? "erro"); setSalvando(false); return; }
+        if (!r.ok) { setErro(r.error ?? "erro"); return; }
       } else {
         const r = await addCategory(nome.trim(), parseInt(ordem) || 0);
-        if (!r.ok) { setErro(r.error ?? "erro"); setSalvando(false); return; }
+        if (!r.ok) { setErro(r.error ?? "erro"); return; }
       }
       await onSaved();
+      onClose();
     } catch {
       setErro("erro interno");
+    } finally {
       setSalvando(false);
     }
   };
@@ -536,13 +541,13 @@ function ProdutoSidebar({
           price_cents: cents, sort_order: parseInt(ordem) || 0, active: ativo,
           addonIds: Array.from(checked),
         });
-        if (!r.ok) { setErro(r.error ?? "erro"); setSalvando(false); return; }
+        if (!r.ok) { setErro(r.error ?? "erro"); return; }
         id = r.id ?? id;
         const { createClient } = await import("@/lib/supabase/client");
         const supabase = createClient();
         const path = `products/${storeId}/${id}.webp`;
         const { error: upErr } = await supabase.storage.from("store-assets").upload(path, blob, { upsert: true, contentType: "image/webp" });
-        if (upErr) { setErro("Falha no upload da imagem."); setSalvando(false); return; }
+        if (upErr) { setErro("Falha no upload da imagem."); return; }
         const { data: pub } = supabase.storage.from("store-assets").getPublicUrl(path);
         await setProductImageUrl(id!, pub.publicUrl);
         setBlob(null);
@@ -552,11 +557,13 @@ function ProdutoSidebar({
           price_cents: cents, sort_order: parseInt(ordem) || 0, active: ativo,
           addonIds: Array.from(checked),
         });
-        if (!r.ok) { setErro(r.error ?? "erro"); setSalvando(false); return; }
+        if (!r.ok) { setErro(r.error ?? "erro"); return; }
       }
       await onSaved();
+      onClose();
     } catch {
       setErro("erro interno");
+    } finally {
       setSalvando(false);
     }
   };
@@ -666,14 +673,16 @@ function ComplementoSidebar({
     try {
       if (edit) {
         const r = await updateAddon(edit.id, { name: nome.trim(), price_cents: cents, active: ativo });
-        if (!r.ok) { setErro(r.error ?? "erro"); setSalvando(false); return; }
+        if (!r.ok) { setErro(r.error ?? "erro"); return; }
       } else {
         const r = await addAddon(nome.trim(), cents);
-        if (!r.ok) { setErro(r.error ?? "erro"); setSalvando(false); return; }
+        if (!r.ok) { setErro(r.error ?? "erro"); return; }
       }
       await onSaved();
+      onClose();
     } catch {
       setErro("erro interno");
+    } finally {
       setSalvando(false);
     }
   };
