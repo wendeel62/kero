@@ -14,13 +14,6 @@ const nowHHMM = () => new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", 
 const fmtClosedAt = (iso: string) =>
   new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Manaus" });
 
-// movimento das últimas 6h (demo visual — números reais vêm do backend)
-const SPARKS: Record<string, number[]> = {
-  count: [2, 3, 2, 5, 4, 6],
-  revenue: [40, 90, 70, 150, 120, 186],
-  ticket: [55, 62, 58, 66, 61, 63],
-};
-
 function useCountUp(target: number, ms = 900) {
   const [v, setV] = useState(0);
   useEffect(() => {
@@ -36,17 +29,6 @@ function useCountUp(target: number, ms = 900) {
     return () => cancelAnimationFrame(raf);
   }, [target, ms]);
   return v;
-}
-
-function Spark({ data, stroke }: { data: number[]; stroke: string }) {
-  const max = Math.max(...data);
-  const pts = data.map((d, i) => `${(i / (data.length - 1)) * 96},${34 - (d / max) * 28}`).join(" ");
-  return (
-    <svg viewBox="0 0 96 36" className="w-24 h-9 overflow-visible" aria-hidden>
-      <polyline points={pts} fill="none" stroke={stroke} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="96" cy={34 - (data[data.length - 1] / max) * 28} r="3" fill={stroke} />
-    </svg>
-  );
 }
 
 function greeting() {
@@ -75,7 +57,7 @@ export default function PainelHoje() {
   const count = useCountUp(stats.count);
   const revenue = useCountUp(stats.revenue, 1100);
   const ticket = useCountUp(stats.ticket, 1000);
-  const today = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
+  const today = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" }).replace(/^./, (c) => c.toUpperCase());
 
   const toggle = async () => {
     const next = !closed;
@@ -89,9 +71,9 @@ export default function PainelHoje() {
   const recent = data?.recent ?? [];
 
   const cards = [
-    { label: `Pedidos · ${PERIOD_LABEL[period]}`, display: String(count), sub: "válidos · exc. cancelados", tone: "flat" as const, spark: SPARKS.count, stroke: "var(--muted)" },
-    { label: `Faturamento · ${PERIOD_LABEL[period]}`, display: brl(revenue), sub: "exc. cancelados", tone: "up" as const, spark: SPARKS.revenue, stroke: "var(--green)" },
-    { label: `Ticket médio · ${PERIOD_LABEL[period]}`, display: brl(ticket), sub: "por pedido válido", tone: "flat" as const, spark: SPARKS.ticket, stroke: "var(--info)" },
+    { label: `Pedidos · ${PERIOD_LABEL[period]}`, display: String(count), sub: "válidos · exc. cancelados", tone: "flat" as const },
+    { label: `Faturamento · ${PERIOD_LABEL[period]}`, display: brl(revenue), sub: "exc. cancelados", tone: "up" as const },
+    { label: `Ticket médio · ${PERIOD_LABEL[period]}`, display: brl(ticket), sub: "por pedido válido", tone: "flat" as const },
   ];
 
   if (failed) {
@@ -116,8 +98,8 @@ export default function PainelHoje() {
     <main className="admin-content">
       <div className="flex flex-wrap items-end gap-3 anim-rise">
         <div>
-          <p className="text-xs font-bold text-[var(--muted)] capitalize">{today}</p>
-          <h1 className="font-extrabold text-[21px] tracking-[-0.02em] leading-tight">{greeting()}, {data.storeName.split(" ")[0]} 👋</h1>
+          <p className="text-xs font-bold text-[var(--muted)]">{today}</p>
+          <h1 className="font-extrabold text-[21px] tracking-[-0.02em] leading-tight">{greeting()}, {data.storeName} 👋</h1>
           <p className="text-xs text-[var(--muted)] mt-0.5 flex items-center gap-1.5">
             <span className={`w-1.5 h-1.5 rounded-full ${closed ? "bg-[var(--muted)]" : "bg-[var(--green)] live-dot"}`} />
             {closed ? `loja fechada desde ${closedAt}` : "loja aberta · operação em tempo real"}
@@ -125,7 +107,7 @@ export default function PainelHoje() {
         </div>
         <button onClick={toggle} aria-pressed={closed} aria-label={closed ? "Reabrir loja" : "Fechar loja agora"}
           className="btn btn--ghost ml-auto">
-          <span className={`store-dot ${closed ? "" : "store-dot--open"}`} aria-hidden />
+          <span className={`w-2 h-2 rounded-full ${closed ? "bg-[var(--red)]" : "bg-[var(--green)]"}`} aria-hidden />
           {closed ? "Reabrir loja" : "Fechar agora"}
         </button>
       </div>
@@ -146,7 +128,7 @@ export default function PainelHoje() {
       <div className="kpi-grid mt-5">
         {cards.map((c, i) => (
           <div key={c.label} style={{ animationDelay: `${i * 70}ms` }} className="anim-rise">
-            <StatCard label={c.label} value={c.display} sub={c.sub} deltaTone={c.tone} icon={<Spark data={c.spark} stroke={c.stroke} />} />
+            <StatCard label={c.label} value={c.display} sub={c.sub} deltaTone={c.tone} />
           </div>
         ))}
         <Link href="/painel/pedidos"
@@ -221,8 +203,6 @@ export default function PainelHoje() {
           })}
         </ul>
       </section>
-
-      <p className="relative text-center text-[11px] text-[var(--muted)] mt-5">🔔 som + toast + badge na aba quando cai pedido novo · fallback polling 30s</p>
     </main>
   );
 }
