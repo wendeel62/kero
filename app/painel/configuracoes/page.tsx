@@ -252,7 +252,7 @@ export default function Configuracoes() {
 
   return (
     <main className="admin-content">
-      <p className="text-xs text-[var(--muted)] anim-rise">tudo que a vitrine e o checkout obedecem</p>
+      <p className="text-xs text-[var(--muted)] anim-rise">configurações da vitrine e do checkout</p>
 
       {/* abas */}
       <div className="mt-4 inline-flex bg-[var(--surface)] border rounded-2xl p-1.5 gap-1 shadow-sm anim-rise" role="tablist">
@@ -300,7 +300,7 @@ export default function Configuracoes() {
               <span className={label}>Logo</span>
               <div className="mt-1 flex items-center gap-3">
                 <ImageUploader currentUrl={logoUrl} fallbackEmoji="🏪" onBlob={onLogo} onError={setLogoError} />
-                <span className="text-xs text-[var(--muted)]">Trocar logo · WebP ≤1MB<br /><span className="text-[var(--muted)]">vai p/ `store-assets/logos`</span></span>
+                <span className="text-xs text-[var(--muted)]">Trocar logo · WebP ≤1MB</span>
               </div>
               {logoError && <p className="text-xs font-bold text-[var(--red)] mt-1">{logoError}</p>}
             </div>
@@ -315,7 +315,7 @@ export default function Configuracoes() {
               <span className={label}>Capa da loja</span>
               <div className="mt-1 flex items-center gap-3">
                 <ImageUploader currentUrl={coverUrl} fallbackEmoji="🖼️" onBlob={onCover} onError={setCoverError} />
-                <span className="text-xs text-[var(--muted)]">Foto da capa · WebP ≤1MB<br /><span className="text-[var(--muted)]">vai p/ `store-assets/logos`</span></span>
+                <span className="text-xs text-[var(--muted)]">Foto da capa · WebP ≤1MB</span>
               </div>
               {coverError && <p className="text-xs font-bold text-[var(--red)] mt-1">{coverError}</p>}
             </div>
@@ -328,7 +328,7 @@ export default function Configuracoes() {
 
       {tab === "horarios" && (
         <section className="mt-3 bg-[var(--surface)] border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise">
-          <p className="text-xs text-[var(--muted)]">≤3 faixas por dia · fim sempre maior que início · meia-noite proibida v1</p>
+          <p className="text-xs text-[var(--muted)]">≤3 faixas por dia · fim sempre maior que início · meia-noite proibida</p>
           <ul className="mt-2 divide-y divide-dashed">
             {days.map((d, di) => (
               <li key={DAYS[di]} className="py-3">

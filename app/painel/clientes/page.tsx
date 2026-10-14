@@ -15,6 +15,15 @@ const PROFILE_TINT: Record<Customer["profile"], string> = {
 
 const daysAgo = (iso: string) => Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000));
 
+// mesmo padrão do detalhe do pedido (app/painel/pedidos/[id]/page.tsx)
+const fmtPhone = (p: string) =>
+  p.length === 11 ? `(${p.slice(0, 2)}) ${p.slice(2, 7)}-${p.slice(7)}`
+  : p.length === 10 ? `(${p.slice(0, 2)}) ${p.slice(2, 6)}-${p.slice(6)}` : p;
+const ultimoPedido = (iso: string) => {
+  const d = daysAgo(iso);
+  return d === 0 ? "último: hoje" : `último há ${d} ${d === 1 ? "dia" : "dias"}`;
+};
+
 export default async function Clientes({ searchParams }: { searchParams: Promise<{ telefone?: string }> }) {
   const { telefone } = await searchParams;
   const { customers } = await getClientes();
@@ -35,7 +44,7 @@ export default async function Clientes({ searchParams }: { searchParams: Promise
     <main className="admin-content">
       <div className="anim-rise">
         <h1 className="font-extrabold text-[21px] tracking-[-0.02em] leading-tight">Clientes</h1>
-        <p className="text-xs text-[var(--muted)] mt-0.5">perfil derivado dos pedidos · sem tabela própria</p>
+        <p className="text-xs text-[var(--muted)] mt-0.5">perfil de consumo gerado a partir dos pedidos</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
@@ -69,7 +78,7 @@ export default async function Clientes({ searchParams }: { searchParams: Promise
                     <span className={`text-[10px] font-extrabold rounded-full px-2 py-0.5 ${PROFILE_TINT[c.profile]}`}>{PROFILE_LABEL[c.profile]}</span>
                   </span>
                   <span className="block text-xs text-[var(--muted)] mt-0.5">
-                    {c.phone} · {c.orders} pedido{c.orders === 1 ? "" : "s"} · último há {daysAgo(c.lastOrderAt)} d
+                    {fmtPhone(c.phone)} · {c.orders} pedido{c.orders === 1 ? "" : "s"} · {ultimoPedido(c.lastOrderAt)}
                   </span>
                 </span>
                 <span className="text-right shrink-0">
