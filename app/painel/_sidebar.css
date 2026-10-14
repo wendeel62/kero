@@ -432,7 +432,6 @@
   width: 7px;
   height: 7px;
   border-radius: var(--radius-pill);
-  background: currentColor;
   animation: live-pulse 2s ease-in-out infinite;
 }
 @keyframes live-pulse {

@@ -1,5 +1,6 @@
 "use client";
 
+import { SquareKanban, ShoppingCart, Bike, Users, Coins } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -13,30 +14,33 @@ const GRUPOS = [
     label: "Operação",
     items: [
       { href: "/painel", label: "Hoje", icon: "hoje" },
-      { href: "/painel/pedidos", label: "Pedidos", icon: "pedidos" },
-      { href: "/painel/pdv", label: "PDV", icon: "pedidos" },
-      { href: "/painel/entregas", label: "Entregas", icon: "pedidos" },
+      { href: "/painel/pedidos", label: "Pedidos", icon: SquareKanban },
+      { href: "/painel/pdv", label: "PDV", icon: ShoppingCart },
+      { href: "/painel/entregas", label: "Entregas", icon: Bike },
     ],
   },
   {
     label: "Gestão",
     items: [
       { href: "/painel/cardapio", label: "Cardápio", icon: "cardapio" },
-      { href: "/painel/clientes", label: "Clientes", icon: "pedidos" },
+      { href: "/painel/clientes", label: "Clientes", icon: Users },
       { href: "/painel/configuracoes", label: "Config", icon: "config" },
-      { href: "/painel/financeiro", label: "Financeiro", icon: "hoje" },
+      { href: "/painel/financeiro", label: "Financeiro", icon: Coins },
     ],
   },
 ];
 
 const PATHS: Record<string, React.ReactNode> = {
   hoje: (<><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></>),
-  pedidos: (<><path d="M6 2h12v20l-3-2-2 2-2-2-2 2-2-2-1 1z" /><path d="M9 7h6M9 11h6" /></>),
   cardapio: (<><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z" /><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5" /><path d="M9 7h7" /></>),
   config: (<><path d="M4 7h9M19 7h1M4 17h3M13 17h7" /><circle cx="16" cy="7" r="2.2" /><circle cx="10" cy="17" r="2.2" /><path d="M4 12h16" /></>),
 };
 
-function NavIcon({ name, className = "w-5 h-5" }: { name: string; className?: string }) {
+function NavIcon({ name, className = "w-5 h-5" }: { name: string | React.ComponentType<{ className?: string }>; className?: string }) {
+  if (typeof name !== "string") {
+    const Icone = name;
+    return <Icone className={className} />;
+  }
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
       {PATHS[name]}
@@ -178,7 +182,7 @@ export default function PainelShell({ children }: { children: React.ReactNode })
             </Link>
           )}
         </div>
-        <nav className="flex gap-1.5 overflow-x-auto no-scrollbar px-4 pb-2.5">
+        <nav className="flex flex-wrap gap-1.5 px-4 pb-2.5">
           {GRUPOS.flatMap((g) => g.items).map((n) => (
             <Link key={n.href} href={n.href}
               className={`whitespace-nowrap text-[13px] font-bold px-3.5 py-1.5 rounded-full inline-flex items-center gap-1.5 ${isActive(n.href) ? "bg-[var(--pill-active-bg)] text-[var(--pill-active-ink)]" : "bg-[var(--pill-bg)] text-[var(--pill-ink)]"}`}>
