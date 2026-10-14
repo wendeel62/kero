@@ -35,6 +35,8 @@ export default function Financeiro() {
   const [relError, setRelError] = useState<string | null>(null);
   const [relLoading, setRelLoading] = useState(true);
   const [relSaving, setRelSaving] = useState<MetaPeriod | null>(null);
+  // erro da meta fica junto ao form dela — o erro global serve aos forms de caixa/contas
+  const [metaError, setMetaError] = useState<string | null>(null);
 
   // caixa form
   const [opening, setOpening] = useState("");
@@ -138,19 +140,19 @@ export default function Financeiro() {
   async function definirMeta(gp: MetaPeriod, fd: FormData) {
     // o campo é em reais ("150,00"); parseBRLToCents devolve centavos
     const cents = parseBRLToCents(String(fd.get("target") ?? ""));
+    setMetaError(null);
     if (!Number.isFinite(cents) || cents <= 0) {
-      setError("Informe um valor em reais (ex.: 150,00).");
+      setMetaError("Informe um valor em reais (ex.: 150,00).");
       return;
     }
     setRelSaving(gp);
-    setError(null);
     try {
       const r = await saveMeta(gp, cents);
       if (!r.ok) throw new Error(r.error ?? "Erro ao salvar meta.");
       await load(period, range);
       await loadRelatorio(period, range);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setMetaError(e instanceof Error ? e.message : String(e));
     } finally {
       setRelSaving(null);
     }
@@ -165,8 +167,9 @@ export default function Financeiro() {
         <p className="text-xs text-[var(--muted)] mt-0.5">caixa, contas a pagar e resultado</p>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 flex items-center gap-2">
         <PeriodFilter size="sm" period={kind} range={range} onPeriod={(k) => setPeriod(k)} onRange={setRange} />
+        {loading && <span className="text-xs text-[var(--muted)]">atualizando…</span>}
       </div>
 
       {error && <div className="card mt-4 p-4 text-sm text-[var(--red)]">{error}</div>}
@@ -178,14 +181,17 @@ export default function Financeiro() {
       {data && (
         <>
           {/* (a) Resumo do período */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+          {/* valores ainda do período anterior enquanto recarrega — o opacity sinaliza */}
+          <div className={`grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4${loading ? " opacity-60" : ""}`}>
             <div className="card anim-rise p-4">
               <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--muted)]">
                 Faturamento · {periodoLabel}
               </p>
               <p className="font-extrabold text-2xl tabular-nums mt-1">{brl(data.revenueCents)}</p>
               <p className="text-[11px] text-[var(--muted)] mt-0.5">
-                {new Date(data.from).toLocaleDateString("pt-BR")} — {new Date(data.to).toLocaleDateString("pt-BR")}
+                {/* data.to é exclusivo (meia-noite seguinte) — exibir o último dia INCLUÍDO */}
+                {new Date(data.from).toLocaleDateString("pt-BR")} —{" "}
+                {new Date(new Date(data.to).getTime() - 86_400_000).toLocaleDateString("pt-BR")}
               </p>
             </div>
             <div className="card anim-rise p-4" style={{ animationDelay: "60ms" }}>
@@ -233,6 +239,7 @@ export default function Financeiro() {
                     <p className="text-[11px] text-[var(--muted)]">defina o alvo — a janela é calculada automaticamente</p>
                   </div>
                 </div>
+                {metaError && <p className="px-3 mt-1 text-xs font-bold text-[var(--red)]">{metaError}</p>}
                 <ul className="mt-1 pb-2">
                   {GOAL_PERIODS.map((gp) => {
                     const meta = relData.metas.find((m) => m.period === gp);
