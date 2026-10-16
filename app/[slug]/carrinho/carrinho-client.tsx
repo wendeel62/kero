@@ -60,14 +60,14 @@ export default function CarrinhoClient({ store, categories, addons, isOpen, open
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f1ec]">
-      <div className="h-1 bg-gradient-to-r from-red-700 via-red-500 to-orange-400" />
+    <div className="min-h-screen bg-[#F7F7F7]">
+      <div className="h-1 bg-[#EA1D2C]" />
       <header className="sticky top-0 z-40 bg-white border-b shadow-[0_1px_12px_rgba(0,0,0,0.05)]">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center gap-2">
           <Link href={`/${store.slug}`} className="w-9 h-9 rounded-full hover:bg-stone-100 flex items-center justify-center text-lg transition-colors" aria-label="Voltar ao cardápio">←</Link>
-          <span className="font-display font-extrabold tracking-tight">Kero<span className="text-red-600">.</span></span>
+          <span className="font-display font-extrabold tracking-tight">{store.name}</span>
           {lines && lines.length > 0 && (
-            <button onClick={() => update([])} className="ml-auto text-xs font-bold text-stone-400 hover:text-red-600 underline underline-offset-4">
+            <button onClick={() => update([])} className="ml-auto text-xs font-bold text-stone-400 hover:text-[#EA1D2C] underline underline-offset-4">
               limpar tudo
             </button>
           )}
@@ -91,7 +91,7 @@ export default function CarrinhoClient({ store, categories, addons, isOpen, open
         </ol>
 
         {/* faixa da loja */}
-        <div className="mt-3 bg-white border rounded-2xl shadow-sm px-4 py-3 flex items-center gap-3 anim-rise" style={{ animationDelay: "60ms" }}>
+        <div className="mt-3 bg-white border rounded-xl shadow-sm px-4 py-3 flex items-center gap-3 anim-rise" style={{ animationDelay: "60ms" }}>
           <div className="w-11 h-11 rounded-xl bg-stone-900 text-white flex items-center justify-center font-display font-extrabold ring-1 ring-black/5 overflow-hidden">
             {store.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -102,22 +102,25 @@ export default function CarrinhoClient({ store, categories, addons, isOpen, open
           </div>
           <div className="min-w-0">
             <p className="font-display font-extrabold leading-tight truncate">{store.name}</p>
-            <p className="text-xs text-stone-500">★ 4.9 · ⏱ {store.prep_time_min}–{store.prep_time_max} min</p>
+            <p className="text-xs text-stone-500">
+              {store.rating != null && <>★ {store.rating.toLocaleString("pt-BR")} · </>}
+              ⏱ {store.prep_time_min}–{store.prep_time_max} min
+            </p>
           </div>
-          <Link href={`/${store.slug}`} className="ml-auto shrink-0 text-xs font-extrabold text-red-700 border border-stone-200 rounded-full px-3.5 py-1.5 hover:bg-red-50 transition-colors">
+          <Link href={`/${store.slug}`} className="ml-auto shrink-0 text-xs font-extrabold text-[#EA1D2C] border border-stone-200 rounded-full px-3.5 py-1.5 hover:bg-red-50 transition-colors">
             cardápio
           </Link>
         </div>
 
         {lines === null ? (
-          <div className="mt-4 bg-white border rounded-3xl p-10 text-center text-sm text-stone-400">carregando sacola…</div>
+          <div className="mt-4 bg-white border rounded-xl p-10 text-center text-sm text-stone-400">carregando sacola…</div>
         ) : items.length === 0 ? (
-          <div className="mt-4 bg-white border rounded-3xl p-10 sm:p-14 text-center anim-pop shadow-sm overflow-hidden relative">
-            <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-red-700 via-red-500 to-orange-400" />
+          <div className="mt-4 bg-white border rounded-xl p-10 sm:p-14 text-center anim-pop shadow-sm overflow-hidden relative">
+            <div className="absolute inset-x-0 top-0 h-1.5 bg-[#EA1D2C]" />
             <p className="text-7xl anim-drift inline-block">🛒</p>
             <p className="font-display font-extrabold text-2xl mt-3 tracking-tight">Sacola vazia</p>
             <p className="text-sm text-stone-500 mt-1">Que tal começar por uma Margherita quentinha?</p>
-            <Link href={`/${store.slug}`} className="btn-shine inline-block mt-5 bg-gradient-to-r from-red-700 to-red-500 text-white font-bold rounded-xl px-8 py-3.5 shadow-lg">
+            <Link href={`/${store.slug}`} className="btn-shine inline-block mt-5 bg-[#EA1D2C] text-white font-bold rounded-lg px-8 py-3.5 shadow-lg">
               Ver cardápio
             </Link>
           </div>
@@ -129,9 +132,9 @@ export default function CarrinhoClient({ store, categories, addons, isOpen, open
               </p>
               <ul className="space-y-3">
                 {items.map(({ index, line, product, addonNames, unit }, i) => (
-                  <li key={`${line.productId}-${index}`} style={{ animationDelay: `${Math.min(i, 8) * 60}ms` }}
-                    className="anim-rise dish-card bg-white border rounded-3xl shadow-sm p-4 flex gap-3.5">
-                    <div aria-hidden className="w-[72px] h-[72px] rounded-2xl bg-gradient-to-br from-amber-100 to-rose-100 shadow-inner ring-1 ring-black/5 overflow-hidden">
+                  <li key={`${line.productId}-${index}`}
+                  className="anim-rise dish-card bg-white border rounded-xl shadow-sm p-4 flex gap-3.5" style={{ animationDelay: `${Math.min(i, 8) * 60}ms` }}>
+                    <div aria-hidden className="w-[72px] h-[72px] rounded-xl bg-gradient-to-br from-amber-100 to-rose-100 shadow-inner ring-1 ring-black/5 overflow-hidden">
                       {product.image_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={product.image_url} alt="" className="w-full h-full object-cover" />
@@ -141,7 +144,7 @@ export default function CarrinhoClient({ store, categories, addons, isOpen, open
                       <div className="flex items-start gap-2">
                         <p className="font-bold text-[15px] leading-snug flex-1">{product.name}</p>
                         <button onClick={() => update(removeLine(lines, index))} aria-label={`Remover ${product.name}`}
-                          className="w-7 h-7 rounded-full hover:bg-red-50 text-stone-300 hover:text-red-600 text-base leading-none transition-colors">✕</button>
+                          className="w-7 h-7 rounded-full hover:bg-red-50 text-stone-300 hover:text-[#EA1D2C] text-base leading-none transition-colors">✕</button>
                       </div>
                       {addonNames.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1.5">
@@ -165,13 +168,13 @@ export default function CarrinhoClient({ store, categories, addons, isOpen, open
                   </li>
                 ))}
               </ul>
-              <Link href={`/${store.slug}`} className="mt-3 inline-flex items-center gap-1.5 text-sm font-extrabold text-red-700 hover:underline underline-offset-4 px-1">
+              <Link href={`/${store.slug}`} className="mt-3 inline-flex items-center gap-1.5 text-sm font-extrabold text-[#EA1D2C] hover:underline underline-offset-4 px-1">
                 + adicionar mais itens
               </Link>
             </div>
 
             {/* recibo */}
-            <div className="bg-stone-900 text-white rounded-3xl shadow-[0_20px_50px_-16px_rgba(28,25,23,0.55)] p-6 lg:sticky lg:top-20 h-fit texture-dots">
+            <div className="bg-stone-900 text-white rounded-xl shadow-[0_20px_50px_-16px_rgba(28,25,23,0.55)] p-6 lg:sticky lg:top-20 h-fit texture-dots">
               <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-amber-300">resumo do pedido</p>
               <dl className="mt-3 space-y-2 text-sm">
                 <div className="flex justify-between text-stone-300">
@@ -192,7 +195,7 @@ export default function CarrinhoClient({ store, categories, addons, isOpen, open
               {!reachedMin ? (
                 <div className="mt-4">
                   <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                    <div className="h-full rounded-full bg-gradient-to-r from-amber-300 to-orange-400 transition-all"
+                    <div className="h-full rounded-full bg-[#FFCE12] transition-all"
                       style={{ width: `${Math.min(100, (subtotal / store.min_order_cents) * 100)}%` }} />
                   </div>
                   <p className="text-xs text-stone-300 mt-2">
@@ -200,23 +203,23 @@ export default function CarrinhoClient({ store, categories, addons, isOpen, open
                   </p>
                 </div>
               ) : (
-                <p className="mt-4 text-xs font-bold text-emerald-300 bg-emerald-400/10 border border-emerald-300/25 rounded-xl px-3 py-2">
+                <p className="mt-4 text-xs font-bold text-emerald-300 bg-emerald-400/10 border border-emerald-300/25 rounded-lg px-3 py-2">
                   ✓ Pedido mínimo ok — bora fechar?
                 </p>
               )}
               {!isOpen && (
-                <p className="mt-3 text-xs text-amber-200 bg-amber-300/10 border border-dashed border-amber-300/40 rounded-xl px-3 py-2">
+                <p className="mt-3 text-xs text-amber-200 bg-amber-300/10 border border-dashed border-amber-300/40 rounded-lg px-3 py-2">
                   Loja fechada — abre às {opensAt}. Checkout desabilitado.
                 </p>
               )}
               <div className="hidden lg:block mt-4">
                 {canGo ? (
                   <Link href={`/${store.slug}/checkout`}
-                    className="btn-shine block text-center w-full bg-gradient-to-r from-red-600 to-orange-500 font-bold rounded-xl py-3.5 shadow-lg transition-transform active:scale-[0.99]">
+                    className="btn-shine block text-center w-full bg-[#EA1D2C] font-bold rounded-lg py-3.5 shadow-lg transition-transform active:scale-[0.99]">
                     Ir p/ o checkout →
                   </Link>
                 ) : (
-                  <button disabled className="w-full bg-white/10 text-stone-400 font-bold rounded-xl py-3.5">{ctaLabel}</button>
+                  <button disabled className="w-full bg-white/10 text-stone-400 font-bold rounded-lg py-3.5">{ctaLabel}</button>
                 )}
               </div>
               <p className="mt-3 text-center text-[11px] text-stone-500">💵 dinheiro · ⚡Pix · 💳 maquininha — só na entrega</p>
@@ -227,18 +230,18 @@ export default function CarrinhoClient({ store, categories, addons, isOpen, open
         {/* barra fixa mobile */}
         {items.length > 0 && (
           <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-            <div className="max-w-3xl mx-auto bg-white border rounded-2xl shadow-[0_12px_30px_-8px_rgba(0,0,0,0.3)] p-2 anim-bar">
+            <div className="max-w-3xl mx-auto bg-white border rounded-xl shadow-[0_12px_30px_-8px_rgba(0,0,0,0.3)] p-2 anim-bar">
               <div className="flex items-center justify-between px-2 pb-1.5">
                 <span className="text-xs text-stone-500 font-medium">Subtotal · {countItems(lines ?? [])} {countItems(lines ?? []) === 1 ? "item" : "itens"}</span>
                 <span className="font-display font-extrabold tabular-nums">{brl(subtotal)}</span>
               </div>
               {canGo ? (
                 <Link href={`/${store.slug}/checkout`}
-                  className="btn-shine block text-center w-full bg-gradient-to-r from-red-700 via-red-600 to-red-500 text-white font-bold rounded-xl py-3.5">
+                  className="btn-shine block text-center w-full bg-[#EA1D2C] text-white font-bold rounded-lg py-3.5">
                   Ir p/ o checkout →
                 </Link>
               ) : (
-                <button disabled className="w-full bg-stone-200 text-stone-400 font-bold rounded-xl py-3.5">{ctaLabel}</button>
+                <button disabled className="w-full bg-stone-200 text-stone-400 font-bold rounded-lg py-3.5">{ctaLabel}</button>
               )}
             </div>
           </div>

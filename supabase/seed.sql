@@ -58,6 +58,15 @@ insert into products (id, store_id, category_id, name, description, price_cents,
   ('00000000-0000-0000-0000-000000000042', '00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000023', 'Guaraná 350ml',             'Lata gelada.',                                                                650, null, false, 1)
 on conflict (id) do nothing;
 
+-- =========== paridade com o preview cardapio-digital (vitrine) ===========
+-- tagline + avaliação da loja demo; descrição completa como no preview.
+update stores
+set tagline = 'forno a lenha · desde 2016',
+    rating = 4.9,
+    rating_count = 2300,
+    description = 'Pizzas artesanais em forno a lenha — a massa descansa 48h antes de ir ao forno.'
+where slug = 'pizza-do-joao';
+
 -- =========== adicionais globais (product_id NULL = global, SPEC §5) ===========
 insert into product_addons (id, store_id, product_id, name, price_cents, active) values
   ('00000000-0000-0000-0000-000000000051', '00000000-0000-0000-0000-000000000001', null, 'Bacon crocante',               600, true),

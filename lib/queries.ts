@@ -16,6 +16,7 @@ export async function getStoreBySlug(slug: string): Promise<(Store & { id: strin
     min_order_cents: data.min_order_cents ?? 0,
     prep_time_min: data.prep_time_min ?? 0, prep_time_max: data.prep_time_max ?? 0,
     active: data.active, force_closed: data.force_closed ?? false,
+    tagline: data.tagline ?? null, rating: data.rating ?? null, rating_count: data.rating_count ?? null,
   };
 }
 

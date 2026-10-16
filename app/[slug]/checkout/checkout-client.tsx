@@ -267,12 +267,12 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
     void send(corrected, true);
   };
 
-  const input = "w-full text-sm border rounded-xl px-3.5 py-2.5 bg-stone-50 focus:bg-white focus:border-red-300 focus:ring-2 focus:ring-red-100 outline-none transition-all disabled:opacity-50";
+  const input = "w-full text-sm border rounded-xl px-3.5 py-2.5 bg-stone-50 focus:bg-white focus:border-[#EA1D2C]/30 focus:ring-2 focus:ring-[#EA1D2C]/10 outline-none transition-all disabled:opacity-50";
   const label = "text-[13px] font-bold text-stone-700";
 
   return (
-    <div className="min-h-screen bg-[#f4f1ec]">
-      <div className="h-1 bg-gradient-to-r from-red-700 via-red-500 to-orange-400" />
+    <div className="min-h-screen bg-[#F7F7F7]">
+      <div className="h-1 bg-[#EA1D2C]" />
       <header className="sticky top-0 z-40 bg-white border-b shadow-[0_1px_12px_rgba(0,0,0,0.05)]">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center gap-2">
           <Link href={`/${store.slug}/carrinho`} className="w-9 h-9 rounded-full hover:bg-stone-100 flex items-center justify-center text-lg transition-colors" aria-label="Voltar à sacola">←</Link>
@@ -297,7 +297,7 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
         </ol>
 
         {!isOpen && (
-          <div className="mt-3 bg-amber-50 border border-dashed border-amber-300 rounded-2xl p-3.5 text-sm anim-rise">
+          <div className="mt-3 bg-amber-50 border border-dashed border-amber-300 rounded-xl p-3.5 text-sm anim-rise">
             Loja fechada no momento — confira tudo com calma, mas o envio está desabilitado. Abrimos às {opensAt}.
           </div>
         )}
@@ -305,8 +305,8 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
         <form id="checkout-form" onSubmit={submit} className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] items-start">
           <div className="min-w-0 space-y-4">
             {/* quem recebe */}
-            <section className="bg-white border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise">
-              <h2 className="font-display font-extrabold">Quem recebe?</h2>
+            <section className="bg-white border rounded-xl shadow-sm p-4 sm:p-6 anim-rise">
+              <h2 className="font-display font-extrabold">Seus dados</h2>
               <div className="grid sm:grid-cols-2 gap-3 mt-3">
                 <div>
                   <label htmlFor="nome" className={label}>Nome</label>
@@ -322,13 +322,13 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
             </section>
 
             {/* entrega ou retirada */}
-            <section className="bg-white border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise" style={{ animationDelay: "60ms" }}>
-              <h2 className="font-display font-extrabold">Entrega ou retirada?</h2>
+            <section className="bg-white border rounded-xl shadow-sm p-4 sm:p-6 anim-rise" style={{ animationDelay: "60ms" }}>
+              <h2 className="font-display font-extrabold">Como você quer receber?</h2>
               <div className="grid grid-cols-2 gap-2 mt-3">
-                {([["delivery", "Entrega"], ["pickup", "Retirada"]] as const).map(([v, t]) => (
-                  <label key={v} className={`border-2 rounded-2xl p-3 text-sm font-bold cursor-pointer transition-all ${fulfillment === v ? "border-red-600 bg-red-50/50" : "border-stone-100 hover:border-stone-300"}`}>
+                {([["delivery", "🚚 Entrega"], ["pickup", "🛍 Retirada"]] as const).map(([v, t]) => (
+                  <label key={v} className={`border-2 rounded-lg p-3 text-sm font-bold cursor-pointer transition-all ${fulfillment === v ? "border-[#EA1D2C] bg-[#EA1D2C]/5" : "border-stone-100 hover:border-stone-300"}`}>
                     <input type="radio" name="tipo" checked={fulfillment === v} disabled={v === "delivery" && pickupOnly}
-                      onChange={() => setType(v)} className="accent-red-600 mr-1.5" />
+                      onChange={() => setType(v)} className="accent-[#EA1D2C] mr-1.5" />
                     {t}
                   </label>
                 ))}
@@ -345,7 +345,7 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
                         onBlur={() => setShowSuggestions(false)}
                         placeholder="Rua das Flores" autoComplete="off" className={`${input} mt-1`} />
                       {showSuggestions && suggestions.length > 0 && (
-                        <ul className="absolute z-30 left-0 right-0 mt-1 bg-white border rounded-xl shadow-lg max-h-60 overflow-y-auto text-sm">
+                        <ul className="absolute z-30 left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto text-sm">
                           {suggestions.map((s, i) => (
                             <li key={`${s.label}-${i}`}>
                               <button type="button" onMouseDown={(e) => { e.preventDefault(); pickSuggestion(s); }}
@@ -393,16 +393,16 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
                 </div>
               )}
               {fulfillment === "pickup" && (
-                <p className="text-xs text-stone-500 mt-3 bg-stone-50 border rounded-xl px-3 py-2">📍 Retirada no balcão — o endereço da loja chega na confirmação.</p>
+                <p className="text-xs text-stone-500 mt-3 bg-stone-50 border rounded-lg px-3 py-2">📍 Retirada no balcão — o endereço da loja chega na confirmação.</p>
               )}
             </section>
 
             {/* pagamento */}
-            <section className="bg-white border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise" style={{ animationDelay: "120ms" }}>
+            <section className="bg-white border rounded-xl shadow-sm p-4 sm:p-6 anim-rise" style={{ animationDelay: "120ms" }}>
               <h2 className="font-display font-extrabold">Pagamento <span className="text-xs font-normal text-stone-400">só na entrega · sem maquininha online</span></h2>
               <div className="grid grid-cols-3 gap-2 mt-3">
                 {([["cash", "Dinheiro"], ["pix", "Pix"], ["card_machine", "Maquininha"]] as const).map(([v, t]) => (
-                  <label key={v} className={`border-2 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer transition-all ${payment === v ? "border-red-600 bg-red-50/50" : "border-stone-100 hover:border-stone-300"}`}>
+                  <label key={v} className={`border-2 rounded-lg p-3 text-center text-sm font-bold cursor-pointer transition-all ${payment === v ? "border-[#EA1D2C] bg-[#EA1D2C]/5" : "border-stone-100 hover:border-stone-300"}`}>
                     <input type="radio" name="pag" checked={payment === v} onChange={() => setPayment(v)} className="sr-only" />
                     {t}
                   </label>
@@ -419,7 +419,7 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
             </section>
 
             {/* obs */}
-            <section className="bg-white border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise" style={{ animationDelay: "180ms" }}>
+            <section className="bg-white border rounded-xl shadow-sm p-4 sm:p-6 anim-rise" style={{ animationDelay: "180ms" }}>
               <div className="flex items-baseline gap-2">
                 <label htmlFor="obs" className="font-display font-extrabold">Observações</label>
                 <span className="ml-auto text-[11px] text-stone-400 tabular-nums">{notes.length}/{MAX_NOTES}</span>
@@ -433,14 +433,14 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
             </section>
 
             {errors.length > 0 && (
-              <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm anim-pop" role="alert">
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm anim-pop" role="alert">
                 <p className="font-extrabold text-red-700">Falta ajustar {errors.length === 1 ? "isto" : "estas coisas"}:</p>
                 <ul className="list-disc pl-5 mt-1 text-red-700 space-y-0.5">
                   {errors.filter((e) => e !== "HONEYPOT").map((e) => <li key={e}>{e}</li>)}
                 </ul>
                 {showWa && (
                   <a href={waLink(store.whatsapp)} target="_blank" rel="noopener noreferrer"
-                    className="mt-3 inline-flex items-center gap-1.5 bg-green-600 text-white font-bold rounded-xl px-4 py-2.5 text-sm hover:bg-green-700 transition-colors">
+                    className="mt-3 inline-flex items-center gap-1.5 bg-green-600 text-white font-bold rounded-lg px-4 py-2.5 text-sm hover:bg-green-700 transition-colors">
                     Falar com a loja no WhatsApp
                   </a>
                 )}
@@ -449,7 +449,7 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
           </div>
 
           {/* recibo */}
-          <div className="bg-stone-900 text-white rounded-3xl shadow-[0_20px_50px_-16px_rgba(28,25,23,0.55)] p-6 lg:sticky lg:top-20 h-fit texture-dots anim-rise" style={{ animationDelay: "100ms" }}>
+          <div className="bg-stone-900 text-white rounded-xl shadow-[0_20px_50px_-16px_rgba(28,25,23,0.55)] p-6 lg:sticky lg:top-20 h-fit texture-dots anim-rise" style={{ animationDelay: "100ms" }}>
             <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-amber-300">seu pedido</p>
             <ul className="mt-3 space-y-2 text-sm max-h-56 overflow-y-auto no-scrollbar">
               {items.map(({ line, product, unit }) => (
@@ -474,12 +474,12 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
               </div>
             </div>
             {!reachedMin && items.length > 0 && (
-              <p className="mt-3 text-xs text-amber-200 bg-amber-300/10 border border-amber-300/25 rounded-xl px-3 py-2">
+              <p className="mt-3 text-xs text-amber-200 bg-amber-300/10 border border-amber-300/25 rounded-lg px-3 py-2">
                 Faltam {brl(store.min_order_cents - subtotal)} p/ o mínimo de {brl(store.min_order_cents)}.
               </p>
             )}
             <button type="submit" form="checkout-form" disabled={sending}
-              className="btn-shine mt-4 w-full bg-gradient-to-r from-red-600 to-orange-500 font-bold rounded-xl py-3.5 shadow-lg transition-transform active:scale-[0.99] disabled:opacity-60">
+              className="btn-shine mt-4 w-full bg-[#EA1D2C] font-bold rounded-lg py-3.5 shadow-lg transition-transform active:scale-[0.99] disabled:opacity-60">
               {sending ? "Enviando…" : `Fazer pedido • ${brl(total)}`}
             </button>
             <p className="mt-3 text-center text-[11px] text-stone-500">Servidor recalcula tudo — preço da tela é exibição.</p>
@@ -489,13 +489,13 @@ export default function CheckoutClient({ store, storeId, categories, neighborhoo
 
       {/* CTA fixo mobile */}
       <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <div className="max-w-3xl mx-auto bg-white border rounded-2xl shadow-[0_12px_30px_-8px_rgba(0,0,0,0.3)] p-2 anim-bar">
+        <div className="max-w-3xl mx-auto bg-white border rounded-xl shadow-[0_12px_30px_-8px_rgba(0,0,0,0.3)] p-2 anim-bar">
           <div className="flex items-center justify-between px-2 pb-1.5">
             <span className="text-xs text-stone-500 font-medium">{fulfillment === "delivery" ? `Entrega · ${hood?.name ?? "—"}` : "Retirada"}</span>
             <span className="font-display font-extrabold tabular-nums">{brl(total)}</span>
           </div>
           <button type="submit" form="checkout-form" disabled={sending}
-            className="btn-shine w-full bg-gradient-to-r from-red-700 via-red-600 to-red-500 text-white font-bold rounded-xl py-3.5 disabled:opacity-60">
+            className="btn-shine w-full bg-[#EA1D2C] text-white font-bold rounded-xl py-3.5 disabled:opacity-60">
             {sending ? "Enviando…" : "Fazer pedido →"}
           </button>
         </div>

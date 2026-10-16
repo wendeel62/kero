@@ -8,6 +8,8 @@ export type Store = {
   marquee_text?: string | null; cover_url?: string | null;
   whatsapp: string; min_order_cents: number; prep_time_min: number; prep_time_max: number;
   active: boolean; force_closed: boolean; delivery_fee_cents?: number;
+  // vitrine iFood-like: extras opcionais (some quando não há dado)
+  tagline?: string | null; rating?: number | null; rating_count?: number | null;
 };
 export type StoreEntry = { store: Store; categories: Category[]; open: boolean; opensAt: string };
 export type Neighborhood = { id: string; name: string; fee_cents: number; active: boolean };
@@ -32,7 +34,9 @@ export const GLOBAL_ADDONS: Addon[] = [
 const STORES: Record<string, StoreEntry> = {
   "pizza-do-joao": {
     store: {
-      slug: "pizza-do-joao", name: "Pizza do João", description: "Pizzas artesanais em forno a lenha",
+      slug: "pizza-do-joao", name: "Pizza do João",
+      description: "Pizzas artesanais em forno a lenha — a massa descansa 48h antes de ir ao forno.",
+      tagline: "forno a lenha · desde 2016", rating: 4.9, rating_count: 2300,
       logo_url: null, whatsapp: "5511999998888", min_order_cents: 2500,
       prep_time_min: 30, prep_time_max: 45, active: true, force_closed: false, delivery_fee_cents: 500,
     },

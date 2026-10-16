@@ -50,12 +50,12 @@ export default function PedidoClient({ store, token }: { store: Store; token: st
 
   if (missing) {
     return (
-      <div className="min-h-screen bg-[#f4f1ec]">
-        <div className="h-1 bg-gradient-to-r from-red-700 via-red-500 to-orange-400" />
+      <div className="min-h-screen bg-[#F7F7F7]">
+        <div className="h-1 bg-[#EA1D2C]" />
         <main className="max-w-3xl mx-auto px-4 py-16 text-center">
           <p className="font-display font-extrabold text-2xl tracking-tight">Pedido não encontrado.</p>
           <p className="text-sm text-stone-500 mt-1">Confira o link ou volte à vitrine.</p>
-          <Link href={`/${store.slug}`} className="inline-block mt-5 bg-stone-900 text-white font-bold rounded-2xl px-6 py-3 text-sm">
+          <Link href={`/${store.slug}`} className="inline-block mt-5 bg-stone-900 text-white font-bold rounded-lg px-6 py-3 text-sm">
             Voltar à vitrine
           </Link>
         </main>
@@ -65,10 +65,10 @@ export default function PedidoClient({ store, token }: { store: Store; token: st
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-[#f4f1ec]">
-        <div className="h-1 bg-gradient-to-r from-red-700 via-red-500 to-orange-400" />
+      <div className="min-h-screen bg-[#F7F7F7]">
+        <div className="h-1 bg-[#EA1D2C]" />
         <main className="max-w-3xl mx-auto px-4 pb-16">
-          <section className="mt-4 bg-stone-900 text-white rounded-3xl p-6 animate-pulse">
+          <section className="mt-4 bg-stone-900 text-white rounded-xl p-6 animate-pulse">
             <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-amber-300">localizando pedido…</p>
             <p className="font-display font-extrabold text-2xl mt-1">Buscando seu pedido…</p>
           </section>
@@ -104,8 +104,8 @@ export default function PedidoClient({ store, token }: { store: Store; token: st
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f1ec]">
-      <div className="h-1 bg-gradient-to-r from-red-700 via-red-500 to-orange-400" />
+    <div className="min-h-screen bg-[#F7F7F7]">
+      <div className="h-1 bg-[#EA1D2C]" />
       <header className="sticky top-0 z-40 bg-white border-b shadow-[0_1px_12px_rgba(0,0,0,0.05)]">
         <div className="max-w-3xl mx-auto px-4 h-14 flex items-center gap-2">
           <Link href={`/${store.slug}`} className="w-9 h-9 rounded-full hover:bg-stone-100 flex items-center justify-center text-lg transition-colors" aria-label="Voltar ao cardápio">←</Link>
@@ -129,63 +129,62 @@ export default function PedidoClient({ store, token }: { store: Store; token: st
           ))}
         </ol>
 
-        {/* status hero */}
-        <section className="mt-4 bg-stone-900 text-white rounded-3xl shadow-[0_20px_50px_-16px_rgba(28,25,23,0.55)] p-6 texture-dots anim-rise overflow-hidden relative" style={{ animationDelay: "60ms" }}>
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-amber-300">pedido #{order.code}</p>
-              <p className="font-display font-extrabold text-2xl mt-1 tracking-tight">
-                {status === "cancelled" ? "Pedido cancelado" : STATUS_LABEL[status]}
-              </p>
-              {status !== "cancelled" && status !== "delivered" && (
-                <>
-                  <p className="text-sm text-stone-300 mt-1">chega ~{hhmm(order.promised_at)}</p>
-                  {status !== "out" && (
-                    <p className="text-sm text-stone-300 mt-0.5 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 live-dot" />
-                      ~{mins} min
-                    </p>
-                  )}
-                </>
-              )}
-              {late && <p className="text-sm mt-1 font-bold text-red-400">Passou do horário previsto.</p>}
-              {status === "delivered" && <p className="text-sm text-stone-300 mt-1">Bom apetite! Obrigado por pedir com a gente.</p>}
-              {status === "cancelled" && (
-                <>
-                  <p className="text-sm text-stone-300 mt-1">Sem cobrança — pagamento é só na entrega.</p>
-                  {order.cancellation_reason && <p className="text-sm text-stone-400 mt-0.5">Motivo: {order.cancellation_reason}</p>}
-                </>
-              )}
-            </div>
-            <span className="text-5xl anim-drift select-none">{status === "cancelled" ? "🧾" : status === "delivered" ? "🎉" : "🛵"}</span>
-          </div>
-          {/* progresso */}
-          {status !== "cancelled" && (
-            <div className="mt-4">
-              <div className="flex gap-1.5">
-                {FLOW.map((f, i) => (
-                  <div key={f} className={`flex-1 h-2 rounded-full transition-all ${i <= stepIndex ? "bg-gradient-to-r from-amber-300 to-orange-400" : "bg-white/15"}`} />
-                ))}
-              </div>
-              <div className="flex justify-between mt-1.5 text-[10px] font-bold uppercase tracking-wide text-stone-400">
-                {FLOW.map((f, i) => (
-                  <span key={f} className={i <= stepIndex ? "text-amber-200" : ""}>{STATUS_LABEL[f]}</span>
-                ))}
-              </div>
-            </div>
+        {/* status — card branco centralizado como no preview */}
+        <section className="mt-4 bg-white border rounded-xl shadow-sm p-6 text-center anim-rise" style={{ animationDelay: "60ms" }}>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">Status · pedido #{order.code}</p>
+          <p className="font-display font-extrabold text-2xl mt-1 tracking-tight">
+            {status === "cancelled" ? "Pedido cancelado" : STATUS_LABEL[status]}
+          </p>
+          {status !== "cancelled" && status !== "delivered" && (
+            <p className="text-sm text-stone-500 mt-1">chega ~{hhmm(order.promised_at)}</p>
           )}
-          <p className="mt-3 text-[11px] text-stone-500">atualizando sozinho a cada 15s · sem login, guarde este link</p>
+          {status !== "cancelled" && status !== "delivered" && status !== "out" && (
+            <p className="text-sm text-stone-500 mt-0.5 flex items-center justify-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 live-dot" />
+              ~{mins} min
+            </p>
+          )}
+          {late && <p className="text-sm mt-1 font-bold text-red-600">Passou do horário previsto.</p>}
+          {status === "delivered" && <p className="text-sm text-stone-500 mt-1">Bom apetite! Obrigado por pedir com a gente.</p>}
+          {status === "cancelled" && (
+            <>
+              <p className="text-sm text-stone-500 mt-1">Sem cobrança — pagamento é só na entrega.</p>
+              {order.cancellation_reason && <p className="text-sm text-stone-400 mt-0.5">Motivo: {order.cancellation_reason}</p>}
+            </>
+          )}
+          <p className="mt-3 text-[11px] text-stone-400">atualizando sozinho a cada 15s · sem login, guarde este link</p>
         </section>
 
-        {/* detalhes + itens */}
-        <section className="mt-4 bg-white border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise" style={{ animationDelay: "120ms" }}>
+        {/* progresso — círculos como no preview */}
+        {status !== "cancelled" && (
+          <section className="mt-4 bg-white border rounded-xl shadow-sm p-5 anim-rise" style={{ animationDelay: "120ms" }}>
+            <div className="flex gap-1">
+              {FLOW.map((f, i) => (
+                <div key={f} className="flex-1 text-center">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto text-lg transition-all ${i <= stepIndex ? "bg-[#FFCE12]" : "bg-stone-100 text-stone-400"}`}>
+                    {i < stepIndex ? "✓" : i === stepIndex ? "👨‍🍳" : f === "ready" ? "✅" : f === "out" ? "🚚" : "🎉"}
+                  </div>
+                  <p className={`mt-1 text-[9px] font-bold uppercase tracking-wide ${i <= stepIndex ? "text-stone-700" : "text-stone-400"}`}>{STATUS_LABEL[f]}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* detalhes */}
+        <section className="mt-4 bg-white border rounded-xl shadow-sm p-4 sm:p-6 anim-rise" style={{ animationDelay: "180ms" }}>
           <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
             <p><span className="text-stone-400">Quem recebe:</span> <b>{order.customer_name}</b> <span className="text-stone-400">{order.phone_masked}</span></p>
             <p><span className="text-stone-400">{order.type === "delivery" ? "Entrega em:" : "Retirada ·"}</span> <b>{order.type === "delivery" ? (order.neighborhood ?? "—") : store.name}</b>{order.type === "delivery" && order.distancia && <span className="text-stone-500"> · {order.distancia} da loja</span>}</p>
             <p><span className="text-stone-400">Pagamento:</span> <b>{PAY[order.payment_method] ?? order.payment_method}</b>{changeLabel && <span className="text-stone-500"> ({changeLabel})</span>}</p>
             <p><span className="text-stone-400">Total:</span> <b className="tabular-nums">{brl(order.total_cents)}</b></p>
           </div>
-          <ul className="mt-3 divide-y divide-dashed border-t border-dashed">
+        </section>
+
+        {/* itens */}
+        <section className="mt-4 bg-white border rounded-xl shadow-sm p-4 sm:p-6 anim-rise" style={{ animationDelay: "240ms" }}>
+          <p className="font-display font-extrabold mb-2">Itens do pedido</p>
+          <ul className="divide-y divide-dashed border-t border-dashed">
             {order.items.map((it, i) => (
               <li key={`${it.name}-${i}`} className="py-2.5 flex justify-between gap-2 text-sm">
                 <span>{it.qty}× {it.name}{it.addons.length > 0 && <span className="text-stone-400"> (+ {it.addons.map((a) => a.name).join(", ")})</span>}</span>
@@ -198,19 +197,19 @@ export default function PedidoClient({ store, token }: { store: Store; token: st
         {/* ações */}
         <section className="mt-4 grid sm:grid-cols-2 gap-2.5 anim-rise" style={{ animationDelay: "180ms" }}>
           <a href={waHref} target="_blank" rel="noreferrer"
-            className="bg-[#25d366] hover:brightness-95 text-white font-bold rounded-2xl py-3.5 text-center shadow-lg transition-all active:scale-[0.99]">
+            className="bg-[#25d366] hover:brightness-95 text-white font-bold rounded-lg py-3.5 text-center shadow-lg transition-all active:scale-[0.99]">
             Chamar no WhatsApp
           </a>
           {canCancel && !cancelOpen && (
             <button onClick={() => setCancelOpen(true)}
-              className="border-2 border-red-200 text-red-700 font-bold rounded-2xl py-3 hover:bg-red-50 transition-colors">
+              className="border-2 border-red-200 text-red-700 font-bold rounded-lg py-3 hover:bg-red-50 transition-colors">
               Cancelar pedido
             </button>
           )}
         </section>
 
         {cancelOpen && (
-          <section className="mt-3 bg-white border border-red-200 rounded-3xl shadow-sm p-4 sm:p-6 anim-pop">
+          <section className="mt-3 bg-white border border-red-200 rounded-xl shadow-sm p-4 sm:p-6 anim-pop">
             <p className="font-display font-extrabold">Cancelar pedido #{order.code}?</p>
             <p className="text-sm text-stone-500 mt-0.5">A loja é avisada na hora. Só vale p/ pedidos ainda não iniciados.</p>
             <label htmlFor="motivo" className="text-[13px] font-bold text-stone-700 block mt-3">Motivo do cancelamento</label>

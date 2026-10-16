@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import VitrineClient from "./vitrine-client";
-import { getCategories, getNeighborhoods, getStoreBySlug } from "@/lib/queries";
+import { getAddons, getCategories, getNeighborhoods, getStoreBySlug } from "@/lib/queries";
 import { isStoreOpen, nextOpeningLabel } from "@/lib/store-hours";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -22,10 +22,11 @@ export default async function VitrinePage({ params }: { params: Promise<{ slug: 
   if (!store) notFound();
   const isOpen = !store.force_closed && isStoreOpen(store.open_hours);
   const opensAt = nextOpeningLabel(store.open_hours);
-  const [neighborhoods, categories] = await Promise.all([
+  const [neighborhoods, categories, addons] = await Promise.all([
     getNeighborhoods(store.id),
     getCategories(store.id),
+    getAddons(store.id),
   ]);
   const minFee = neighborhoods.length ? Math.min(...neighborhoods.map((n) => n.fee_cents)) : null;
-  return <VitrineClient store={store} categories={categories} isOpen={isOpen} opensAt={opensAt} minFee={minFee} />;
+  return <VitrineClient store={store} categories={categories} addons={addons} isOpen={isOpen} opensAt={opensAt} minFee={minFee} />;
 }
