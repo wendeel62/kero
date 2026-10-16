@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./[slug]/storefront.css";
 
 export const metadata: Metadata = {
   title: "Kero — Delivery",
