@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { apiError } from "@/lib/api-errors";
-import { calcularQuote } from "@/lib/storefront-quote";
+import { isStoreOpen } from "@/lib/store-hours";
+import { buildQuoteGroups, calcularQuote } from "@/lib/storefront-quote";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // Quote da vitrine (paridade com POST /api/checkout/quote do original).
@@ -24,8 +25,11 @@ export async function POST(req: Request) {
   if (!Array.isArray(b.items)) return apiError("INVALID_BODY", "Itens inválidos.", 400);
 
   const admin = createAdminClient();
-  const { data: store } = await admin.from("stores").select("id, active, force_closed").eq("slug", b.slug).single();
+  const { data: store } = await admin.from("stores").select("id, active, force_closed, open_hours").eq("slug", b.slug).single();
   if (!store) return NextResponse.json({ error: "nao_encontrado" }, { status: 404 });
+  if (!store.active || store.force_closed || !isStoreOpen(store.open_hours)) {
+    return NextResponse.json({ error: "loja_fechada" }, { status: 409 });
+  }
 
   const [{ data: prods }, { data: groups }, { data: addons }, { data: fees }] = await Promise.all([
     admin.from("products").select("id, price_cents, active").eq("store_id", store.id),
@@ -35,13 +39,14 @@ export async function POST(req: Request) {
   ]);
 
   try {
+    const allAddons = addons ?? [];
     const lines = b.items.map((it) => {
       const p = (prods ?? []).find((x) => x.id === it.productId);
       if (!p) throw new Error("produto_nao_encontrado");
       const ids = Array.isArray(it.addonIds) ? it.addonIds.filter((x): x is string => typeof x === "string") : [];
       const prices: Record<string, number> = {};
       for (const id of ids) {
-        const a = (addons ?? []).find((x) => x.id === id && (x.product_id === null || x.product_id === p.id));
+        const a = allAddons.find((x) => x.id === id && (x.product_id === null || x.product_id === p.id));
         if (!a) throw new Error("opcao_invalida");
         prices[id] = a.price_cents;
       }
@@ -50,12 +55,7 @@ export async function POST(req: Request) {
           id: p.id,
           price_cents: p.price_cents,
           active: p.active,
-          groups: (groups ?? []).map((g) => ({
-            id: g.id,
-            required: g.required,
-            maxChoices: g.max_choices,
-            addonIds: (addons ?? []).filter((x) => x.group_id === g.id).map((x) => x.id),
-          })),
+          groups: buildQuoteGroups(groups ?? [], allAddons, p.id),
           addonPrices: prices,
         },
         qty: it.qtd,

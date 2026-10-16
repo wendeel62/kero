@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
 import type { SfMenuData } from "@/lib/storefront";
 import { parseBRLToCents } from "@/lib/pricing";
 import { formatarMoeda, type SfCarrinhoItem } from "@/lib/storefront-cart";
@@ -54,6 +53,7 @@ export default function Checkout({
   const [metodo, setMetodo] = useState<Metodo>("pix");
   const [troco, setTroco] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const honeypotRef = useRef<HTMLInputElement | null>(null);
   const lojaFechada = !menu.business.aberto_fechado;
 
   function erroBody(body: unknown, status: number): string {
@@ -173,7 +173,7 @@ export default function Checkout({
           address: tipo === "delivery" ? { endereco: endereco.trim(), cep: cep.replace(/\D/g, ""), neighborhood_id: bairro } : null,
           items: itensParaQuote.map((i) => ({ id: i.productId, qty: i.qtd, addons: i.addonIds })),
           total_cents: Math.round(quote.total * 100),
-          website: "",
+          website: honeypotRef.current?.value ?? "",
         }),
       });
       const body = await res.json().catch(() => ({}));
@@ -225,6 +225,7 @@ export default function Checkout({
 
       <section className="checkout-etapa" aria-labelledby="etapa-dados">
         <h2 id="etapa-dados">Seus dados</h2>
+        <input type="text" name="website" ref={honeypotRef} autoComplete="off" tabIndex={-1} aria-hidden="true" style={{ display: "none" }} defaultValue="" />
         <div className="form-grid">
           <label className="form-field">
             <span>Nome *</span>

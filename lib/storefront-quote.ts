@@ -20,6 +20,27 @@ function fail(code: string): never {
   throw new Error(code);
 }
 
+export type RawGroup = { id: string; required: boolean; max_choices: number | null };
+export type RawAddon = { id: string; product_id: string | null; group_id: string | null };
+
+/** Grupos aplicáveis ao produto (global ou amarrado), omitindo grupo vazio.
+ * Paridade com groupAddons + enforcement 013: grupo só incide se tem ao
+ * menos um adicional ativo aplicável. */
+export function buildQuoteGroups(
+  groups: RawGroup[],
+  addons: RawAddon[],
+  productId: string,
+): QuoteGroup[] {
+  const out: QuoteGroup[] = [];
+  for (const g of groups) {
+    const ids = addons
+      .filter((a) => a.group_id === g.id && (a.product_id === null || a.product_id === productId))
+      .map((a) => a.id);
+    if (ids.length > 0) out.push({ id: g.id, required: g.required, maxChoices: g.max_choices, addonIds: ids });
+  }
+  return out;
+}
+
 export function calcularQuote(input: { tipo: string; feeCents: number; lines: QuoteLine[] }): QuoteResult {
   const { tipo, feeCents, lines } = input;
   if (!TIPOS.includes(tipo)) fail("tipo_invalido");
@@ -28,6 +49,7 @@ export function calcularQuote(input: { tipo: string; feeCents: number; lines: Qu
   const itens = lines.map((l) => {
     const p = l.product;
     if (!p.active) fail("produto_nao_encontrado");
+    const qty = Math.min(l.qty, 20); // teto do RPC (clamp 1..20)
     let extras = 0;
     for (const id of l.addonIds) {
       const price = p.addonPrices[id];
@@ -40,7 +62,7 @@ export function calcularQuote(input: { tipo: string; feeCents: number; lines: Qu
       if (g.maxChoices !== null && n > g.maxChoices) fail("max_escolhas");
     }
     const precoUnit = p.price_cents + extras;
-    return { productId: p.id, qtd: l.qty, precoUnit, total: precoUnit * l.qty };
+    return { productId: p.id, qtd: qty, precoUnit, total: precoUnit * qty };
   });
 
   const subtotal = itens.reduce((s, i) => s + i.total, 0);

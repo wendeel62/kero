@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import type { SfMenuData, SfProduct } from "@/lib/storefront";
 import { calcularTotal, editarItem, formatarMoeda, montarItem, type SfCarrinhoItem, type SfEscolha } from "@/lib/storefront-cart";
 import Checkout from "./checkout";
-import CookieBanner from "./cookie-banner";
 import Pedido from "./pedido";
 
 // Vitrine pública — transcrição fiel de cardapio-digital App.tsx.
@@ -52,7 +51,6 @@ export default function StorefrontClient({ menu, isOpen, neighborhoods, storeId 
             aoVoltar={() => setEmCheckout(false)}
           />
         </main>
-        <CookieBanner />
       </div>
     );
   }
@@ -338,7 +336,6 @@ export default function StorefrontClient({ menu, isOpen, neighborhoods, storeId 
 
         {emPedido !== null && <Pedido token={emPedido} aoVoltar={() => setEmPedido(null)} />}
       </main>
-      <CookieBanner />
     </div>
   );
 }
