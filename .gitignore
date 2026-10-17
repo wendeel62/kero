@@ -18,3 +18,5 @@ garantir-admin.js
 list-users.js
 restaurar-lojista.js
 test-login.js
+.vercel
+.env*

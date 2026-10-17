@@ -39,14 +39,6 @@ const parsePlan = (v: unknown): Plan | undefined | null => {
   return null; // inválido
 };
 
-// parse estrito p/ PATCH [id]: distingue "ausente" (undefined) de "inválido" (erro)
-const parsePlanStrict = (v: unknown): { ok: true; value: Plan } | { ok: false } | null => {
-  if (v === undefined) return null;
-  if (typeof v === "string" && (PLANS as readonly string[]).includes(v))
-    return { ok: true, value: v as Plan };
-  return { ok: false };
-};
-
 const parseSegmentStrict = (
   v: unknown,
 ): { ok: true; value: string | null } | { ok: false } | null => {
