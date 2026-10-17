@@ -19,7 +19,7 @@ const WEBHOOK = "http://n8n.test/webhook/kero"; // só o teste precisa; o env re
 process.env.WHATSAPP_WEBHOOK_URL = WEBHOOK;
 
 const h = vi.hoisted(() => {
-  const statuses = new Map<string, { status: string; me: string | null }>();
+  const statuses = new Map<string, { status: string; me: { id: string } | null }>();
   const calls: Array<{ fn: string; session: string; webhookUrl?: string }> = [];
   const reset = () => (calls.length = 0);
   return { statuses, calls, reset };
@@ -135,7 +135,7 @@ beforeAll(async () => {
   await createOwner(emailA, storeA);
   await createOwner(emailB, storeB);
 
-  h.statuses.set(sessionA, { status: "WORKING", me: "559299990001" });
+  h.statuses.set(sessionA, { status: "WORKING", me: { id: "559299990001@c.us" } });
   h.statuses.set(sessionB, { status: "STOPPED", me: null });
 
   await client.auth.signOut();

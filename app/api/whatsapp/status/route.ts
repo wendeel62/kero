@@ -11,7 +11,9 @@ export async function GET(_req: Request) {
   if (!s || !s.storeId) return apiError("UNAUTHORIZED", "Não autenticado.", 401);
   try {
     const st = await statusSessao(sessionName(s.storeId));
-    return NextResponse.json({ status: st.status, phone: st.me });
+    // `me` é objeto no GOWS; a página renderiza o número, não o objeto.
+    const phone = st.me?.id?.replace(/@.*$/, "") ?? null;
+    return NextResponse.json({ status: st.status, phone });
   } catch {
     // WAHA fora / sessão inexistente: o painel trata erro como "Desconectado".
     return apiError("WAHA_ERROR", "Não foi possível consultar o WhatsApp.", 502);

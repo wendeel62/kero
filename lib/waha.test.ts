@@ -47,10 +47,10 @@ test("criarSessao: 409 cai para GET do status em vez de explodir", async () => {
     calls.push(init?.method ? `${init.method} ${url}` : `GET ${url}`);
     if (init?.method === "POST")
       return new Response("already exists", { status: 409 });
-    return ok({ status: "WORKING", me: "5511999@c.us" });
+    return ok({ status: "WORKING", me: { id: "5511999@c.us", pushName: "Loja" } });
   });
   const s = await criarSessao("loja1", "https://exemplo/hook");
-  expect(s).toEqual({ status: "WORKING", me: "5511999@c.us" });
+  expect(s).toEqual({ status: "WORKING", me: { id: "5511999@c.us", pushName: "Loja" } });
   expect(calls).toEqual([
     "POST http://localhost:3100/api/sessions",
     "GET http://localhost:3100/api/sessions/kero_loja1",
@@ -63,10 +63,10 @@ test("statusSessao: retorna {status, me} e usa X-Api-Key", async () => {
   let captured: RequestInit | undefined;
   fetchMock((url, init) => {
     captured = init;
-    return ok({ status: "WORKING", me: "5511999@c.us" });
+    return ok({ status: "WORKING", me: { id: "5511999@c.us", pushName: "Loja" } });
   });
   const s = await statusSessao("kero_loja1");
-  expect(s).toEqual({ status: "WORKING", me: "5511999@c.us" });
+  expect(s).toEqual({ status: "WORKING", me: { id: "5511999@c.us", pushName: "Loja" } });
   expect((captured!.headers as Record<string, string>)["X-Api-Key"]).toBe("test-key");
 });
 

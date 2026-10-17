@@ -19,7 +19,7 @@ export async function POST(_req: Request) {
   }
   try {
     const st = await criarSessao(s.storeId, webhook);
-    return NextResponse.json({ status: st.status, phone: st.me });
+    return NextResponse.json({ status: st.status, phone: st.me?.id?.replace(/@.*$/, "") ?? null });
   } catch {
     return apiError("WAHA_ERROR", "Não foi possível conectar o WhatsApp.", 502);
   }

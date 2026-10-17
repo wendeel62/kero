@@ -62,9 +62,18 @@ async function iniciarSePreciso(session: string, s: WahaStatus): Promise<WahaSta
   return statusSessao(session);
 }
 
+// `me` é o contato da sessão autenticada — OBJETO, não string (medido no GOWS:
+// {id, pushName, lid, jid, reachoutTimelock, messageCapping}). `id` traz o
+// número como "5511999999999@c.us". Antes de 2026-10-17 isso era tipado string e
+// o React quebrava ao renderizar o objeto.
+export interface WahaMe {
+  id: string;
+  pushName?: string | null;
+}
+
 export interface WahaStatus {
   status: string;
-  me: string | null;
+  me: WahaMe | null;
 }
 
 export async function statusSessao(session: string): Promise<WahaStatus> {
