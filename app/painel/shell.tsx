@@ -1,6 +1,6 @@
 "use client";
 
-import { SquareKanban, ShoppingCart, Bike, Users, Coins } from "lucide-react";
+import { SquareKanban, ShoppingCart, Bike, Users, Coins, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -25,6 +25,7 @@ const GRUPOS = [
       { href: "/painel/cardapio", label: "Cardápio", icon: "cardapio" },
       { href: "/painel/clientes", label: "Clientes", icon: Users },
       { href: "/painel/configuracoes", label: "Config", icon: "config" },
+      { href: "/painel/whatsapp", label: "WhatsApp", icon: MessageCircle },
       { href: "/painel/financeiro", label: "Financeiro", icon: Coins },
     ],
   },
