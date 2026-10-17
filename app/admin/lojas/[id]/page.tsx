@@ -2,16 +2,17 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { notFound, useParams } from "next/navigation";
+import { notFound, useParams, useRouter } from "next/navigation";
 import { getLoja } from "@/lib/admin";
 
 type Loja = NonNullable<Awaited<ReturnType<typeof getLoja>>["loja"]>;
 
 export default function LojaDetalhe() {
   const id = useParams().id as string;
+  const router = useRouter();
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [loja, setLoja] = useState<Loja | null | undefined>(undefined);
   const [newPass, setNewPass] = useState<string | null>(null);
-  const [confirmAnon, setConfirmAnon] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -65,18 +66,18 @@ export default function LojaDetalhe() {
     if (j) setNewPass(j.password); // mostra 1 vez
   };
 
-  const anonymize = async (orderId: string) => {
+  const removeStore = async () => {
     setBusy(true);
     setError("");
     try {
-      const r = await fetch(`/api/admin/orders/${orderId}/anonymize`, { method: "POST" });
+      const r = await fetch(`/api/admin/stores/${loja.id}`, { method: "DELETE" });
       const j = await r.json().catch(() => null);
       if (!r.ok) {
-        setError(j?.error?.message ?? "O banco recusou a anonimização.");
+        setError(j?.error?.message ?? "O banco recusou a exclusão.");
+        setConfirmDelete(false);
         return;
       }
-      setConfirmAnon(null);
-      await reload();
+      router.replace("/admin/lojas");
     } finally {
       setBusy(false);
     }
@@ -84,8 +85,8 @@ export default function LojaDetalhe() {
 
   return (
     <main className="p-4 sm:p-8 max-w-4xl mx-auto pb-16">
-      <Link href="/admin/lojas" className="inline-flex items-center gap-1.5 text-[13px] font-extrabold text-stone-500 hover:text-stone-900 transition-colors anim-rise">
-        ← Voltar às lojas
+      <Link href="/admin" className="inline-flex items-center gap-1.5 text-[13px] font-extrabold text-stone-500 hover:text-stone-900 transition-colors anim-rise">
+        ← Voltar ao dashboard
       </Link>
 
       <div className="mt-2 bg-white border rounded-3xl shadow-sm p-5 sm:p-6 anim-rise" style={{ animationDelay: "60ms" }}>
@@ -96,11 +97,26 @@ export default function LojaDetalhe() {
           <div className="min-w-0 flex-1">
             <h1 className="font-display font-extrabold text-2xl tracking-tight leading-tight truncate">{loja.name}</h1>
             <p className="text-xs text-stone-400 font-mono">kero.app/{loja.slug} · {loja.ownerEmail} · desde {loja.createdAt}</p>
+            <p className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              <span className={`text-[10px] font-extrabold rounded-full px-2 py-0.5 border ${loja.plan === "completo" ? "bg-violet-50 text-violet-700 border-violet-200" : "bg-sky-50 text-sky-700 border-sky-200"}`}>
+                Plano {loja.plan === "completo" ? "Completo" : "Básico"}
+              </span>
+              {loja.segment && (
+                <span className="text-[10px] font-bold rounded-full px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200">
+                  {loja.segment}
+                </span>
+              )}
+              {loja.adesaoPaidAt ? (
+                <span className="text-[10px] font-extrabold rounded-full px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Adesão paga em {new Date(loja.adesaoPaidAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+                </span>
+              ) : (
+                <span className="text-[10px] font-bold rounded-full px-2 py-0.5 bg-stone-100 text-stone-500 border border-stone-200">
+                  Adesão pendente
+                </span>
+              )}
+            </p>
           </div>
-          <a href={`/${loja.slug}`} target="_blank" rel="noreferrer"
-            className="shrink-0 text-xs font-extrabold border border-stone-200 hover:border-stone-400 rounded-xl px-3.5 py-2 transition-colors">
-            Abrir vitrine ↗
-          </a>
         </div>
 
         {/* números */}
@@ -150,50 +166,31 @@ export default function LojaDetalhe() {
             </div>
           )}
         </div>
+
+        {/* excluir loja */}
+        <div className="mt-3 border border-red-200 rounded-2xl p-4">
+          <p className="font-display font-extrabold text-sm text-red-700">Excluir loja</p>
+          <p className="text-xs text-stone-500">Apaga a loja, o cardápio, os pedidos e o login do dono · sem volta.</p>
+          {confirmDelete ? (
+            <span className="mt-2 flex gap-1.5">
+              <button onClick={() => setConfirmDelete(false)} disabled={busy}
+                className="text-sm font-bold border rounded-xl px-4 py-2.5 hover:bg-stone-50 disabled:opacity-50">
+                Voltar
+              </button>
+              <button onClick={removeStore} disabled={busy}
+                className="text-sm font-extrabold bg-red-600 hover:bg-red-500 text-white rounded-xl px-4 py-2.5 transition-colors disabled:opacity-50">
+                {busy ? "Excluindo…" : `Excluir ${loja.slug} sem volta?`}
+              </button>
+            </span>
+          ) : (
+            <button onClick={() => setConfirmDelete(true)} disabled={busy}
+              className="mt-2 text-sm font-bold text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 rounded-xl px-4 py-2.5 transition-colors disabled:opacity-50">
+              Excluir loja
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* anonimizar (LGPD) */}
-      <section className="mt-4 bg-white border rounded-3xl shadow-sm p-5 sm:p-6 anim-rise" style={{ animationDelay: "120ms" }}>
-        <h2 className="font-display font-extrabold">Anonimizar pedido <span className="text-xs font-normal text-stone-400">LGPD · retenção &gt;90 dias</span></h2>
-        <p className="text-xs text-stone-500 mt-0.5">Apaga nome, telefone, endereço e notas · grava `anonymized_at` · sem volta.</p>
-        {loja.orders.length === 0 ? (
-          <p className="mt-3 text-sm text-stone-400 bg-stone-50 border border-dashed rounded-2xl p-4 text-center">Sem pedidos nesta loja.</p>
-        ) : (
-          <ul className="mt-2 divide-y divide-dashed">
-            {loja.orders.map((o) => (
-              <li key={o.id} className="py-2.5 flex items-center gap-3 text-sm">
-                <span className="font-display font-extrabold bg-stone-100 rounded-lg px-2 py-0.5 shrink-0">#{o.code}</span>
-                {o.anonymized ? (
-                  <span className="flex-1 text-stone-400">
-                    <b className="text-stone-500">[anonimizado]</b> · <span className="text-xs">itens/totais/status intactos</span>
-                  </span>
-                ) : (
-                  <span className="flex-1 min-w-0">
-                    <span className="block truncate"><b>{o.customer}</b> · {o.status} · {brl(o.total_cents)}</span>
-                    <span className="block text-[11px] text-stone-400">há {o.minutesAgo} min · {o.date} · {o.type === "delivery" ? "entrega" : "retirada"} · {o.payment}</span>
-                  </span>
-                )}
-                {!o.anonymized && (
-                  confirmAnon === o.id ? (
-                    <span className="flex gap-1.5 shrink-0">
-                      <button onClick={() => setConfirmAnon(null)} className="text-xs font-bold border rounded-lg px-2.5 py-1.5 hover:bg-stone-50">voltar</button>
-                      <button onClick={() => anonymize(o.id)} disabled={busy}
-                        className="text-xs font-extrabold bg-red-600 hover:bg-red-500 text-white rounded-lg px-2.5 py-1.5 transition-colors disabled:opacity-50">
-                        #{o.code} sem volta?
-                      </button>
-                    </span>
-                  ) : (
-                    <button onClick={() => setConfirmAnon(o.id)}
-                      className="shrink-0 text-xs font-bold text-stone-400 hover:text-red-600 border border-stone-200 hover:border-red-200 rounded-lg px-2.5 py-1.5 transition-colors">
-                      Anonimizar
-                    </button>
-                  )
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
     </main>
   );
 }

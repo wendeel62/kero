@@ -8,7 +8,7 @@ import type {
   FichaData, PanelAddon, PanelAddress, PanelDetail,
   PanelProduct, PanelRow, PanelSettings, PanelStatus,
 } from "./painel-utils";
-import { manausDayStartISO, toPanelOrder, addonIdsByProduct } from "./painel-utils";
+import { manausDayStartISO, toPanelOrder, addonIdsByProduct, resumoPedidos } from "./painel-utils";
 import { parsePeriodKind, resolvePeriod, type CustomRange } from "./period";
 import { minutesInStatus } from "./order-timing";
 import { aggregateCustomers, type Customer } from "./customers";
@@ -26,7 +26,7 @@ export async function getHoje(period: string = "today", range: CustomRange = {})
   const now = Date.now();
   const { from, to } = resolvePeriod(parsePeriodKind(period), range);
   const [{ data: store }, { data: rows }] = await Promise.all([
-    supabase.from("stores").select("name,force_closed,force_closed_at").eq("id", storeId).single(),
+    supabase.from("stores").select("name,force_closed,force_closed_at,lat,lng").eq("id", storeId).single(),
     supabase.from("orders").select(ORDER_COLS).eq("store_id", storeId)
       .gte("created_at", from).lt("created_at", to).order("created_at", { ascending: false }),
   ]);
@@ -34,6 +34,50 @@ export async function getHoje(period: string = "today", range: CustomRange = {})
   const orders = ((rows ?? []) as PanelRow[]).map((o) => toPanelOrder(o, now));
   const valid = orders.filter((o) => o.status !== "cancelled");
   const revenue = valid.reduce((s, o) => s + o.total_cents, 0);
+
+  // KPIs do dashboard: metas dia/mês + entregadores em rota (queries leves em paralelo;
+  // taxa/split/aguardando vêm de graça via resumoPedidos sobre os orders já buscados).
+  const [{ data: goals }, { data: routes }, { data: couriers }, { data: positions }] = await Promise.all([
+    supabase.from("sales_goals").select("period,target_cents").eq("store_id", storeId).in("period", ["daily", "monthly"]),
+    supabase.from("routes").select("id,courier_id").eq("store_id", storeId).eq("status", "open"),
+    supabase.from("couriers").select("id,name").eq("store_id", storeId).eq("active", true),
+    supabase.from("courier_positions").select("courier_id,lat,lng,atualizado_em").eq("store_id", storeId),
+  ]);
+  const routesList = (routes ?? []) as { id: string; courier_id: string }[];
+  const { data: stops } = await supabase.from("route_stops").select("route_id,order_id")
+    .in("route_id", routesList.length ? routesList.map((r) => r.id) : ["00000000-0000-0000-0000-000000000000"]);
+  const paradasPorRota = new Map<string, number>();
+  for (const s of (stops ?? []) as { route_id: string }[]) {
+    paradasPorRota.set(s.route_id, (paradasPorRota.get(s.route_id) ?? 0) + 1);
+  }
+  const nomes = new Map(((couriers ?? []) as { id: string; name: string }[]).map((c) => [c.id, c.name]));
+  const posicaoPorCourier = new Map(
+    ((positions ?? []) as { courier_id: string; lat: number; lng: number; atualizado_em: string }[])
+      .map((p) => [p.courier_id, p] as const)
+  );
+  const emRota = routesList
+    .filter((r) => nomes.has(r.courier_id) && posicaoPorCourier.has(r.courier_id))
+    .map((r) => ({
+      courierId: r.courier_id,
+      nome: nomes.get(r.courier_id) as string,
+      lat: (posicaoPorCourier.get(r.courier_id) as { lat: number }).lat,
+      lng: (posicaoPorCourier.get(r.courier_id) as { lng: number }).lng,
+      atualizadoEm: (posicaoPorCourier.get(r.courier_id) as { atualizado_em: string }).atualizado_em,
+      paradas: paradasPorRota.get(r.id) ?? 0,
+    }));
+
+  // faturamento de cada janela de meta com meta cadastrada (1 query por janela, como getRelatorios)
+  const metaPor: Record<string, { targetCents: number; revenueCents: number; percent: number } | null> = { daily: null, monthly: null };
+  for (const g of (goals ?? []) as { period: GoalPeriod; target_cents: number }[]) {
+    const w = windowFor(g.period);
+    const { data: janela } = await supabase.from("orders")
+      .select("total_cents").eq("store_id", storeId)
+      .gte("created_at", w.from).lt("created_at", w.to).neq("status", "cancelled");
+    const revenueJanela = (janela ?? []).reduce((s, o) => s + (o.total_cents as number), 0);
+    const p = goalProgress(g.target_cents, revenueJanela);
+    if (p) metaPor[g.period] = { targetCents: g.target_cents, revenueCents: revenueJanela, percent: p.percent };
+  }
+
   return {
     storeName: store.name as string,
     closed: store.force_closed as boolean,
@@ -44,6 +88,10 @@ export async function getHoje(period: string = "today", range: CustomRange = {})
       awaiting: orders.filter((o) => o.status === "new").length,
       entregasAndamento: entregasEmAndamento(orders),
     },
+    resumo: resumoPedidos(orders),
+    metas: metaPor as { daily: { targetCents: number; revenueCents: number; percent: number } | null; monthly: { targetCents: number; revenueCents: number; percent: number } | null },
+    entregadores: { total: (couriers ?? []).length, emRota },
+    loja: store.lat != null && store.lng != null ? { lat: store.lat as number, lng: store.lng as number } : null,
     recent: orders.slice(0, 5),
   };
 }

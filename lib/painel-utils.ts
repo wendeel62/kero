@@ -4,9 +4,13 @@ import { STATUS_LABEL, type OrderStatus } from "@/lib/order-status";
 
 export { STATUS_LABEL };
 export type PanelStatus = OrderStatus;
-export type PanelType = "delivery" | "pickup";
+export type PanelType = "delivery" | "pickup" | "dine_in";
 
 export const PAYMENT_PT: Record<string, string> = { cash: "Dinheiro", pix: "Pix", card_machine: "Maquininha" };
+
+// rótulo único do tipo de pedido (antes cada tela repetia o ternário delivery/retirada,
+// que ainda classificava mesa como "Retirada").
+export const TYPE_PT: Record<PanelType, string> = { delivery: "Entrega", pickup: "Retirada", dine_in: "Mesa" };
 
 export type PanelOrder = {
   id: string; code: string; customer: string; minutesAgo: number;
@@ -37,6 +41,34 @@ export const toPanelOrder = (o: PanelRow, now = Date.now(), statusMinutes?: numb
   statusMinutes: statusMinutes ?? Math.max(0, Math.round((now - new Date(o.created_at).getTime()) / 60000)),
   ...(courierId ? { courierId } : {}),
 });
+
+// Agregados do dashboard (puros, testáveis sem DB): taxa de cancelamento,
+// aguardando ação há >10min e split por tipo — calculados sobre os pedidos
+// que o getHoje já busca (sem query extra).
+export type ResumoPedidos = {
+  total: number; cancelados: number; perdidaCents: number; taxaCancelamento: number;
+  aguardando10min: number; split: Record<PanelType, number>;
+};
+
+export const resumoPedidos = (
+  orders: { status: PanelStatus; type: PanelType; minutesAgo: number; total_cents: number }[]
+): ResumoPedidos => {
+  const split: Record<PanelType, number> = { delivery: 0, pickup: 0, dine_in: 0 };
+  let cancelados = 0, perdidaCents = 0, aguardando10min = 0;
+  for (const o of orders) {
+    if (o.status === "cancelled") { cancelados++; perdidaCents += o.total_cents; }
+    else {
+      split[o.type] = (split[o.type] ?? 0) + 1;
+      if (o.status === "new" && o.minutesAgo > 10) aguardando10min++;
+    }
+  }
+  const total = orders.length;
+  return {
+    total, cancelados, perdidaCents,
+    taxaCancelamento: total ? cancelados / total : 0,
+    aguardando10min, split,
+  };
+};
 
 export type PanelItem = { name: string; qty: number; unit: number; addons: string[]; notes: string };
 export type PanelEvent = { label: string; actor: string; at: string };

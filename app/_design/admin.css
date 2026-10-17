@@ -694,6 +694,14 @@ body {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
 }
 .dash-card { display: flex; flex-direction: column; gap: 0.75rem; min-height: 0; }
+/* Fileira de 3 KPIs (taxa/espara/split): 3 colunas iguais no desktop, herda o
+   responsivo do .kpi-grid (3 em tablet, 2 no mobile). */
+.kpi-grid--3 { grid-template-columns: repeat(3, 1fr); }
+/* Os itens esticam, mas o card interno precisa preencher: sem isso cada card
+   fica da altura do próprio conteúdo e os rodapés desalinham entre si. */
+.kpi-grid--3 .card { height: 100%; }
+/* Meta + mapa: metades iguais, colapsa em 1024 como o resto do painel. */
+.dash-cols--equal { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 
 /* --- Dashboard v3: cards alinhados + animação (preview aprovado) ---
    Fileiras com mesma altura (stretch do grid) + topo/valor/rodapé dos KPIs

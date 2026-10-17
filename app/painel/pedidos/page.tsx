@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { getAwaitingCount, getKanban, getRealtimeContext } from "@/lib/painel";
 import { playNewOrderSound, updateFaviconBadge, usePanelLive } from "@/lib/painel-live";
 import type { PanelOrder } from "@/lib/painel-utils";
@@ -107,6 +107,10 @@ export default function Kanban() {
   const [reason, setReason] = useState("");
   const [reasonError, setReasonError] = useState("");
   const [advanceError, setAdvanceError] = useState("");
+  const router = useRouter();
+
+  // clicar em qualquer lugar do card abre o detalhe do pedido
+  const abrirPedido = (id: string) => router.push(`/painel/pedidos/${id}`);
 
   // transição via API-02 (RPC set_order_status): otimista, reverte se o banco recusar
   const transition = async (id: string, status: PanelOrder["status"], reason?: string) => {
@@ -217,7 +221,12 @@ export default function Kanban() {
                   const late = o.status === "new" ? o.statusMinutes > 10 : o.statusMinutes > 30;
                   const next = nextStatus(o);
                   return (
-                    <article key={`${o.id}-${o.status}`} className={`card p-3.5 ${late ? "border-[var(--red)]" : ""}`}>
+                    <article
+                      key={`${o.id}-${o.status}`}
+                      className={`card p-3.5 cursor-pointer hover:bg-[var(--surface-2)] transition-colors ${late ? "border-[var(--red)]" : ""}`}
+                      onClick={() => abrirPedido(o.id)}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirPedido(o.id); } }}
+                    >
                       <div className="flex items-center gap-2">
                         <span className="font-extrabold text-sm bg-[var(--pill-bg)] rounded-lg px-2 py-0.5">#{o.code}</span>
                         {late ? (
@@ -225,8 +234,6 @@ export default function Kanban() {
                         ) : (
                           <span className="text-[11px] font-medium text-[var(--muted)] tabular-nums">há {o.statusMinutes} min</span>
                         )}
-                        <Link href={`/painel/pedidos/${o.id}`} aria-label={`Detalhe do pedido ${o.code}`}
-                          className="ml-auto text-[var(--muted)] hover:text-[var(--text)] font-bold transition-colors">›</Link>
                       </div>
                       <p className="text-sm font-bold mt-1.5">{o.customer}</p>
                       <div className="flex flex-wrap gap-1 mt-1.5">
@@ -239,11 +246,11 @@ export default function Kanban() {
                       )}
                       {next && (
                         <div className="flex gap-1.5 mt-2.5">
-                          <button onClick={() => advance(o.id)}
+                          <button onClick={(e) => { e.stopPropagation(); advance(o.id); }}
                             className="btn btn--primary flex-1 !min-h-0 text-[13px] font-extrabold py-2 transition-all active:scale-[0.98]">
                             {NEXT_LABEL[next]} →
                           </button>
-                          <button onClick={() => { setCancelId(o.id); setReason(""); setReasonError(""); }} aria-label={`Cancelar pedido ${o.code}`}
+                          <button onClick={(e) => { e.stopPropagation(); setCancelId(o.id); setReason(""); setReasonError(""); }} aria-label={`Cancelar pedido ${o.code}`}
                             className="btn btn--ghost px-3 text-[13px] font-bold text-[var(--muted)] hover:text-[var(--red)] transition-colors">
                             ✕
                           </button>
@@ -272,11 +279,14 @@ export default function Kanban() {
               {anteriores.map((o) => {
                 const next = nextStatus(o);
                 return (
-                  <article key={`${o.id}-${o.status}`} className="card p-3.5">
+                  <article
+                    key={`${o.id}-${o.status}`}
+                    className="card p-3.5 cursor-pointer hover:bg-[var(--surface-2)] transition-colors"
+                    onClick={() => abrirPedido(o.id)}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirPedido(o.id); } }}
+                  >
                     <div className="flex items-center gap-2">
                       <span className="font-extrabold text-sm bg-[var(--pill-bg)] rounded-lg px-2 py-0.5">#{o.code}</span>
-                      <Link href={`/painel/pedidos/${o.id}`} aria-label={`Detalhe do pedido ${o.code}`}
-                        className="ml-auto text-[var(--muted)] hover:text-[var(--text)] font-bold transition-colors">›</Link>
                     </div>
                     <p className="text-sm font-bold mt-1.5">{o.customer}</p>
                     <div className="flex flex-wrap gap-1 mt-1.5">
@@ -289,11 +299,11 @@ export default function Kanban() {
                     )}
                     {next && (
                       <div className="flex gap-1.5 mt-2.5">
-                        <button onClick={() => advance(o.id)}
+                        <button onClick={(e) => { e.stopPropagation(); advance(o.id); }}
                           className="btn btn--primary flex-1 !min-h-0 text-[13px] font-extrabold py-2 transition-all active:scale-[0.98]">
                           {NEXT_LABEL[next]} →
                         </button>
-                        <button onClick={() => { setCancelId(o.id); setReason(""); setReasonError(""); }} aria-label={`Cancelar pedido ${o.code}`}
+                        <button onClick={(e) => { e.stopPropagation(); setCancelId(o.id); setReason(""); setReasonError(""); }} aria-label={`Cancelar pedido ${o.code}`}
                           className="btn btn--ghost px-3 text-[13px] font-bold text-[var(--muted)] hover:text-[var(--red)] transition-colors">
                           ✕
                         </button>
@@ -315,7 +325,11 @@ export default function Kanban() {
             </summary>
             <div className="space-y-2 mt-1">
               {cancelled.map((o) => (
-                <div key={o.id} className="bg-[var(--surface-2)] border border-[var(--border)] rounded-2xl p-3">
+                <div
+                  key={o.id}
+                  className="bg-[var(--surface-2)] border border-[var(--border)] rounded-2xl p-3 cursor-pointer hover:bg-[var(--surface-2)] transition-colors"
+                  onClick={() => abrirPedido(o.id)}
+                >
                   <p className="text-sm font-bold">#{o.code} · {o.customer}</p>
                   <p className="text-[11px] text-[var(--muted)] mt-1 flex items-center gap-1.5"><StatusBadge status={o.status} size="sm" /><span>{brl(o.total_cents)}</span></p>
                 </div>

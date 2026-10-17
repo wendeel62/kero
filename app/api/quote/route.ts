@@ -7,7 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 // Quote da vitrine (paridade com POST /api/checkout/quote do original).
 // Preços e grupos resolvidos no banco; cliente nunca dita total.
-// Taxa delivery = menor taxa ativa da loja (bairros não têm zona/CEP).
+// Taxa delivery = taxa do bairro escolhido (se válido+ativo) ou a menor taxa ativa.
 export async function POST(req: Request) {
   let body: unknown;
   try {
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     return apiError("INVALID_BODY", "Dados inválidos.", 400);
   }
   if (typeof body !== "object" || body === null) return apiError("INVALID_BODY", "Dados inválidos.", 400);
-  const b = body as { slug?: unknown; tipo?: unknown; items?: Array<{ productId?: unknown; qtd?: unknown; addonIds?: unknown }> };
+  const b = body as { slug?: unknown; tipo?: unknown; items?: Array<{ productId?: unknown; qtd?: unknown; addonIds?: unknown }>; neighborhood_id?: unknown };
 
   if (typeof b.slug !== "string" || !b.slug) return apiError("INVALID_BODY", "Loja inválida.", 400);
   if (typeof b.tipo !== "string" || !["delivery", "retirada", "mesa"].includes(b.tipo)) {
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     admin.from("products").select("id, price_cents, active").eq("store_id", store.id),
     admin.from("product_addon_groups").select("id, required, max_choices").eq("store_id", store.id),
     admin.from("product_addons").select("id, product_id, price_cents, active, group_id").eq("store_id", store.id).eq("active", true),
-    admin.from("neighborhoods").select("fee_cents").eq("store_id", store.id).eq("active", true),
+    admin.from("neighborhoods").select("id, fee_cents").eq("store_id", store.id).eq("active", true),
   ]);
 
   try {
@@ -63,7 +63,9 @@ export async function POST(req: Request) {
       };
     });
     const feeList = (fees ?? []).map((f) => f.fee_cents);
-    const q = calcularQuote({ tipo: b.tipo as string, feeCents: feeList.length ? Math.min(...feeList) : 0, lines: lines as never });
+    const minFee = feeList.length ? Math.min(...feeList) : 0;
+    const nbFee = typeof b.neighborhood_id === "string" ? (fees ?? []).find((f) => f.id === b.neighborhood_id)?.fee_cents : undefined;
+    const q = calcularQuote({ tipo: b.tipo as string, feeCents: nbFee ?? minFee, lines: lines as never });
     const names = new Map((await admin.from("products").select("id, name").eq("store_id", store.id)).data?.map((x) => [x.id, x.name] as const) ?? []);
     return NextResponse.json({
       quote: {

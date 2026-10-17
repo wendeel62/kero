@@ -144,6 +144,7 @@ export default function StorefrontClient({ menu, isOpen, neighborhoods, storeId 
         : c.products,
     }))
     .filter((c) => c.products.length > 0);
+  const categoriaAtivaValida = categoriasVisiveis.some((c) => c.id === categoriaAtiva) ? categoriaAtiva : (categoriasVisiveis[0]?.id ?? categoriaAtiva);
 
   const inicialNome = menu.business.nome.trim().charAt(0).toUpperCase() || "L";
 
@@ -176,8 +177,8 @@ export default function StorefrontClient({ menu, isOpen, neighborhoods, storeId 
         </header>
 
         <nav className="catbar" aria-label="Categorias">
-          {menu.business.categories.map((c) => (
-            <button key={c.id} onClick={() => irParaCategoria(c.id)} className={c.id === categoriaAtiva ? "active" : ""} aria-current={c.id === categoriaAtiva ? "true" : undefined}>
+          {categoriasVisiveis.map((c) => (
+            <button key={c.id} onClick={() => irParaCategoria(c.id)} className={c.id === categoriaAtivaValida ? "active" : ""} aria-current={c.id === categoriaAtivaValida ? "true" : undefined}>
               {c.nome}
             </button>
           ))}
@@ -295,15 +296,27 @@ export default function StorefrontClient({ menu, isOpen, neighborhoods, storeId 
             <div className="sheet-content" role="dialog" aria-modal="true" aria-label="Sacola" onClick={(e) => e.stopPropagation()}>
               <div className="sheet-body">
                 <h2 className="sheet-title">Sacola</h2>
-                {carrinho.map((item, i) => (
+                {carrinho.map((item, i) => {
+                  const foto = menu.business.categories.flatMap((c) => c.products).find((p) => p.id === item.productId)?.foto_url;
+                  return (
                   <div key={i} className="cartitem">
+                    {foto ? <img src={foto} alt="" className="cartitem-photo" /> : <span className="cartitem-photo cartitem-photo-fallback" aria-hidden="true" />}
+                    <div className="cartitem-main">
                     <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
                       <strong>
                         {item.qtd}× {item.nome}
                       </strong>
                       <span>{formatarMoeda(item.total)}</span>
                     </div>
-                    {item.opcoes.length > 0 && <p className="cartitem-opcoes">{item.opcoes.map((o) => o.optionNome).join(" · ")}</p>}
+                    <p className="cartitem-unit">
+                      {formatarMoeda(item.precoUnit)} cada
+                    </p>
+                    {item.opcoes.map((o) => (
+                      <p key={o.optionId} className="cartitem-addon">
+                        <span>{o.optionNome}</span>
+                        {o.precoExtra > 0 && <span>+{formatarMoeda(o.precoExtra)}</span>}
+                      </p>
+                    ))}
                     <div className="cartitem-actions">
                       <button onClick={() => alterarQtd(i, -1)} aria-label="Diminuir quantidade">
                         −
@@ -316,8 +329,10 @@ export default function StorefrontClient({ menu, isOpen, neighborhoods, storeId 
                         Editar
                       </button>
                     </div>
+                    </div>
                   </div>
-                ))}
+                  );
+                })}
                 <p className="cart-total">Total: {formatarMoeda(totalCarrinho)}</p>
                 <button
                   className="btn-finalizar-carrinho"

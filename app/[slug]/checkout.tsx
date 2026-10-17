@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import type { SfMenuData } from "@/lib/storefront";
 import { parseBRLToCents } from "@/lib/pricing";
 import { formatarMoeda, type SfCarrinhoItem } from "@/lib/storefront-cart";
+
+const CheckoutMap = dynamic(() => import("@/components/checkout-map"), { ssr: false, loading: () => <div style={{ height: 260, borderRadius: 12, background: "#f0f0f0" }} /> });
 
 type TipoPedido = "delivery" | "retirada";
 type Metodo = "pix" | "cash" | "card_machine";
@@ -46,10 +49,10 @@ export default function Checkout({
   const [cep, setCep] = useState("");
   const [bairro, setBairro] = useState("");
   const [gpsErro, setGpsErro] = useState("");
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [quote, setQuote] = useState<Quote | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
-  const [consentimento, setConsentimento] = useState(false);
   const [metodo, setMetodo] = useState<Metodo>("pix");
   const [troco, setTroco] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -89,7 +92,7 @@ export default function Checkout({
         const res = await fetch("/api/quote", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ slug, tipo, items: itensParaQuote }),
+          body: JSON.stringify({ slug, tipo, items: itensParaQuote, neighborhood_id: bairro || undefined }),
         });
         const body = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(erroBody(body, res.status));
@@ -101,7 +104,7 @@ export default function Checkout({
         setCarregando(false);
       }
     }, 400);
-  }, [slug, tipo, itensParaQuote]);
+  }, [slug, tipo, itensParaQuote, bairro]);
 
   useEffect(() => {
     atualizarQuote();
@@ -116,18 +119,28 @@ export default function Checkout({
       setGpsErro("Geolocalização não suportada");
       return;
     }
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const res = await fetch(`/api/geo/reverse?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`);
-          const body = await res.json().catch(() => ({}));
-          if (res.ok && body.endereco) setEndereco(body.endereco);
-        } catch {
-          // endereço manual continua valendo
-        }
+    setGpsErro("Obtendo localização…");
+    let resolvido = false;
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        if (resolvido) return;
+        resolvido = true;
+        navigator.geolocation.clearWatch(watchId);
+        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        const acc = Math.round(pos.coords.accuracy);
+        setGpsErro(acc > 100 ? `Precisão ~${acc}m — confira o ponto no mapa.` : "");
+        fetch(`/api/geo/reverse?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`)
+          .then((r) => r.json())
+          .then((b) => { if (b.endereco) setEndereco(b.endereco); })
+          .catch(() => {});
       },
-      () => setGpsErro("Não foi possível obter localização"),
-      { enableHighAccuracy: true, timeout: 10000 },
+      (err) => {
+        if (resolvido) return;
+        resolvido = true;
+        navigator.geolocation.clearWatch(watchId);
+        setGpsErro(err.code === 1 ? "Permissão de GPS negada" : "Não foi possível obter localização");
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 },
     );
   }
 
@@ -138,7 +151,7 @@ export default function Checkout({
   }
 
   function podeFinalizar(): boolean {
-    return dadosValidos() && consentimento && !!quote && !carregando;
+    return dadosValidos() && !!quote && !carregando;
   }
 
   async function handleCriarPedido() {
@@ -256,12 +269,21 @@ export default function Checkout({
                   ))}
                 </select>
               </label>
-              <div className="form-field">
+              <div className="form-field full-width">
                 <span>Ou use sua localização</span>
                 <button type="button" className="btn-mapa" disabled={!!gpsErro} onClick={usarLocalizacao}>
                   Usar localização atual
                 </button>
                 {gpsErro && <span className="form-hint">{gpsErro}</span>}
+                {coords && (
+                  <div style={{ marginTop: 12 }}>
+                    <CheckoutMap
+                      lat={coords.lat}
+                      lng={coords.lng}
+                      onChange={(lat, lng) => setCoords({ lat, lng })}
+                    />
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -335,15 +357,7 @@ export default function Checkout({
             <p className="fonte-servidor">Valores calculados pelo servidor.</p>
           </div>
         )}
-        <fieldset className="lgpd-consent">
-          <legend>Consentimento LGPD</legend>
-          <label>
-            <input type="checkbox" required checked={consentimento} onChange={(e) => setConsentimento(e.target.checked)} />
-            <span>
-              Concordo com o tratamento dos meus dados para este pedido, conforme a <a href="/privacidade" target="_blank" rel="noopener">Política de Privacidade</a> (Lei 13.709/2018).
-            </span>
-          </label>
-        </fieldset>
+
       </section>
 
       <div className="checkout-cta-bar">

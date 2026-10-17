@@ -2,12 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { getHoje } from "@/lib/painel";
 import { setForceClosed } from "@/lib/painel-actions";
+import { TYPE_PT } from "@/lib/painel-utils";
 import { PERIOD_LABEL, type CustomRange, type PeriodKind } from "@/lib/period";
 import PeriodFilter from "@/components/ui/period-filter";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { StatCard } from "@/components/ui/StatCard";
+
+const DeliveryMap = dynamic(() => import("@/components/delivery-map"), { ssr: false });
 
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const nowHHMM = () => new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -43,6 +47,7 @@ export default function PainelHoje() {
   const [failed, setFailed] = useState(false);
   const [period, setPeriod] = useState<PeriodKind>("today");
   const [range, setRange] = useState<CustomRange>({});
+  const [abaMeta, setAbaMeta] = useState<"daily" | "monthly">("daily");
   useEffect(() => { getHoje(period, range).then(setData).catch(() => setFailed(true)); }, [period, range]);
   const [closed, setClosed] = useState(false);
   const [closedAt, setClosedAt] = useState("");
@@ -69,6 +74,15 @@ export default function PainelHoje() {
   };
 
   const recent = data?.recent ?? [];
+  const resumo = data?.resumo ?? { total: 0, cancelados: 0, perdidaCents: 0, taxaCancelamento: 0, aguardando10min: 0, split: { delivery: 0, pickup: 0, dine_in: 0 } };
+  const meta = abaMeta === "daily" ? data?.metas.daily : data?.metas.monthly;
+  const pctMeta = meta?.percent ?? 0;
+  const circ = 2 * Math.PI * 70;
+  const validosSplit = resumo.split.delivery + resumo.split.pickup + resumo.split.dine_in || 1;
+  const semValidos = resumo.split.delivery + resumo.split.pickup + resumo.split.dine_in === 0;
+  const taxaPct = (resumo.taxaCancelamento * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+  const taxaRuim = resumo.taxaCancelamento > 0.1;
+  const atrasados = resumo.aguardando10min;
 
   const cards = [
     { label: `Pedidos · ${PERIOD_LABEL[period]}`, display: String(count), sub: "válidos · exc. cancelados", tone: "flat" as const },
@@ -139,11 +153,13 @@ export default function PainelHoje() {
             <span className="text-xs font-extrabold text-[var(--muted)] transition-transform group-hover:translate-x-0.5">→</span>
           </div>
           <span className="stat-value flex items-center gap-2.5">
-            {stats.awaiting > 0 && <span className="live-dot w-2.5 h-2.5 rounded-full bg-[var(--red)] shrink-0" />}
+            {stats.awaiting > 0 && <span className={`live-dot w-2.5 h-2.5 rounded-full shrink-0 ${atrasados > 0 ? "bg-[var(--red)]" : "bg-[var(--amber)]"}`} />}
             {stats.awaiting}
           </span>
-          <span className="stat-delta stat-delta--flat">
-            {stats.awaiting > 0 ? "toque p/ atender no kanban" : "tudo em dia ✓"}
+          <span className={`stat-delta ${atrasados > 0 ? "stat-delta--warn" : "stat-delta--flat"}`}>
+            {stats.awaiting === 0 ? "tudo em dia ✓"
+              : atrasados > 0 ? `${atrasados} há +10 min 🔴 — toque p/ atender`
+              : "toque p/ atender no kanban"}
           </span>
         </Link>
         <Link href="/painel/pedidos"
@@ -161,6 +177,112 @@ export default function PainelHoje() {
             {stats.entregasAndamento > 0 ? "preparando · pronto · a caminho" : "nenhuma no momento"}
           </span>
         </Link>
+      </div>
+
+      {/* novos KPIs: meta, cancelamento, espera >10min, split por tipo */}
+      <div className="kpi-grid kpi-grid--3 mt-4">
+        <div className="anim-rise" style={{ animationDelay: "350ms" }}>
+          <StatCard label="Taxa de cancelamento" value={`${taxaPct}%`}
+            sub={resumo.total ? `${resumo.cancelados} de ${resumo.total} pedidos` : "sem pedidos no período"}
+            deltaTone={taxaRuim ? "warn" : "flat"} />
+        </div>
+        <div className="anim-rise" style={{ animationDelay: "420ms" }}>
+          <StatCard label="Receita perdida" value={brl(resumo.perdidaCents)}
+            sub={resumo.cancelados ? `${resumo.cancelados} ${resumo.cancelados === 1 ? "cancelado" : "cancelados"} no período` : "nenhum cancelamento ✓"}
+            deltaTone={resumo.perdidaCents > 0 ? "warn" : "flat"} />
+        </div>
+        <div className="anim-rise" style={{ animationDelay: "490ms" }}>
+          <div className="card stat-card kpi-card">
+            <div className="stat-top"><span className="stat-label">Delivery · Retirada · Mesa</span></div>
+            <div className="stat-value flex gap-4">
+              {([["delivery", "var(--amber)"], ["pickup", "var(--info)"], ["dine_in", "var(--green)"]] as const).map(([t, cor]) => (
+                <div key={t} className="flex-1 min-w-0">
+                  <span className="flex items-center gap-1.5 text-[1rem] leading-tight font-extrabold tabular-nums">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: cor }} aria-hidden />
+                    {resumo.split[t]}
+                  </span>
+                  <span className="block text-[11px] font-bold text-[var(--muted)] truncate">{TYPE_PT[t]}</span>
+                  <span className="block text-[11px] tabular-nums" style={{ color: cor }}>
+                    {Math.round((resumo.split[t] / validosSplit) * 100)}%
+                  </span>
+                </div>
+              ))}
+            </div>
+            <span className="stat-delta stat-delta--flat">
+              {semValidos ? "sem pedidos válidos no período" : "pedidos válidos no período"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* meta de faturamento (donut) + entregadores em rota (mapa) */}
+      <div className="dash-cols dash-cols--equal mt-4">
+        <section className="card anim-rise" style={{ animationDelay: "560ms" }}>
+          <div className="card-head">
+            <h2 className="card-title">Meta de faturamento</h2>
+            <div className="donut-tabs" role="tablist" aria-label="Período da meta">
+              {(["daily", "monthly"] as const).map((aba) => (
+                <button key={aba} type="button" role="tab" aria-selected={abaMeta === aba}
+                  className={`donut-tab ${abaMeta === aba ? "is-active" : ""}`}
+                  onClick={() => setAbaMeta(aba)}>
+                  {aba === "daily" ? "Dia" : "Mês"}
+                </button>
+              ))}
+            </div>
+          </div>
+          {meta != null ? (
+            <>
+              <div className="meta-progress mt-3">
+                <div className="meta-progress-head">
+                  <span className="meta-legenda">{brl(meta.revenueCents)} de {brl(meta.targetCents)}</span>
+                  <span className="meta-pct">{pctMeta}%</span>
+                </div>
+                <div className="meta-track" role="progressbar" aria-label={`Progresso da meta ${abaMeta === "daily" ? "do dia" : "do mês"}`}
+                  aria-valuenow={pctMeta} aria-valuemin={0} aria-valuemax={100}>
+                  <div className={`meta-fill ${pctMeta >= 100 ? "is-complete" : ""}`} style={{ width: `${Math.min(100, pctMeta)}%` }} />
+                </div>
+              </div>
+              <div className="meta-donut-area mt-3">
+                <div className="donut-container">
+                  <svg width="160" height="160" viewBox="0 0 160 160" className="donut-svg" role="img" aria-label={`Progresso da meta: ${pctMeta}%`}>
+                    <circle cx={80} cy={80} r={70} fill="none" stroke="var(--pill-bg)" strokeWidth={18} />
+                    <circle cx={80} cy={80} r={70} fill="none" stroke="var(--accent)" strokeWidth={18}
+                      strokeDasharray={circ} strokeDashoffset={circ - (Math.min(100, pctMeta) / 100) * circ}
+                      strokeLinecap="round" transform="rotate(-90 80 80)" className="donut-fill" />
+                    <text x={80} y={74} textAnchor="middle" fill="var(--text)" fontSize="20" fontWeight="800">{pctMeta}%</text>
+                    <text x={80} y={92} textAnchor="middle" fill="var(--muted)" fontSize="11">da meta</text>
+                  </svg>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className="text-xs text-[var(--muted)] mt-3">Sem meta cadastrada p/ {abaMeta === "daily" ? "o dia" : "o mês"} — cadastre no Financeiro.</p>
+          )}
+        </section>
+        <section className="card anim-rise" style={{ animationDelay: "630ms" }}>
+          <div className="card-head">
+            <h2 className="card-title">Entregadores em rota</h2>
+            <span className="text-[11px] font-extrabold tabular-nums text-[var(--muted)] bg-[var(--surface-2)] rounded-full px-2 py-0.5">
+              {data.entregadores.emRota.length} {data.entregadores.emRota.length === 1 ? "ativo" : "ativos"}
+            </span>
+          </div>
+          <div className="mini-map-wrapper mt-3">
+            <DeliveryMap points={[]} couriers={data.entregadores.emRota} loja={data.loja} />
+          </div>
+          {data.entregadores.emRota.length === 0 ? (
+            <p className="text-xs text-[var(--muted)]">Nenhum entregador em rota agora.</p>
+          ) : (
+            <ul className="mt-2 space-y-1.5">
+              {data.entregadores.emRota.map((c) => (
+                <li key={c.courierId} className="flex items-center gap-2 text-[13px]">
+                  <b>{c.nome}</b>
+                  <span className="text-[var(--muted)] text-xs">{c.paradas} {c.paradas === 1 ? "parada restante" : "paradas restantes"}</span>
+                  <span className="ml-auto text-[11px] font-extrabold text-[var(--green)] bg-[var(--green-soft)] rounded-full px-2.5 py-0.5">em rota</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
 
       {/* últimos pedidos */}
@@ -190,7 +312,7 @@ export default function PainelHoje() {
                       <StatusBadge status={o.status} size="sm" />
                     </span>
                     <span className="block text-xs text-[var(--muted)] mt-0.5">
-                      #{o.code} · há {o.minutesAgo} min {late && <b className="text-[var(--red)]">· precisa de você 🔴</b>} · {o.type === "delivery" ? "Entrega" : "Retirada"} · {o.payment}
+                      #{o.code} · há {o.minutesAgo} min {late && <b className="text-[var(--red)]">· precisa de você 🔴</b>} · {TYPE_PT[o.type]} · {o.payment}
                     </span>
                   </span>
                   <span className="text-right shrink-0">

@@ -12,3 +12,9 @@ tests/e2e/.store.json
 next-env.d.ts
 .DS_Store
 vercel.json.local
+criar-admin*.js
+fix-admin-profile.js
+garantir-admin.js
+list-users.js
+restaurar-lojista.js
+test-login.js

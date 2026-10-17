@@ -26,6 +26,37 @@ type StoreBody = {
   id?: unknown;
   active?: unknown;
   reset_password?: unknown;
+  plan?: unknown;
+  segment?: unknown;
+};
+
+const PLANS = ["basico", "completo"] as const;
+type Plan = (typeof PLANS)[number];
+
+const parsePlan = (v: unknown): Plan | undefined | null => {
+  if (v === undefined) return undefined; // usa default do banco ('basico')
+  if (typeof v === "string" && (PLANS as readonly string[]).includes(v)) return v as Plan;
+  return null; // inválido
+};
+
+// parse estrito p/ PATCH [id]: distingue "ausente" (undefined) de "inválido" (erro)
+const parsePlanStrict = (v: unknown): { ok: true; value: Plan } | { ok: false } | null => {
+  if (v === undefined) return null;
+  if (typeof v === "string" && (PLANS as readonly string[]).includes(v))
+    return { ok: true, value: v as Plan };
+  return { ok: false };
+};
+
+const parseSegmentStrict = (
+  v: unknown,
+): { ok: true; value: string | null } | { ok: false } | null => {
+  if (v === undefined) return null;
+  if (v === null) return { ok: true, value: null };
+  if (typeof v !== "string") return { ok: false };
+  const t = v.trim();
+  if (!t) return { ok: true, value: null };
+  if (t.length > 40) return { ok: false };
+  return { ok: true, value: t };
 };
 
 // GET ?page=N&status=all|active|inactive&q= (ilike em name/slug) — SPEC §11.
@@ -41,7 +72,7 @@ export async function GET(req: Request) {
 
   let query = createAdminClient()
     .from("stores")
-    .select("id,slug,name,active,whatsapp,created_at", { count: "exact" })
+    .select("id,slug,name,active,whatsapp,created_at,plan,segment,adesao_paid_at", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(from, from + PER_PAGE - 1);
   if (status === "active") query = query.eq("active", true);
@@ -76,6 +107,12 @@ export async function POST(req: Request) {
     return apiError("INVALID_EMAIL", "E-mail inválido.", 400);
   if (whatsapp !== undefined && (typeof whatsapp !== "string" || !PHONE_RE.test(whatsapp)))
     return apiError("INVALID_BODY", "Dados inválidos.", 400);
+  const plan = parsePlan(b.plan);
+  if (plan === null) return apiError("INVALID_BODY", "Plano inválido (basico|completo).", 400);
+  const segParsed = parseSegmentStrict(b.segment);
+  if (segParsed && !segParsed.ok)
+    return apiError("INVALID_BODY", "Segmento inválido (máx. 40 caracteres).", 400);
+  const segment = segParsed && segParsed.ok ? segParsed.value : undefined;
 
   const db = createAdminClient();
   const { data: dup } = await db.from("stores").select("id").eq("slug", slug).maybeSingle();
@@ -89,8 +126,10 @@ export async function POST(req: Request) {
       whatsapp: typeof whatsapp === "string" ? whatsapp : "0000000000",
       open_hours: {},
       active: false,
+      ...(plan !== undefined ? { plan } : {}),
+      ...(segment !== undefined ? { segment } : {}),
     })
-    .select("id,slug,name,active")
+    .select("id,slug,name,active,plan,segment")
     .single();
   if (storeError || !store) return apiError("UNEXPECTED", "Erro inesperado. Tente de novo.", 500);
 

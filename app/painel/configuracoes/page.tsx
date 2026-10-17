@@ -15,7 +15,7 @@ const CheckoutMap = dynamic(() => import("@/components/checkout-map"), {
   loading: () => <div style={{ height: 260 }} />,
 });
 
-type Tab = "loja" | "horarios" | "entrega" | "salao" | "rastreamento";
+type Tab = "loja" | "horarios" | "entrega" | "salao" | "rastreamento" | "conta";
 type Range = { from: string; to: string };
 type Day = { open: boolean; ranges: Range[] };
 type Hood = { id: string; name: string; fee_cents: number; active: boolean };
@@ -57,6 +57,38 @@ export default function Configuracoes() {
   const [ga4Id, setGa4Id] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [pass1, setPass1] = useState("");
+  const [pass2, setPass2] = useState("");
+  const [passBusy, setPassBusy] = useState(false);
+  const [passOk, setPassOk] = useState("");
+  const [passErr, setPassErr] = useState("");
+
+  async function trocarSenha() {
+    setPassOk("");
+    setPassErr("");
+    if (pass1.length < 8) {
+      setPassErr("A nova senha precisa de ao menos 8 caracteres.");
+      return;
+    }
+    if (pass1 !== pass2) {
+      setPassErr("As senhas não conferem.");
+      return;
+    }
+    setPassBusy(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.updateUser({ password: pass1 });
+      if (error) {
+        setPassErr("Não foi possível trocar a senha. Tente de novo.");
+        return;
+      }
+      setPass1("");
+      setPass2("");
+      setPassOk("Senha trocada com sucesso.");
+    } finally {
+      setPassBusy(false);
+    }
+  }
 
   useEffect(() => {
     getSettings().then(({ settings: s }) => {
@@ -248,6 +280,7 @@ export default function Configuracoes() {
     { id: "entrega", label: "Entrega" },
     { id: "salao", label: "Salão" },
     { id: "rastreamento", label: "Rastreamento" },
+    { id: "conta", label: "Conta" },
   ];
 
   return (
@@ -521,6 +554,28 @@ export default function Configuracoes() {
           </div>
           <button onClick={async () => { setSaving(true); done("rastreamento", await saveTracking(fbPixel, ga4Id)); }} disabled={saving} className="mt-4 w-full sm:w-auto bg-[var(--text)] hover:bg-[var(--pill-active-bg)] text-white font-extrabold rounded-2xl px-8 py-3 transition-all active:scale-[0.99] disabled:opacity-50">
             {saving ? "Salvando…" : "Salvar rastreamento"}
+          </button>
+        </section>
+      )}
+
+      {tab === "conta" && (
+        <section className="mt-3 bg-[var(--surface)] border rounded-3xl shadow-sm p-4 sm:p-6 anim-rise">
+          <h2 className="font-extrabold">Trocar senha</h2>
+          <p className="text-xs text-[var(--muted)] mt-1">Use esta tela para substituir a senha provisória por uma senha sua.</p>
+          <div className="grid sm:grid-cols-2 gap-3 mt-3">
+            <div>
+              <label htmlFor="c-pass1" className={label}>Nova senha</label>
+              <input id="c-pass1" type="password" autoComplete="new-password" value={pass1} onChange={(e) => setPass1(e.target.value)} placeholder="Mín. 8 caracteres" className={`${input} mt-1`} />
+            </div>
+            <div>
+              <label htmlFor="c-pass2" className={label}>Confirmar nova senha</label>
+              <input id="c-pass2" type="password" autoComplete="new-password" value={pass2} onChange={(e) => setPass2(e.target.value)} placeholder="Repita a senha" className={`${input} mt-1`} />
+            </div>
+          </div>
+          {passErr && <p className="text-xs font-bold text-[var(--red)] mt-2" role="alert">{passErr}</p>}
+          {passOk && <p className="text-xs font-bold text-[var(--green)] mt-2">{passOk}</p>}
+          <button onClick={trocarSenha} disabled={passBusy} className="mt-4 w-full sm:w-auto bg-[var(--text)] hover:bg-[var(--pill-active-bg)] text-white font-extrabold rounded-2xl px-8 py-3 transition-all active:scale-[0.99] disabled:opacity-50">
+            {passBusy ? "Trocando…" : "Trocar senha"}
           </button>
         </section>
       )}
