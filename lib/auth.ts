@@ -34,13 +34,20 @@ export async function requireAdmin() {
 
 // Guard p/ rotas de API: 401 JSON é responsabilidade do caller; aqui só null.
 // Posse da loja fica no RPC (lojista órfão vira NOT_YOUR_STORE 403 — honesto).
+// store_id do profile (mesmo padrão do requireAdminApi) — rotas /api/whatsapp*
+// NUNCA o recebem do body/query; null = sem loja (admin/órfão).
 export async function requireStoreApi() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
-  return { supabase, userId: user.id };
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("store_id")
+    .eq("id", user.id)
+    .single();
+  return { supabase, userId: user.id, storeId: profile?.store_id ?? null };
 }
 
 // Guard p/ rotas /api/admin/*: null = sem sessão OU sem role admin (caller → 401).
