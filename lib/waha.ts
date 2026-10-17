@@ -31,8 +31,9 @@ export async function criarSessao(storeId: string, webhookUrl: string) {
     headers: headers(),
     body: JSON.stringify({
       name,
-      engine: "GOWS",
       config: {
+        // live: engine só aplica dentro de config (na raiz é ignorado).
+        engine: { engine: "GOWS" },
         metadata: { store_id: storeId },
         webhooks: [
           { url: webhookUrl, events: ["message"], retries: { policy: "exponential", attempts: 3 } },
@@ -41,11 +42,24 @@ export async function criarSessao(storeId: string, webhookUrl: string) {
     }),
   });
   // Já existe → cai para o status em vez de falhar (live: 422; 400/409 por garantia).
-  if (res.status === 400 || res.status === 409 || res.status === 422) {
-    return statusSessao(name);
+  if (!res.ok && res.status !== 400 && res.status !== 409 && res.status !== 422) {
+    throw await erro(res);
   }
+  // Sessão nova nasce STOPPED — só serve QR depois de start. WORKING nunca
+  // reinicia (desconectaria o WhatsApp vivo do lojista).
+  const s = await statusSessao(name);
+  return iniciarSePreciso(name, s);
+}
+
+async function iniciarSePreciso(session: string, s: WahaStatus): Promise<WahaStatus> {
+  if (s.status === "WORKING") return s;
+  const { url } = conf();
+  const res = await fetch(`${url}/api/sessions/${session}/start`, {
+    method: "POST",
+    headers: headers(false),
+  });
   if (!res.ok) throw await erro(res);
-  return statusSessao(name);
+  return statusSessao(session);
 }
 
 export interface WahaStatus {

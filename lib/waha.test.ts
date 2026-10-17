@@ -18,23 +18,27 @@ test("sessionName: estável e derivado só do storeId", () => {
   expect(sessionName("abc123")).not.toBe(sessionName("xyz"));
 });
 
-test("criarSessao: POST com name explícito, metadata e webhook", async () => {
+test("criarSessao: POST com name, engine dentro de config, metadata e webhook; e dá start", async () => {
   const calls: Array<{ url: string; init?: RequestInit }> = [];
   fetchMock((url, init) => {
     calls.push({ url: url as string, init });
+    if ((url as string).endsWith("/start")) return ok({});
     return ok({ status: "SCAN_QR_CODE", me: null });
   });
   const s = await criarSessao("loja1", "https://exemplo/hook");
   expect(s).toEqual({ status: "SCAN_QR_CODE", me: null });
-  expect(calls).toHaveLength(2);
   expect(calls[0].init!.method).toBe("POST");
   const body = JSON.parse(calls[0].init!.body as string);
   expect(calls[0].url).toBe("http://localhost:3100/api/sessions");
   expect(body.name).toBe("kero_loja1");
-  expect(body.engine).toBe("GOWS");
+  // engine na raiz é ignorado ao vivo — tem que estar dentro de config
+  expect(body.engine).toBeUndefined();
+  expect(body.config.engine).toEqual({ engine: "GOWS" });
   expect(body.config.metadata).toEqual({ store_id: "loja1" });
   expect(body.config.webhooks[0].url).toBe("https://exemplo/hook");
   expect(body.config.webhooks[0].events).toEqual(["message"]);
+  // sessão nova STOPPED → precisa do start
+  expect(calls.some((c) => c.init?.method === "POST" && c.url.endsWith("/api/sessions/kero_loja1/start"))).toBe(true);
 });
 
 test("criarSessao: 409 cai para GET do status em vez de explodir", async () => {
@@ -51,6 +55,8 @@ test("criarSessao: 409 cai para GET do status em vez de explodir", async () => {
     "POST http://localhost:3100/api/sessions",
     "GET http://localhost:3100/api/sessions/kero_loja1",
   ]);
+  // já WORKING → nunca reinicia (desconectaria o WhatsApp do lojista)
+  expect(calls.some((c) => c.startsWith("POST") && c.endsWith("/start"))).toBe(false);
 });
 
 test("statusSessao: retorna {status, me} e usa X-Api-Key", async () => {
