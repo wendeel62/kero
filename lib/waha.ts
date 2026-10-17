@@ -105,6 +105,42 @@ export async function enviarTexto(session: string, chatId: string, text: string)
   return res.json();
 }
 
+// Lista de conversas (inbox do painel). Timestamp em segundos UNIX.
+export interface WahaChat {
+  id: string;
+  name?: string | null;
+  timestamp: number;
+  unreadCount?: number;
+  lastMessage?: { body?: string | null; fromMe?: boolean } | null;
+}
+
+export async function listarChats(session: string, limit = 30): Promise<WahaChat[]> {
+  const { url } = conf();
+  const res = await fetch(`${url}/api/${session}/chats?limit=${limit}`, { headers: headers(false) });
+  if (!res.ok) throw await erro(res);
+  return res.json();
+}
+
+// Mensagens de uma conversa, em ordem crescente (mais antiga → mais nova).
+export interface WahaMessage {
+  id: string;
+  timestamp: number;
+  from?: string;
+  fromMe: boolean;
+  body?: string | null;
+  ackName?: string;
+}
+
+export async function listarMensagens(session: string, chatId: string, limit = 50): Promise<WahaMessage[]> {
+  const { url } = conf();
+  const res = await fetch(
+    `${url}/api/${session}/chats/${encodeURIComponent(chatId)}/messages?limit=${limit}`,
+    { headers: headers(false) },
+  );
+  if (!res.ok) throw await erro(res);
+  return res.json();
+}
+
 export async function desconectar(session: string) {
   const { url } = conf();
   const res = await fetch(`${url}/api/sessions/${session}`, { method: "DELETE", headers: headers(false) });

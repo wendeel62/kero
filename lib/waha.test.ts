@@ -1,6 +1,6 @@
 import { afterEach, expect, test, vi } from "vitest";
 
-import { criarSessao, desconectar, enviarTexto, qrCode, sessionName, statusSessao } from "./waha";
+import { criarSessao, desconectar, enviarTexto, listarChats, listarMensagens, qrCode, sessionName, statusSessao } from "./waha";
 
 const ok = (body: unknown) =>
   new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } });
@@ -90,6 +90,33 @@ test("enviarTexto: POST /api/sendText com session/chatId/text", async () => {
   const body = JSON.parse(calls[0].init!.body as string);
   expect(calls[0].url).toBe("http://localhost:3100/api/sendText");
   expect(body).toEqual({ session: "kero_loja1", chatId: "5511999@c.us", text: "oi" });
+});
+
+test("listarChats: GET /api/{session}/chats com limit e X-Api-Key", async () => {
+  let url = "";
+  let captured: RequestInit | undefined;
+  fetchMock((u, init) => {
+    url = u as string;
+    captured = init;
+    return ok([{ id: "5511999999999@c.us", name: "Maria", timestamp: 1727745026, unreadCount: 2 }]);
+  });
+  const chats = await listarChats("kero_loja1");
+  expect(chats).toHaveLength(1);
+  expect(chats[0].unreadCount).toBe(2);
+  expect(url).toBe("http://localhost:3100/api/kero_loja1/chats?limit=30");
+  expect((captured!.headers as Record<string, string>)["X-Api-Key"]).toBe("test-key");
+});
+
+test("listarMensagens: GET com chatId encodado no path", async () => {
+  let url = "";
+  fetchMock((u) => {
+    url = u as string;
+    return ok([{ id: "false_123@c.us_AAA", timestamp: 1727745026, fromMe: false, body: "oi" }]);
+  });
+  const msgs = await listarMensagens("kero_loja1", "5511999@c.us");
+  expect(msgs[0].body).toBe("oi");
+  // @ é sempre encodado no path; a sessão vem do server (nunca do cliente)
+  expect(url).toBe("http://localhost:3100/api/kero_loja1/chats/5511999%40c.us/messages?limit=50");
 });
 
 test("desconectar: DELETE da sessão", async () => {
