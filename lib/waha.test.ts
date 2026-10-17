@@ -1,6 +1,6 @@
 import { afterEach, expect, test, vi } from "vitest";
 
-import { criarSessao, desconectar, enviarTexto, listarChats, listarMensagens, qrCode, sessionName, statusSessao } from "./waha";
+import { allMessages, chatDaMensagem, criarSessao, desconectar, enviarTexto, overviewChats, qrCode, sessionName, statusSessao } from "./waha";
 
 const ok = (body: unknown) =>
   new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } });
@@ -92,31 +92,51 @@ test("enviarTexto: POST /api/sendText com session/chatId/text", async () => {
   expect(body).toEqual({ session: "kero_loja1", chatId: "5511999@c.us", text: "oi" });
 });
 
-test("listarChats: GET /api/{session}/chats com limit e X-Api-Key", async () => {
+test("overviewChats: POST chats/overview com pagination e X-Api-Key — forma medida", async () => {
   let url = "";
   let captured: RequestInit | undefined;
   fetchMock((u, init) => {
     url = u as string;
     captured = init;
-    return ok([{ id: "5511999999999@c.us", name: "Maria", timestamp: 1727745026, unreadCount: 2 }]);
+    return ok([{ id: "559291532662@c.us", name: null, picture: "https://pps.whatsapp.net/v/t61…",
+      lastMessage: { id: "true_559291532662@c.us_AAAA", timestamp: 1792274548, from: "559291532662@c.us",
+        fromMe: true, body: "Oi", hasMedia: false, ack: 2, ackName: "DEVICE" }, _chat: {} }]);
   });
-  const chats = await listarChats("kero_loja1");
-  expect(chats).toHaveLength(1);
-  expect(chats[0].unreadCount).toBe(2);
-  expect(url).toBe("http://localhost:3100/api/kero_loja1/chats?limit=30");
+  const chats = await overviewChats("kero_loja1", 30);
+  expect(url).toBe("http://localhost:3100/api/kero_loja1/chats/overview");
+  expect(captured!.method).toBe("POST");
+  const body = JSON.parse(captured!.body as string);
+  expect(body).toEqual({ pagination: { limit: 30, offset: 0 } });
   expect((captured!.headers as Record<string, string>)["X-Api-Key"]).toBe("test-key");
+  // forma medida: name pode ser null, lastMessage populado, sem unreadCount/timestamp na raiz
+  expect(chats[0].name).toBeNull();
+  expect(chats[0].lastMessage).toEqual({ id: "true_559291532662@c.us_AAAA", timestamp: 1792274548,
+    from: "559291532662@c.us", fromMe: true, body: "Oi", hasMedia: false, ack: 2, ackName: "DEVICE" });
+  expect((chats[0] as unknown as Record<string, unknown>).unreadCount).toBeUndefined();
+  expect((chats[0] as unknown as Record<string, unknown>).timestamp).toBeUndefined();
 });
 
-test("listarMensagens: GET com chatId encodado no path", async () => {
+test("allMessages: GET com chatId encodado no path — forma medida", async () => {
   let url = "";
-  fetchMock((u) => {
+  let captured: RequestInit | undefined;
+  fetchMock((u, init) => {
     url = u as string;
-    return ok([{ id: "false_123@c.us_AAA", timestamp: 1727745026, fromMe: false, body: "oi" }]);
+    captured = init;
+    return ok([{ id: "false_153734176833718@lid_AAAA", timestamp: 1792274548, from: "153734176833718@lid",
+      fromMe: false, source: "app", body: "Oi", hasMedia: false, media: null, ack: 2, ackName: "DEVICE" }]);
   });
-  const msgs = await listarMensagens("kero_loja1", "5511999@c.us");
-  expect(msgs[0].body).toBe("oi");
-  // @ é sempre encodado no path; a sessão vem do server (nunca do cliente)
-  expect(url).toBe("http://localhost:3100/api/kero_loja1/chats/5511999%40c.us/messages?limit=50");
+  const msgs = await allMessages("kero_loja1", "153734176833718@lid");
+  // @ e . são sempre encodados no path; a sessão vem do server (nunca do cliente)
+  expect(url).toBe("http://localhost:3100/api/kero_loja1/chats/153734176833718%40lid/messages?limit=50");
+  expect(captured!.method).toBeUndefined();
+  const m = msgs[0];
+  expect(m).toMatchObject({ id: "false_153734176833718@lid_AAAA", timestamp: 1792274548,
+    fromMe: false, body: "Oi", hasMedia: false, ackName: "DEVICE" });
+});
+
+test("chatDaMensagem: deriva o chat do id true/false_<chatId>_<msgId>", () => {
+  expect(chatDaMensagem("true_559291532662@c.us_AAAA")).toBe("559291532662@c.us");
+  expect(chatDaMensagem("false_153734176833718@lid_A5F01EC82021")).toBe("153734176833718@lid");
 });
 
 test("desconectar: DELETE da sessão", async () => {

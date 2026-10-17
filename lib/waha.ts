@@ -105,33 +105,53 @@ export async function enviarTexto(session: string, chatId: string, text: string)
   return res.json();
 }
 
-// Lista de conversas (inbox do painel). Timestamp em segundos UNIX.
+// Formas MEDIDAS na instância viva (não nas docs do WAHA):
+// - GET /api/{session}/chats NÃO tem lastMessage/unreadCount/timestamp — inútil
+//   para o inbox. A fonte real da lista é POST chats/overview.
+// - Não existe endpoint de avatar nem de marcar-lida (profilePicture/read → 404).
+// - timestamp em segundos UNIX; ackName: PENDING/SERVER/DEVICE/READ/PLAYED.
+
+export interface WahaLastMsg {
+  id?: string;
+  timestamp?: number;
+  fromMe?: boolean;
+  body?: string | null;
+  hasMedia?: boolean;
+  ack?: number;
+  ackName?: string | null;
+}
+
 export interface WahaChat {
   id: string;
   name?: string | null;
-  timestamp: number;
-  unreadCount?: number;
-  lastMessage?: { body?: string | null; fromMe?: boolean } | null;
+  picture?: string | null;
+  lastMessage?: WahaLastMsg | null;
 }
 
-export async function listarChats(session: string, limit = 30): Promise<WahaChat[]> {
+// Lista do inbox: POST /api/{session}/chats/overview (ordenado já pelo WAHA).
+export async function overviewChats(session: string, limit = 30): Promise<WahaChat[]> {
   const { url } = conf();
-  const res = await fetch(`${url}/api/${session}/chats?limit=${limit}`, { headers: headers(false) });
+  const res = await fetch(`${url}/api/${session}/chats/overview`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({ pagination: { limit, offset: 0 } }),
+  });
   if (!res.ok) throw await erro(res);
   return res.json();
 }
 
-// Mensagens de uma conversa, em ordem crescente (mais antiga → mais nova).
+// Mensagens de uma conversa, ordem reversa vinda do WAHA (novo → velho).
 export interface WahaMessage {
   id: string;
   timestamp: number;
   from?: string;
   fromMe: boolean;
   body?: string | null;
-  ackName?: string;
+  hasMedia?: boolean;
+  ackName?: string | null;
 }
 
-export async function listarMensagens(session: string, chatId: string, limit = 50): Promise<WahaMessage[]> {
+export async function allMessages(session: string, chatId: string, limit = 50): Promise<WahaMessage[]> {
   const { url } = conf();
   const res = await fetch(
     `${url}/api/${session}/chats/${encodeURIComponent(chatId)}/messages?limit=${limit}`,
@@ -139,6 +159,13 @@ export async function listarMensagens(session: string, chatId: string, limit = 5
   );
   if (!res.ok) throw await erro(res);
   return res.json();
+}
+
+// O chat de uma mensagem, derivado do id "true/false_<chatId>_<msgId>" — os ids
+// de chat nem sempre batem entre /chats (@c.us) e as mensagens (@lid).
+export function chatDaMensagem(id: string): string {
+  const s = id.replace(/^(true|false)_/, "");
+  return s.slice(0, s.lastIndexOf("_"));
 }
 
 export async function desconectar(session: string) {
