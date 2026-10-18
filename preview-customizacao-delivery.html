@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preview — Customizações de Delivery</title>
+<style>
+:root {
+  --bg: #f4f1ec;
+  --card: #ffffff;
+  --foreground: #1a1a1a;
+  --muted: #6b6b6b;
+  --accent: #e85d3d;
+  --border: #e0dcd4;
+  --radius: 12px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--foreground);
+  line-height: 1.5;
+}
+.tab-nav {
+  display: flex;
+  gap: 4px;
+  padding: 12px 16px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.tab-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+  transition: all 0.2s;
+}
+.tab-btn:hover { border-color: var(--accent); color: var(--accent); }
+.tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+.screen { display: none; padding: 24px; max-width: 800px; margin: 0 auto; }
+.screen.active { display: block; }
+h2 { font-size: 20px; margin-bottom: 16px; }
+h3 { font-size: 16px; margin: 20px 0 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.field input, .field select, .field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+}
+.field textarea { min-height: 80px; resize: vertical; }
+.row { display: flex; gap: 12px; }
+.row .field { flex: 1; }
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+.badge.warn { background: #fff3e0; color: #e65100; }
+.badge.info { background: #e3f2fd; color: #1565c0; }
+.price { font-size: 24px; font-weight: 700; color: var(--accent); }
+.price-unit { font-size: 14px; color: var(--muted); }
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { opacity: 0.9; }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--foreground); }
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.checkbox-row:last-child { border-bottom: none; }
+.checkbox-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
+.tag {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  background: #f0f0f0;
+  color: var(--muted);
+  margin-left: 6px;
+}
+.variant-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+.variant-row input { flex: 1; }
+.variant-row .price-input { width: 100px; }
+.combo-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+.group-box {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+.group-tag {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #e3f2fd;
+  color: #1565c0;
+}
+.option-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 13px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.option-row:last-child { border-bottom: none; }
+.option-price { color: var(--accent); font-weight: 600; }
+.option-price.free { color: #2e7d32; }
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 200;
+}
+.sheet {
+  background: var(--card);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 480px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 24px;
+}
+.sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.sheet-title { font-size: 18px; font-weight: 700; }
+.close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--muted); }
+.size-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.size-btn {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.size-btn:hover { border-color: var(--accent); }
+.size-btn.active { border-color: var(--accent); background: #fff5f3; }
+.size-price { display: block; font-size: 12px; color: var(--muted); font-weight: 400; }
+.footer {
+  position: sticky;
+  bottom: 0;
+  background: var(--card);
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 12px;
+}
+.footer .btn { flex: 1; }
+</style>
+</head>
+<body>
+
+<!-- Tab Navigation -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="showScreen('lojista')">Lojista</button>
+  <button class="tab-btn" onclick="showScreen('cliente')">Cliente</button>
+</div>
+
+<!-- Tela do Lojista -->
+<div id="lojista" class="screen active">
+  <h2>Novo Produto — Pizza</h2>
+
+  <div class="card">
+    <div class="field">
+      <label>Nome</label>
+      <input type="text" value="Pizza Margherita">
+    </div>
+    <div class="field">
+      <label>Descrição</label>
+      <textarea>Molho de tomate, mussarela, manjericão fresco</textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Variações (Tamanho)</h3>
+    <div class="variant-row">
+      <input type="text" value="P" placeholder="Nome">
+      <input type="text" price-input placeholder="R$ 25,00">
+    </div>
+    <div class="variant-row">
+      <input type="text" value="M" placeholder="Nome">
+      <input type="text" price-input placeholder="R$ 35,00">
+    </div>
+    <div class="variant-row">
+      <input type="text" value="G" placeholder="Nome">
+      <input type="text" price-input placeholder="R$ 45,00">
+    </div>
+    <button class="btn btn-ghost" style="width:100%; margin-top:8px">+ Adicionar tamanho</button>
+  </div>
+
+  <div class="card">
+    <h3>Grupos de Complementos</h3>
+
+    <div class="group-box">
+      <div class="group-header">
+        <span>Sabor</span>
+        <span class="group-tag">Obrigatório</span>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Regra de preço</label>
+          <select>
+            <option value="max">Mais caro</option>
+            <option value="avg">Média</option>
+            <option value="sum">Soma</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Máx. escolhas</label>
+          <input type="number" value="2">
+        </div>
+      </div>
+      <div style="margin-top:8px">
+        <div class="option-row"><span>Margherita</span><span class="option-price free">R$ 0</span></div>
+        <div class="option-row"><span>Calabresa</span><span class="option-price free">R$ 0</span></div>
+        <div class="option-row"><span>4 Queijos</span><span class="option-price free">R$ 0</span></div>
+        <div class="option-row"><span>Portuguesa</span><span class="option-price">+R$ 5</span></div>
+      </div>
+    </div>
+
+    <div class="group-box">
+      <div class="group-header">
+        <span>Complementos</span>
+        <span class="group-tag">Opcional</span>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Incluídos grátis</label>
+          <input type="number" value="2">
+        </div>
+        <div class="field">
+          <label>Máx. extras</label>
+          <input type="number" value="5">
+        </div>
+      </div>
+      <div style="margin-top:8px">
+        <div class="option-row"><span>Bacon</span><span class="option-price">+R$ 3</span></div>
+        <div class="option-row"><span>Ovo</span><span class="option-price">+R$ 2</span></div>
+        <div class="option-row"><span>Cebola</span><span class="option-price">+R$ 1</span></div>
+      </div>
+    </div>
+
+    <div class="group-box">
+      <div class="group-header">
+        <span>Remoções</span>
+        <span class="group-tag">Opcional</span>
+      </div>
+      <div class="option-row"><span>Sem cebola</span><span class="option-price free">R$ 0</span></div>
+      <div class="option-row"><span>Sem tomate</span><span class="option-price free">R$ 0</span></div>
+    </div>
+
+    <button class="btn btn-ghost" style="width:100%">+ Adicionar grupo</button>
+  </div>
+
+  <div class="card">
+    <h3>Personalização</h3>
+    <div class="field">
+      <label>Campo 1</label>
+      <div class="row">
+        <input type="text" placeholder="Nome no bolo" style="flex:2">
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400">
+          <input type="checkbox" style="width:auto"> Obrigatório
+        </label>
+      </div>
+    </div>
+    <button class="btn btn-ghost" style="width:100%">+ Adicionar campo</button>
+  </div>
+</div>
+
+<!-- Tela do Cliente -->
+<div id="cliente" class="screen">
+  <div class="sheet-overlay">
+    <div class="sheet">
+      <div class="sheet-header">
+        <span class="sheet-title">Pizza Margherita</span>
+        <button class="close-btn">&times;</button>
+      </div>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:16px">Molho de tomate, mussarela, manjericão fresco</p>
+
+      <div class="price">R$ 35,00 <span class="price-unit">/ M</span></div>
+
+      <h3 style="margin-top:20px">Tamanho</h3>
+      <div class="size-selector">
+        <button class="size-btn">
+          P
+          <span class="size-price">R$ 25,00</span>
+        </button>
+        <button class="size-btn active">
+          M
+          <span class="size-price">R$ 35,00</span>
+        </button>
+        <button class="size-btn">
+          G
+          <span class="size-price">R$ 45,00</span>
+        </button>
+      </div>
+
+      <h3>Sabor <span class="badge">Obrigatório</span> <span class="badge info">Mais caro</span></h3>
+      <div class="group-box">
+        <div class="option-row"><span>Margherita</span><span class="option-price free">R$ 0</span></div>
+        <div class="option-row"><span>Calabresa</span><span class="option-price free">R$ 0</span></div>
+        <div class="option-row"><span>4 Queijos</span><span class="option-price free">R$ 0</span></div>
+        <div class="option-row"><span>Portuguesa</span><span class="option-price">+R$ 5</span></div>
+      </div>
+
+      <h3>Complementos <span class="badge warn">2 grátis</span></h3>
+      <div class="group-box">
+        <div class="option-row"><span>Bacon</span><span class="option-price">+R$ 3</span></div>
+        <div class="option-row"><span>Ovo</span><span class="option-price">+R$ 2</span></div>
+        <div class="option-row"><span>Cebola</span><span class="option-price">+R$ 1</span></div>
+      </div>
+
+      <h3>Remoções</h3>
+      <div class="group-box">
+        <div class="option-row"><span>Sem cebola</span><span class="option-price free">R$ 0</span></div>
+        <div class="option-row"><span>Sem tomate</span><span class="option-price free">R$ 0</span></div>
+      </div>
+
+      <h3>Observações</h3>
+      <div class="field">
+        <textarea placeholder="Ex: molho à parte, pouco wasabi..."></textarea>
+      </div>
+
+      <div class="footer">
+        <button class="btn btn-ghost">Cancelar</button>
+        <button class="btn btn-primary">Adicionar — R$ 35,00</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(name).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
