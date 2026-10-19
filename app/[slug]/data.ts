@@ -48,7 +48,8 @@ export async function getVitrine(slug: string): Promise<VitrineData | null> {
     supabase.from("neighborhoods").select("id, name, fee_cents").eq("store_id", store.id).eq("active", true).order("name"),
   ]);
   const [rProds, rGroups, rAddons, rVariations, rCustomFields, rCombos, rComboItems, rTracking, rHoods] = results;
-  const fetchErrors = results.filter((r) => r.error).map((r) => r.error?.message);
+  // store_tracking e' opcional (usa .single()): nao ha registro => sem pixel/GA4, nao derruba a pagina.
+  const fetchErrors = results.filter((r, i) => r.error && !(i === 7 && r.data === null)).map((r) => r.error?.message);
   if (fetchErrors.length) throw new Error("Falha ao carregar cardápio: " + fetchErrors.join("; "));
   const { data: prods } = rProds;
   const { data: groups } = rGroups;
