@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import type { SfMenuData } from "@/lib/storefront";
 import { parseBRLToCents } from "@/lib/pricing";
 import { formatarMoeda, type SfCarrinhoItem } from "@/lib/storefront-cart";
+import { type GeocodeInput, type AddressSuggestion, sugestaoParaGeocodeInput } from "@/lib/geocode";
 
 const CheckoutMap = dynamic(() => import("@/components/checkout-map"), { ssr: false, loading: () => <div style={{ height: 260, borderRadius: 12, background: "#f0f0f0" }} /> });
 
@@ -31,6 +32,7 @@ export default function Checkout({
   carrinho,
   menu,
   neighborhoods,
+  notes,
   aoConcluir,
   aoVoltar,
 }: {
@@ -39,6 +41,7 @@ export default function Checkout({
   carrinho: SfCarrinhoItem[];
   menu: SfMenuData;
   neighborhoods: Array<{ id: string; name: string; fee_cents: number }>;
+  notes: string;
   aoConcluir: (token: string) => void;
   aoVoltar: () => void;
 }) {
@@ -50,13 +53,29 @@ export default function Checkout({
   const [bairro, setBairro] = useState("");
   const [gpsErro, setGpsErro] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoAviso, setGeoAviso] = useState("");
   const [quote, setQuote] = useState<Quote | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
   const [metodo, setMetodo] = useState<Metodo>("pix");
   const [troco, setTroco] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debounceAutocompleteRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sugestaoBoxRef = useRef<HTMLUListElement | null>(null);
   const honeypotRef = useRef<HTMLInputElement | null>(null);
+  const [sugestoes, setSugestoes] = useState<AddressSuggestion[]>([]);
+  const [sugestaoAberta, setSugestaoAberta] = useState(false);
+  // O autocomplete (LocationIQ) devolve, ora, itens com o display_address
+  // idêntico — a chave do dropdown `key={s.label}` só é segura sem duplicadas,
+  // por isso mantive a lista filtrada nesse estado.
+  const sugestoesUnicas = useMemo(() => {
+    const seen = new Set<string>();
+    return sugestoes.filter((s) => {
+      if (seen.has(s.label)) return false;
+      seen.add(s.label);
+      return true;
+    });
+  }, [sugestoes]);
   const lojaFechada = !menu.business.aberto_fechado;
 
   function erroBody(body: unknown, status: number): string {
@@ -115,33 +134,105 @@ export default function Checkout({
 
   function usarLocalizacao() {
     setGpsErro("");
+    setGeoAviso("");
     if (!navigator.geolocation) {
       setGpsErro("Geolocalização não suportada");
       return;
     }
     setGpsErro("Obtendo localização…");
     let resolvido = false;
+    let melhor: { lat: number; lng: number; acc: number } | null = null;
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
-        if (resolvido) return;
-        resolvido = true;
-        navigator.geolocation.clearWatch(watchId);
-        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        const acc = Math.round(pos.coords.accuracy);
-        setGpsErro(acc > 100 ? `Precisão ~${acc}m — confira o ponto no mapa.` : "");
-        fetch(`/api/geo/reverse?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`)
-          .then((r) => r.json())
-          .then((b) => { if (b.endereco) setEndereco(b.endereco); })
-          .catch(() => {});
+        const acc = pos.coords.accuracy;
+        // a 1ª leitura vem de Wi-Fi/torre e é a mais grosseira: guarda a melhor
+        // e só aceita quando boa o bastante (ou quando o watch expirar).
+        if (!melhor || acc < melhor.acc) {
+          melhor = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc };
+        }
+        if (acc <= 40) {
+          resolvido = true;
+          navigator.geolocation.clearWatch(watchId);
+          aplicarPino(melhor.lat, melhor.lng);
+        }
       },
       (err) => {
         if (resolvido) return;
         resolvido = true;
         navigator.geolocation.clearWatch(watchId);
-        setGpsErro(err.code === 1 ? "Permissão de GPS negada" : "Não foi possível obter localização");
+        // timeout mas com leituras ruins: melhor usar o que temos do que nada
+        if (melhor) aplicarPino(melhor.lat, melhor.lng);
+        else setGpsErro(err.code === 1 ? "Permissão de GPS negada" : "Não foi possível obter localização");
       },
       { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 },
     );
+
+    function aplicarPino(lat: number, lng: number) {
+      setCoords({ lat, lng });
+      setGpsErro("");
+      fetch(`/api/geo/reverse?lat=${lat}&lng=${lng}`)
+        .then((r) => r.json())
+        .then((b) => { if (b.endereco) setEndereco(b.endereco); })
+        .catch(() => {});
+    }
+  }
+
+  async function resolverEndereco(input: GeocodeInput) {
+    setGeoAviso("Buscando endereço…");
+    try {
+      const res = await fetch("/api/geo/geocode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      const b = await res.json().catch(() => ({}));
+      if (!res.ok || typeof b.lat !== "number") {
+        setGeoAviso("Não encontramos esse endereço — use o GPS ou ajuste o pino no mapa.");
+        return;
+      }
+      setCoords({ lat: b.lat, lng: b.lng });
+      setGeoAviso(
+        b.origem === "cep"
+          ? "Achamos só a região do CEP. Arraste o pino até a sua porta."
+          : "",
+      );
+    } catch {
+      setGeoAviso("Falha ao buscar o endereço — use o GPS ou ajuste o pino.");
+    }
+  }
+
+  function buscarEndereco() {
+    if (!cep.trim()) return;
+    const hood = neighborhoods.find((n) => n.id === bairro)?.name;
+    resolverEndereco({
+      cep: cep.replace(/\D/g, ""),
+      street: endereco.split(/,\s*/)[0]?.trim() || undefined,
+      number: endereco.match(/(?:^|[\s,])\d+[a-zA-Z]?(?:$|[\s,])/)?.[0]?.trim() || undefined,
+      neighborhood: hood,
+    });
+  }
+
+  function onEnderecoChange(v: string) {
+    setEndereco(v);
+    if (v.trim().length < 3) {
+      setSugestoes([]);
+      setSugestaoAberta(false);
+      return;
+    }
+    if (debounceAutocompleteRef.current) clearTimeout(debounceAutocompleteRef.current);
+    debounceAutocompleteRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/geo/autocomplete?q=${encodeURIComponent(v.trim())}`,
+        );
+        const b = await res.json().catch(() => ({}));
+        setSugestoes(b.suggestions || []);
+        setSugestaoAberta(true);
+      } catch {
+        setSugestoes([]);
+        setSugestaoAberta(false);
+      }
+    }, 300);
   }
 
   function dadosValidos(): boolean {
@@ -182,8 +273,17 @@ export default function Checkout({
           type: tipo === "retirada" ? "pickup" : "delivery",
           payment_method: metodo,
           change_for_cents: trocoCents,
-          notes: "",
-          address: tipo === "delivery" ? { endereco: endereco.trim(), cep: cep.replace(/\D/g, ""), neighborhood_id: bairro } : null,
+          notes: notes.trim(),
+          address: tipo === "delivery"
+            ? {
+                endereco: endereco.trim(),
+                cep: cep.replace(/\D/g, ""),
+                neighborhood_id: bairro,
+                // o ponto que o cliente arrasta no mapa é a origem da distância
+                // e do link de navegação do motoboy — sem ele não há entrega precisa
+                ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
+              }
+            : null,
           items: itensParaQuote.map((i) => ({ id: i.productId, qty: i.qtd, addons: i.addonIds })),
           total_cents: Math.round(quote.total * 100),
           website: honeypotRef.current?.value ?? "",
@@ -199,6 +299,34 @@ export default function Checkout({
       setCarregando(false);
     }
   }
+
+  function selecionarSugestao(s: AddressSuggestion) {
+    setEndereco(s.label || [s.street, s.number].filter(Boolean).join(", "));
+    setSugestaoAberta(false);
+    setSugestoes([]);
+    resolverEndereco(sugestaoParaGeocodeInput(s));
+  }
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setSugestaoAberta(false);
+        setSugestoes([]);
+      }
+    }
+    function handleMouseDown(e: MouseEvent) {
+      if (sugestaoBoxRef.current && !sugestaoBoxRef.current.contains(e.target as Node)) {
+        setSugestaoAberta(false);
+        setSugestoes([]);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleMouseDown);
+    };
+  }, []);
 
   if (lojaFechada) {
     return (
@@ -250,9 +378,53 @@ export default function Checkout({
           </label>
           {tipo === "delivery" && (
             <>
-              <label className="form-field full-width">
+              <label className="form-field full-width" style={{ position: "relative" }}>
                 <span>Endereço completo *</span>
-                <input type="text" required autoComplete="street-address" placeholder="Rua, número..." value={endereco} onChange={(e) => setEndereco(e.target.value)} />
+                <input
+                  type="text"
+                  required
+                  autoComplete="street-address"
+                  placeholder="Rua, número..."
+                  value={endereco}
+                  onChange={(e) => onEnderecoChange(e.target.value)}
+                  style={{ padding: "0.75rem", border: "1px solid var(--color-border)", borderRadius: "var(--radius-button)", fontSize: "1rem", minHeight: 44, background: "#fff" }}
+                />
+                {sugestaoAberta && (
+                  <ul
+                    ref={sugestaoBoxRef}
+                    role="listbox"
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      left: 0,
+                      right: 0,
+                      maxHeight: 240,
+                      overflowY: "auto",
+                      border: "1px solid var(--color-border)",
+                      backgroundColor: "var(--color-card)",
+                      zIndex: 50,
+                      listStyle: "none",
+                      margin: 0,
+                      padding: 0,
+                    }}
+                  >
+                    {sugestoesUnicas.map((s) => (
+                      <li
+                        key={s.label}
+                        role="option"
+                        aria-selected={false}
+                        onMouseDown={() => selecionarSugestao(s)}
+                        style={{
+                          padding: "0.75rem",
+                          cursor: "pointer",
+                          borderBottom: "1px solid var(--color-border)",
+                        }}
+                      >
+                        {s.label}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </label>
               <label className="form-field">
                 <span>CEP *</span>
@@ -270,21 +442,33 @@ export default function Checkout({
                 </select>
               </label>
               <div className="form-field full-width">
+                <button type="button" className="btn-mapa" onClick={buscarEndereco}>
+                  Buscar endereço no mapa
+                </button>
+                {geoAviso && <span className="form-hint">{geoAviso}</span>}
+              </div>
+              <div className="form-field full-width">
                 <span>Ou use sua localização</span>
-                <button type="button" className="btn-mapa" disabled={!!gpsErro} onClick={usarLocalizacao}>
+                <button type="button" className="btn-mapa" disabled={gpsErro === "Obtendo localização…"} onClick={usarLocalizacao}>
                   Usar localização atual
                 </button>
                 {gpsErro && <span className="form-hint">{gpsErro}</span>}
-                {coords && (
-                  <div style={{ marginTop: 12 }}>
-                    <CheckoutMap
-                      lat={coords.lat}
-                      lng={coords.lng}
-                      onChange={(lat, lng) => setCoords({ lat, lng })}
-                    />
-                  </div>
-                )}
               </div>
+              {coords && (
+                <div className="form-field full-width">
+                  <span>Confirme o ponto de entrega no mapa</span>
+                  <CheckoutMap
+                    lat={coords.lat}
+                    lng={coords.lng}
+                    onChange={(lat, lng) => {
+                      setCoords({ lat, lng });
+                      // arrastar = o cliente assumiu o controle: o ponto deixa de ser aproximado
+                      setGeoAviso("");
+                      setGpsErro("");
+                    }}
+                  />
+                </div>
+              )}
             </>
           )}
           {tipo === "retirada" && <p className="form-hint full-width">Apresente seu nome no balcão para retirar.</p>}
