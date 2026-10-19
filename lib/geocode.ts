@@ -49,18 +49,84 @@ export function normalizeAddress(input: GeocodeInput): string {
 }
 
 type BrasilApiCep = {
-  logradouro?: string;
-  localidade?: string;
-  uf?: string;
+  cep?: string;
+  street?: string;
+  city?: string;
+  state?: string;
+  neighborhood?: string;
+  service?: string;
   location?: { coordinates?: { latitude?: string | number; longitude?: string | number } };
 };
 
-type LocationIqResult = { lat: string; lon: string }[];
+type LocationIqResult = {
+  lat: string;
+  lon: string;
+  display_name?: string;
+  address?: { suburb?: string; neighbourhood?: string; city?: string; postcode?: string };
+}[];
 
-export async function geocodeExternal(
+// Uma rua se repete em vários bairros (Manaus tem 8 "Rua Jerusalém"). Pegar o
+// primeiro resultado (`limit=1`) cai na rua certa no bairro errado. Busca um
+// lote e escolhe o que tem o bairro pedido no `suburb`/`display_name`; sem
+// bairro confiável, cai na âncora (centroid do CEP) só como último recurso.
+function melhorPorBairro(
+  data: LocationIqResult,
+  bairro: string | undefined,
+  ancora: Coords | null,
+): Coords | null {
+  const alvo = bairro?.trim().toLowerCase();
+  const parse = (d: LocationIqResult[number]): Coords | null => {
+    const lat = parseFloat(d.lat ?? "");
+    const lng = parseFloat(d.lon ?? "");
+    return posicaoValida(lat, lng) ? { lat, lng } : null;
+  };
+  const bairroDe = (d: LocationIqResult[number]): string =>
+    (d.address?.suburb ?? d.address?.neighbourhood ?? "").trim().toLowerCase();
+
+  // 1º: bairro bate com `suburb` do addressdetails
+  let pool: LocationIqResult = [];
+  if (alvo) {
+    pool = data.filter((d) => {
+      const s = bairroDe(d);
+      return s !== "" && (s.includes(alvo) || alvo.includes(s));
+    });
+    // 2º: bairro aparece no display_name (OSM às vezes põe o bairro só lá)
+    if (pool.length === 0) {
+      pool = data.filter((d) =>
+        (d.display_name ?? "").toLowerCase().includes(alvo),
+      );
+    }
+  }
+  // 3º: sem bairro utilizável → todos, e desempata pela âncora do CEP
+  const candidatos = pool.length > 0 ? pool : ancora ? data : data.slice(0, 1);
+
+  if (ancora) {
+    return candidatos.reduce<Coords | null>((best, d) => {
+      const c = parse(d);
+      if (!c) return best;
+      if (!best) return c;
+      return distanciaKm(ancora, c) < distanciaKm(ancora, best) ? c : best;
+    }, null);
+  }
+  return parse(candidatos[0]);
+}
+
+/** Resultado de geocodificação + origem, para o chamador avisar o cliente
+ *  quando o ponto veio só do CEP (centroide ~5km, bairro errado em Manaus)
+ *  ou quando o ponto está a mais de 1km do centroide (sem número). */
+export type GeocodeResult = {
+  lat: number;
+  lng: number;
+  /** "endereco" = rua encontrada pelo LocationIQ · "cep" = só centroide do CEP */
+  origem: "endereco" | "cep";
+  /** true = ponto aproximado, cliente deve confirmar no mapa */
+  aproximado: boolean;
+};
+
+export async function geocodeExternalComOrigem(
   input: GeocodeInput,
   fetchImpl: typeof fetch = fetch,
-): Promise<Coords | null> {
+): Promise<GeocodeResult | null> {
   // 1. CEP na BrasilAPI
   const cepDigits = input.cep?.replace(/\D/g, "");
   let brasilData: BrasilApiCep | null = null;
@@ -73,42 +139,74 @@ export async function geocodeExternal(
     }
   }
 
-  // 2. LocationIQ
+  // BrasilAPI retorna 200 com dados de OUTRA cidade para CEP inexistente
+  // (ex: 99999-999 → Sarandi/PR, campo service:"open-cep"). Nao confiar nesses.
+  const cepConfiavel = brasilData?.service !== "open-cep" && !!brasilData?.cep;
+  const dadosCep = cepConfiavel ? brasilData : null;
+
+  // 3. Centroide do CEP (BrasilAPI retorna string — parseFloat necessário).
+  //    Também é a âncora para escolher a rua certa entre as homônimas.
+  const cepLat = parseFloat(String(dadosCep?.location?.coordinates?.latitude ?? ""));
+  const cepLng = parseFloat(String(dadosCep?.location?.coordinates?.longitude ?? ""));
+  const centroideCep = posicaoValida(cepLat, cepLng) ? { lat: cepLat, lng: cepLng } : null;
+
+  // 2. LocationIQ. Sem chave a única resposta possível é o centroide do CEP, que
+  //    em Manaus erra ~5km e às vezes acerta o bairro errado — melhor devolver
+  //    "sem ponto" e deixar o cliente confirmar no mapa do que fingir precisão.
   const key = process.env.LOCATIONIQ_KEY;
-  const hasAddress = Boolean(input.street || input.number || input.neighborhood || input.city);
-  if (key && hasAddress) {
-    const city = input.city || brasilData?.localidade;
-    const uf = brasilData?.uf;
+  if (!key) return centroideCep ? { ...centroideCep, origem: "cep", aproximado: true } : null;
+
+  // Se o chamador mandou só CEP, usa o logradouro/bairro que a BrasilAPI
+  // acabou de devolver — sem isso a query fica sem rua e erra o bairro.
+  const street = input.street || dadosCep?.street;
+  const neighborhood = input.neighborhood || dadosCep?.neighborhood;
+  if (street || input.number || neighborhood || input.city) {
+    const city = input.city || dadosCep?.city;
+    const uf = dadosCep?.state;
     const parts = [
-      [input.street, input.number].filter(Boolean).join(" "),
-      input.neighborhood,
+      [street, input.number].filter(Boolean).join(" "),
+      neighborhood,
       city && uf ? `${city}-${uf}` : city,
       input.cep,
       "Brasil",
     ].filter(Boolean);
     const q = parts.join(", ");
     try {
+      // limit=8 + addressdetails=1: Manaus tem 8 "Rua Jerusalém" (limit=1 pega a
+  // errada) e o campo `suburb` — que diz qual bairro é qual — só vem com
+  // addressdetails.
       const res = await fetchImpl(
-        `https://us1.locationiq.com/v1/search?key=${key}&q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=br`,
+        `https://us1.locationiq.com/v1/search?key=${key}&q=${encodeURIComponent(q)}&format=json&limit=8&countrycodes=br&addressdetails=1`,
       );
       if (res.ok) {
         const data = (await res.json()) as LocationIqResult;
-        const lat = parseFloat(data[0]?.lat ?? "");
-        const lng = parseFloat(data[0]?.lon ?? "");
-        if (posicaoValida(lat, lng)) return { lat, lng };
+        const coords = melhorPorBairro(data, neighborhood, centroideCep);
+        if (coords) {
+          // Marca como aproximado: sem número OU ponto a mais de 1km do centroide do CEP.
+          const dist = centroideCep ? distanciaKm(centroideCep, coords) : 0;
+          const aproximado = !input.number || dist > 1;
+          return { ...coords, origem: "endereco", aproximado };
+        }
       }
     } catch {
       // LocationIQ falhou — cai no CEP
     }
   }
 
-  // 3. Fallback: coordenada do CEP (BrasilAPI retorna string — parseFloat necessário)
-  const lat = parseFloat(String(brasilData?.location?.coordinates?.latitude ?? ""));
-  const lng = parseFloat(String(brasilData?.location?.coordinates?.longitude ?? ""));
-  if (posicaoValida(lat, lng)) return { lat, lng };
+  // 4. Só o centroid do CEP sobrou — ponto aproximado, sinalizado como tal.
+  if (centroideCep) return { ...centroideCep, origem: "cep", aproximado: true };
 
-  // 4. Sem coordenada
+  // 5. Sem coordenada
   return null;
+}
+
+// Compat: chamadas antigas só querem o par de coordenadas.
+export async function geocodeExternal(
+  input: GeocodeInput,
+  fetchImpl: typeof fetch = fetch,
+): Promise<Coords | null> {
+  const r = await geocodeExternalComOrigem(input, fetchImpl);
+  return r ? { lat: r.lat, lng: r.lng } : null;
 }
 
 export type AddressSuggestion = {
@@ -139,7 +237,18 @@ export function parseAutocomplete(data: unknown): AddressSuggestion[] {
     .filter((s) => s.label !== "");
 }
 
-export async function geocodeAddress(input: GeocodeInput): Promise<Coords | null> {
+// Mapeia uma sugestão do dropdown (sem coordenada) no input PRECISO do geocoder.
+// A origem do pino vem do forward-geocode (/api/geo/geocode), nunca do autocomplete.
+export function sugestaoParaGeocodeInput(s: AddressSuggestion): GeocodeInput {
+  return {
+    cep: s.cep || undefined,
+    street: s.street || undefined,
+    number: s.number || undefined,
+    neighborhood: s.neighborhood || undefined,
+  };
+}
+
+export async function geocodeAddress(input: GeocodeInput): Promise<GeocodeResult | null> {
   const queryKey = normalizeAddress(input);
   if (!queryKey) return null;
 
@@ -149,7 +258,7 @@ export async function geocodeAddress(input: GeocodeInput): Promise<Coords | null
   const admin = createAdminClient();
   const { data: cached } = await admin
     .from("geocode_cache")
-    .select("lat,lng,falha,expira_em")
+    .select("lat,lng,origem,falha,expira_em")
     .eq("query_key", queryKey)
     .maybeSingle();
 
@@ -158,16 +267,19 @@ export async function geocodeAddress(input: GeocodeInput): Promise<Coords | null
     if (!expired) {
       if (cached.falha) return null;
       if (cached.lat != null && cached.lng != null && posicaoValida(cached.lat, cached.lng)) {
-        return { lat: cached.lat, lng: cached.lng };
+        // entrada antiga (pré-fix) não tem `origem`: assume "cep" (centroide),
+        // que é o comportamento seguro — o chamador pede confirmação do pino.
+        const origem = (cached as { origem?: GeocodeResult["origem"] }).origem ?? "cep";
+        return { lat: cached.lat, lng: cached.lng, origem, aproximado: origem === "cep" };
       }
     }
   }
 
-  const coords = await geocodeExternal(input);
+  const coords = await geocodeExternalComOrigem(input);
 
   if (coords) {
     await admin.from("geocode_cache").upsert(
-      { query_key: queryKey, lat: coords.lat, lng: coords.lng, falha: false, expira_em: null },
+      { query_key: queryKey, lat: coords.lat, lng: coords.lng, origem: coords.origem, aproximado: coords.aproximado, falha: false, expira_em: null },
       { onConflict: "query_key" },
     );
     return coords;
