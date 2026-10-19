@@ -5,8 +5,8 @@
 import { requireStore } from "@/lib/auth";
 import { STATUS_LABEL } from "@/lib/order-status";
 import type {
-  FichaData, PanelAddon, PanelAddress, PanelDetail,
-  PanelProduct, PanelRow, PanelSettings, PanelStatus,
+  FichaData, PanelAddon, PanelAddress, PanelCombo, PanelCustomField, PanelDetail,
+  PanelProduct, PanelProductWithVars, PanelRow, PanelSettings, PanelStatus, PanelVariation,
 } from "./painel-utils";
 import { manausDayStartISO, toPanelOrder, addonIdsByProduct, resumoPedidos } from "./painel-utils";
 import { parsePeriodKind, resolvePeriod, type CustomRange } from "./period";
@@ -163,26 +163,57 @@ export async function getPedido(id: string): Promise<{ order: PanelDetail | null
 // ordenado por sort_order (persistido no banco, não no cliente).
 export async function getCardapio() {
   const { supabase, storeId } = await requireStore();
-  const [{ data: cats }, { data: prods }, { data: addons }, { data: prodAddons }, { data: groups }] = await Promise.all([
+  const [
+    { data: cats }, { data: prods }, { data: addons }, { data: prodAddons }, { data: groups },
+    { data: variations }, { data: customFields }, { data: combos }, { data: comboItems },
+  ] = await Promise.all([
     supabase.from("categories").select("id,name,active,sort_order").eq("store_id", storeId).order("sort_order"),
     supabase.from("products").select("id,category_id,name,description,price_cents,image_url,active,sort_order")
       .eq("store_id", storeId).order("sort_order"),
-    supabase.from("product_addons").select("id,name,price_cents,active,group_id")
+    supabase.from("product_addons").select("id,name,price_cents,active,group_id,is_removal,is_separate")
       .eq("store_id", storeId).is("product_id", null),
     supabase.from("product_addons").select("id,product_id").eq("store_id", storeId).not("product_id", "is", null),
-    supabase.from("product_addon_groups").select("id,name,required,max_choices,sort_order")
+    supabase.from("product_addon_groups").select("id,name,required,max_choices,sort_order,price_rule,free_addons,min_choices,is_preparation")
+      .eq("store_id", storeId).order("sort_order"),
+    supabase.from("product_variations").select("id,product_id,name,price_cents,active,sort_order")
+      .eq("store_id", storeId),
+    supabase.from("product_custom_fields").select("id,product_id,label,required,max_length,sort_order")
+      .eq("store_id", storeId),
+    supabase.from("combos").select("id,name,description,price_cents,image_url,active,sort_order")
+      .eq("store_id", storeId).order("sort_order"),
+    supabase.from("combo_items").select("id,combo_id,product_id,qty,optional,sort_order")
       .eq("store_id", storeId).order("sort_order"),
   ]);
-  const byCat = new Map<string, PanelProduct[]>();
+  const fetchErrors = [cats, prods, addons, prodAddons, groups, variations, customFields, combos, comboItems]
+    .map((r) => r.error).filter(Boolean);
+  if (fetchErrors.length) throw new Error("Falha ao carregar cardápio: " + fetchErrors.map((e) => e.message).join("; "));
+  const byCat = new Map<string, PanelProductWithVars[]>();
+  const varsByProduct = new Map<string, PanelVariation[]>();
+  for (const v of (variations ?? []) as PanelVariation[]) {
+    const list = varsByProduct.get(v.product_id) ?? [];
+    list.push(v);
+    varsByProduct.set(v.product_id, list);
+  }
+  const cfByProduct = new Map<string, PanelCustomField[]>();
+  for (const f of (customFields ?? []) as PanelCustomField[]) {
+    const list = cfByProduct.get(f.product_id) ?? [];
+    list.push(f);
+    cfByProduct.set(f.product_id, list);
+  }
   for (const p of (prods ?? []) as (PanelProduct & { category_id: string })[]) {
     const list = byCat.get(p.category_id) ?? [];
     list.push({
       id: p.id, name: p.name, description: p.description ?? "", price_cents: p.price_cents,
       image_url: p.image_url, active: p.active, sort_order: p.sort_order, category_id: p.category_id,
+      variations: varsByProduct.get(p.id) ?? [],
+      customFields: cfByProduct.get(p.id) ?? [],
     });
     byCat.set(p.category_id, list);
   }
   const prodAddonIds = addonIdsByProduct((prodAddons ?? []) as { id: string; product_id: string }[]);
+  const prodNameById = new Map(((prods ?? []) as { id: string; name: string }[]).map((p) => [p.id, p.name]));
+  const comboItemsMapped = ((comboItems ?? []) as { id: string; combo_id: string; product_id: string; qty: number; optional: boolean; sort_order: number }[])
+    .map((ci) => ({ ...ci, productName: prodNameById.get(ci.product_id) ?? "(produto removido)" }));
   return {
     storeId,
     categories: ((cats ?? []) as { id: string; name: string; active: boolean; sort_order: number }[]).map((c) => ({
@@ -191,6 +222,8 @@ export async function getCardapio() {
     addons: ((addons ?? []) as (PanelAddon & { group_id: string | null })[]).map((a) => ({ ...a })),
     groups: ((groups ?? []) as AddonGroupRow[]),
     addonIdsByProduct: prodAddonIds,
+    combos: ((combos ?? []) as PanelCombo[]).map((c) => ({ ...c })),
+    comboItems: comboItemsMapped,
   };
 }
 
