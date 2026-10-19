@@ -185,8 +185,8 @@ export async function getCardapio() {
       .eq("store_id", storeId).order("sort_order"),
   ]);
   const fetchErrors = [cats, prods, addons, prodAddons, groups, variations, customFields, combos, comboItems]
-    .map((r) => r.error).filter(Boolean);
-  if (fetchErrors.length) throw new Error("Falha ao carregar cardápio: " + fetchErrors.map((e) => e.message).join("; "));
+    .map((r) => (r as { error?: { message?: string } }).error).filter(Boolean);
+  if (fetchErrors.length) throw new Error("Falha ao carregar cardápio: " + fetchErrors.map((e) => e?.message).join("; "));
   const byCat = new Map<string, PanelProductWithVars[]>();
   const varsByProduct = new Map<string, PanelVariation[]>();
   for (const v of (variations ?? []) as PanelVariation[]) {
