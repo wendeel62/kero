@@ -47,10 +47,10 @@ export async function POST(req: Request) {
     city: typeof b.city === "string" ? b.city : undefined,
   };
 
-  const coords = await geocodeAddress(input);
-  if (!coords || !posicaoValida(coords.lat, coords.lng)) {
+  const result = await geocodeAddress(input);
+  if (!result || !posicaoValida(result.lat, result.lng)) {
     return apiError("GEOCODE_FAILED", "Não encontramos o ponto no mapa.", 404);
   }
 
-  return NextResponse.json({ lat: coords.lat, lng: coords.lng });
+  return NextResponse.json({ lat: result.lat, lng: result.lng, origem: result.origem });
 }

@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   if (!Array.isArray(b.items)) return apiError("INVALID_BODY", "Itens inválidos.", 400);
 
   const admin = createAdminClient();
-  const { data: store } = await admin.from("stores").select("id, active, force_closed, open_hours").eq("slug", b.slug).single();
+  const { data: store } = await admin.from("stores").select("id, active, force_closed, open_hours, min_order_cents").eq("slug", b.slug).single();
   if (!store) return NextResponse.json({ error: "nao_encontrado" }, { status: 404 });
   if (!store.active || store.force_closed || !isStoreOpen(store.open_hours)) {
     return NextResponse.json({ error: "loja_fechada" }, { status: 409 });
@@ -66,6 +66,11 @@ export async function POST(req: Request) {
     const minFee = feeList.length ? Math.min(...feeList) : 0;
     const nbFee = typeof b.neighborhood_id === "string" ? (fees ?? []).find((f) => f.id === b.neighborhood_id)?.fee_cents : undefined;
     const q = calcularQuote({ tipo: b.tipo as string, feeCents: nbFee ?? minFee, lines: lines as never });
+    // Valida pedido mínimo (sobre o subtotal, conforme spec)
+    const minOrder = store.min_order_cents ?? 0;
+    if (minOrder > 0 && q.subtotal < minOrder) {
+      return NextResponse.json({ error: "MIN_ORDER", minOrderCents: minOrder, subtotal: q.subtotal }, { status: 422 });
+    }
     const names = new Map((await admin.from("products").select("id, name").eq("store_id", store.id)).data?.map((x) => [x.id, x.name] as const) ?? []);
     return NextResponse.json({
       quote: {

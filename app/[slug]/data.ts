@@ -22,7 +22,7 @@ export async function getVitrine(slug: string): Promise<VitrineData | null> {
   const supabase = await createClient();
   const { data: store } = await supabase
     .from("stores")
-    .select("id, slug, name, logo_url, active, force_closed, open_hours")
+    .select("id, slug, name, logo_url, whatsapp, active, force_closed, open_hours")
     .eq("slug", slug)
     .eq("active", true)
     .single();
@@ -63,7 +63,7 @@ export async function getVitrine(slug: string): Promise<VitrineData | null> {
 
   const aberto = store.active && !store.force_closed && isStoreOpen(store.open_hours);
   const menu = mapMenu({
-    store: { id: store.id, nome: store.name, slug: store.slug, logo_url: store.logo_url },
+    store: { id: store.id, nome: store.name, slug: store.slug, logo_url: store.logo_url, whatsapp: store.whatsapp },
     categories: (cats ?? []).map((c) => ({ ...c, active: true })),
     products: (prods ?? []).filter((p) => p.active).map((p) => ({ ...p, active: true, destaque: p.destaque ?? false })),
     groups: groups ?? [],

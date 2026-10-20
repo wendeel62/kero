@@ -342,6 +342,9 @@
 .sf .pdetail-store-status.closed { color: var(--color-error); }
 
 .sf .pdetail-group { margin: 0.75rem -1.25rem 0; }
+.sf .pdetail-group-prep .pdetail-group-head { background: #F5F5F4; }
+.sf .pdetail-group-prep .pdetail-option { background: #FAFAF9; }
+.sf .pdetail-option-removal .pdetail-option-name { text-decoration: line-through; color: var(--color-muted); }
 .sf .pdetail-group-head {
   background: var(--color-bg);
   padding: 0.6rem 1.25rem;
@@ -396,6 +399,34 @@
 }
 .sf .pdetail-option input[type='checkbox'] { border-radius: 7px; }
 .sf .pdetail-option input[type='checkbox']:checked::after { border-radius: 4px; }
+
+/* Seletor de variações (tamanho) */
+.sf .pdetail-variations { margin: 0.75rem 0 0; }
+.sf .pdetail-variations-label { margin: 0 0 0.35rem; font-size: 0.75rem; font-weight: 700; color: var(--color-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.sf .pdetail-variations-btns { display: flex; gap: 0.5rem; }
+.sf .pdetail-variations-btns button {
+  flex: 1;
+  min-height: 40px;
+  border: 2px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.sf .pdetail-variations-btns button.active { border-color: var(--color-accent); }
+
+/* Badges de regra de preço dos grupos */
+.sf .pdetail-badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  background: var(--color-primary-soft);
+  color: #836800;
+  border-radius: 6px;
+  padding: 0.1rem 0.35rem;
+  white-space: nowrap;
+}
 
 .sf .pdetail-footer {
   border-top: 1px solid var(--color-border);
@@ -504,13 +535,13 @@
 }
 .sf .sheet-cta:active { background: var(--color-accent-hover); }
 
-/* Sacola fixa */
+/* Sacola fixa — z-index acima do cookie banner (100) para nao ser coberta */
 .sf .cartbar-wrap {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 10;
+  z-index: 101;
   display: flex;
   justify-content: center;
   pointer-events: none;
@@ -1246,4 +1277,57 @@
   .pagamento-cartao,
   .sf .pagamento-erro { max-width: 1120px; margin-left: auto; margin-right: auto; }
   .sf .pagamento-metodos { grid-template-columns: repeat(2, minmax(0, 220px)); justify-content: center; }
+}
+
+/* ===== FOOTER VITRINE ===== */
+.sf .ifood-footer {
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  padding: 2rem 1.25rem 1rem;
+  margin-top: auto;
+}
+.sf .ifood-footer-content {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.sf .ifood-footer-section h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 0.75rem;
+}
+.sf .ifood-footer-section h4 {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 0.75rem;
+}
+.sf .ifood-footer-section p {
+  font-size: 0.875rem;
+  color: var(--color-muted);
+  margin: 0.25rem 0;
+}
+.sf .ifood-footer-section a {
+  color: var(--color-muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+  display: block;
+  margin: 0.25rem 0;
+  transition: color 0.2s;
+}
+.sf .ifood-footer-section a:hover {
+  color: var(--color-primary);
+}
+.sf .ifood-footer-bottom {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-top: 1rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--color-muted);
 }

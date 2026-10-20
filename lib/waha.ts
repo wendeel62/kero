@@ -100,6 +100,7 @@ export async function enviarTexto(session: string, chatId: string, text: string)
     method: "POST",
     headers: headers(),
     body: JSON.stringify({ session, chatId, text }),
+    signal: AbortSignal.timeout(8000),
   });
   if (!res.ok) throw await erro(res);
   return res.json();
@@ -135,6 +136,7 @@ export async function overviewChats(session: string, limit = 30): Promise<WahaCh
     method: "POST",
     headers: headers(),
     body: JSON.stringify({ pagination: { limit, offset: 0 } }),
+    signal: AbortSignal.timeout(8000),
   });
   if (!res.ok) throw await erro(res);
   return res.json();
@@ -155,7 +157,7 @@ export async function allMessages(session: string, chatId: string, limit = 50): 
   const { url } = conf();
   const res = await fetch(
     `${url}/api/${session}/chats/${encodeURIComponent(chatId)}/messages?limit=${limit}`,
-    { headers: headers(false) },
+    { headers: headers(false), signal: AbortSignal.timeout(8000) },
   );
   if (!res.ok) throw await erro(res);
   return res.json();

@@ -103,20 +103,20 @@ export async function toggleAddon(id: string, active: boolean): Promise<R> {
   });
 }
 
-export async function addAddon(name: string, price_cents: number): Promise<R> {
+export async function addAddon(name: string, price_cents: number, is_removal = false, is_separate = false): Promise<R> {
   const { supabase, storeId } = await requireStore();
   return mutate("/painel/cardapio", async () => {
     const { error } = await supabase.from("product_addons")
-      .insert({ store_id: storeId, product_id: null, name: name.trim(), price_cents });
+      .insert({ store_id: storeId, product_id: null, name: name.trim(), price_cents, is_removal, is_separate });
     return { error };
   });
 }
 
-export async function updateAddon(id: string, input: { name: string; price_cents: number; active: boolean }): Promise<R> {
+export async function updateAddon(id: string, input: { name: string; price_cents: number; active: boolean; is_removal: boolean; is_separate: boolean }): Promise<R> {
   const { supabase, storeId } = await requireStore();
   return mutate("/painel/cardapio", async () => {
     const { error } = await supabase.from("product_addons")
-      .update({ name: input.name.trim(), price_cents: input.price_cents, active: input.active })
+      .update({ name: input.name.trim(), price_cents: input.price_cents, active: input.active, is_removal: input.is_removal, is_separate: input.is_separate })
       .eq("id", id).eq("store_id", storeId);
     return { error };
   });
@@ -132,10 +132,41 @@ export async function deleteAddon(id: string): Promise<R> {
   });
 }
 
+// Variações de produto (product_variations) — CRUD simples.
+export async function addVariation(product_id: string, name: string, price_cents: number): Promise<R & { id?: string }> {
+  const { supabase, storeId } = await requireStore();
+  return mutate("/painel/cardapio", async () => {
+    const { data, error } = await supabase.from("product_variations")
+      .insert({ store_id: storeId, product_id, name: name.trim(), price_cents, sort_order: 0, active: true })
+      .select("id").single();
+    return { error, id: data?.id as string | undefined };
+  });
+}
+
+export async function updateVariation(id: string, input: { name: string; price_cents: number; active: boolean }): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  return mutate("/painel/cardapio", async () => {
+    const { error } = await supabase.from("product_variations")
+      .update({ name: input.name.trim(), price_cents: input.price_cents, active: input.active })
+      .eq("id", id).eq("store_id", storeId);
+    return { error };
+  });
+}
+
+export async function removeVariation(id: string): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  return mutate("/painel/cardapio", async () => {
+    const { error } = await supabase.from("product_variations").delete().eq("id", id).eq("store_id", storeId);
+    return { error };
+  });
+}
+
 // Grupos de opção (migration 012) — o grupo é o único conceito novo; as opções
 // são os adicionais com group_id preenchido (design D4).
 export async function saveAddonGroup(input: {
   id?: string; name: string; required: boolean; maxChoices: number | null; sortOrder: number;
+  priceRule: string; freeAddons: number | null; minChoices: number | null; isPreparation: boolean;
+  isRemoval: boolean; isSeparate: boolean;
 }): Promise<R & { id?: string }> {
   const { supabase, storeId } = await requireStore();
   const name = input.name.trim();
@@ -143,7 +174,7 @@ export async function saveAddonGroup(input: {
   if (input.maxChoices !== null && input.maxChoices < 1) {
     return { ok: false, error: "Máximo de escolhas precisa ser 1 ou mais (ou vazio)." };
   }
-  const row = { store_id: storeId, name, required: input.required, max_choices: input.maxChoices, sort_order: input.sortOrder };
+  const row = { store_id: storeId, name, required: input.required, max_choices: input.maxChoices, sort_order: input.sortOrder, price_rule: input.priceRule, free_addons: input.freeAddons, min_choices: input.minChoices, is_preparation: input.isPreparation, is_removal: input.isRemoval, is_separate: input.isSeparate };
   return mutate("/painel/cardapio", async () => {
     const q = input.id
       ? supabase.from("product_addon_groups").update(row).eq("id", input.id).eq("store_id", storeId).select("id").single()
@@ -232,6 +263,111 @@ export async function deleteFicha(id: string): Promise<R> {
   const { supabase, storeId } = await requireStore();
   return mutate("/painel/cardapio", async () => {
     const { error } = await supabase.from("products").update({ active: false }).eq("id", id).eq("store_id", storeId);
+    return { error };
+  });
+}
+
+// Combos (migration 030) — CRUD direto via RLS do lojista.
+export async function addCombo(input: {
+  name: string; description: string; price_cents: number; image_url: string;
+}): Promise<R & { id?: string }> {
+  const { supabase, storeId } = await requireStore();
+  const name = input.name.trim();
+  if (name.length < 1) return { ok: false, error: "Nome com pelo menos 1 letra." };
+  if (!Number.isInteger(input.price_cents) || input.price_cents < 0) {
+    return { ok: false, error: "Preço inválido." };
+  }
+  const { count } = await supabase.from("combos").select("id", { count: "exact", head: true }).eq("store_id", storeId);
+  const row = {
+    store_id: storeId, name, description: input.description.trim() || null,
+    price_cents: input.price_cents, image_url: input.image_url.trim() || null,
+    sort_order: count ?? 0,
+  };
+  return mutate("/painel/cardapio", async () => {
+    const { data, error } = await supabase.from("combos").insert(row).select("id").single();
+    return { error, id: data?.id as string | undefined };
+  });
+}
+
+export async function updateCombo(id: string, input: {
+  name: string; description: string; price_cents: number; image_url: string; active: boolean;
+}): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  const name = input.name.trim();
+  if (name.length < 1) return { ok: false, error: "Nome com pelo menos 1 letra." };
+  if (!Number.isInteger(input.price_cents) || input.price_cents < 0) {
+    return { ok: false, error: "Preço inválido." };
+  }
+  return mutate("/painel/cardapio", async () => {
+    const { error } = await supabase.from("combos")
+      .update({
+        name, description: input.description.trim() || null,
+        price_cents: input.price_cents, image_url: input.image_url.trim() || null,
+        active: input.active,
+      })
+      .eq("id", id).eq("store_id", storeId);
+    return { error };
+  });
+}
+
+export async function removeCombo(id: string): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  return mutate("/painel/cardapio", async () => {
+    const { error } = await supabase.from("combos").delete().eq("id", id).eq("store_id", storeId);
+    return { error };
+  });
+}
+
+export async function addComboItem(combo_id: string, product_id: string, qty: number, optional: boolean): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  if (!Number.isInteger(qty) || qty < 1) return { ok: false, error: "Quantidade precisa ser 1 ou mais." };
+  return mutate("/painel/cardapio", async () => {
+    const { count } = await supabase.from("combo_items").select("id", { count: "exact", head: true }).eq("combo_id", combo_id).eq("store_id", storeId);
+    const { error } = await supabase.from("combo_items")
+      .insert({ store_id: storeId, combo_id, product_id, qty, optional, sort_order: count ?? 0 });
+    return { error };
+  });
+}
+
+export async function removeComboItem(id: string): Promise<R> {
+  const { supabase, storeId } = await requireStore();
+  return mutate("/painel/cardapio", async () => {
+    const { error } = await supabase.from("combo_items").delete().eq("id", id).eq("store_id", storeId);
+    return { error };
+  });
+}
+
+// Campos personalizados de produto (product_custom_fields) — escrita via admin
+// (service role): RLS do lojista ainda não cobre esta tabela.
+export async function addCustomField(product_id: string, label: string, required: boolean, max_length: number): Promise<R & { id?: string }> {
+  const { storeId } = await requireStore();
+  const admin = createAdminClient();
+  const name = label.trim();
+  if (name.length < 1) return { ok: false, error: "Label com pelo menos 1 letra." };
+  return mutate("/painel/cardapio", async () => {
+    const { data, error } = await admin.from("product_custom_fields")
+      .insert({ store_id: storeId, product_id, label: name, required, max_length })
+      .select("id").single();
+    return { error, id: data?.id as string | undefined };
+  });
+}
+
+export async function updateCustomField(id: string, input: { label: string; required: boolean; max_length: number }): Promise<R> {
+  const { storeId } = await requireStore();
+  const admin = createAdminClient();
+  return mutate("/painel/cardapio", async () => {
+    const { error } = await admin.from("product_custom_fields")
+      .update({ label: input.label.trim(), required: input.required, max_length: input.max_length })
+      .eq("store_id", storeId).eq("id", id);
+    return { error };
+  });
+}
+
+export async function removeCustomField(id: string): Promise<R> {
+  const { storeId } = await requireStore();
+  const admin = createAdminClient();
+  return mutate("/painel/cardapio", async () => {
+    const { error } = await admin.from("product_custom_fields").delete().eq("store_id", storeId).eq("id", id);
     return { error };
   });
 }

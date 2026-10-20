@@ -63,6 +63,9 @@ export default function LoginClient() {
               className={`${input} mt-1`} disabled={enviando} />
           </div>
           <p role="alert" aria-live="polite" className="text-[13px] font-bold text-red-600 min-h-5">{erro || "\u00a0"}</p>
+          <p className="text-right">
+            <a href="/login/esqueci-senha" className="text-sm text-red-600 hover:underline">Esqueci minha senha</a>
+          </p>
           <button type="submit" disabled={enviando}
             className="w-full bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-xl px-4 py-3 transition-colors disabled:opacity-60">
             {enviando ? "Entrando…" : "Entrar"}

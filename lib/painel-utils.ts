@@ -88,10 +88,22 @@ export type PanelProduct = {
   id: string; name: string; description: string; price_cents: number;
   image_url: string | null; active: boolean; sort_order: number; category_id: string;
 };
-export type PanelCategory = { id: string; name: string; active: boolean; sort_order: number; products: PanelProduct[] };
-export type PanelAddon = { id: string; name: string; price_cents: number; active: boolean; group_id: string | null };
+export type PanelVariation = { id: string; product_id: string; name: string; price_cents: number; active: boolean; sort_order: number };
+export type PanelCustomField = { id: string; product_id: string; label: string; required: boolean; max_length: number; sort_order: number };
+export type PanelProductWithVars = PanelProduct & { variations: PanelVariation[]; customFields: PanelCustomField[] };
+export type PanelCategory = { id: string; name: string; active: boolean; sort_order: number; products: PanelProductWithVars[] };
+export type PanelAddon = { id: string; name: string; price_cents: number; active: boolean; group_id: string | null; is_removal: boolean; is_separate: boolean };
+export type PanelCombo = {
+  id: string; name: string; description: string; price_cents: number;
+  image_url: string | null; active: boolean; sort_order: number;
+};
+export type PanelComboItem = {
+  id: string; combo_id: string; product_id: string; productName: string;
+  qty: number; optional: boolean; sort_order: number;
+};
 export type CardapioData = {
   storeId: string; categories: PanelCategory[]; addons: PanelAddon[]; addonIdsByProduct: Map<string, string[]>;
+  combos: PanelCombo[]; comboItems: PanelComboItem[];
 };
 
 // Linhas espelhadas de product_addons (product_id preenchido) → mapa

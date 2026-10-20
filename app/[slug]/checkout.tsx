@@ -83,8 +83,9 @@ export default function Checkout({
       const b = body as { error?: unknown; code?: unknown; message?: unknown };
       if (b.error && typeof b.error === "object") {
         const e = b.error as { code?: unknown; message?: unknown };
-        if (typeof e.code === "string" && e.code) return e.code;
+        // Prioriza a mensagem em PT-BR (error.message) antes do código
         if (typeof e.message === "string" && e.message) return e.message;
+        if (typeof e.code === "string" && e.code) return e.code;
       }
       if (typeof b.error === "string" && b.error) return b.error;
       if (typeof b.code === "string" && b.code) return b.code;
@@ -114,7 +115,14 @@ export default function Checkout({
           body: JSON.stringify({ slug, tipo, items: itensParaQuote, neighborhood_id: bairro || undefined }),
         });
         const body = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(erroBody(body, res.status));
+        if (!res.ok) {
+          // MIN_ORDER: o servidor devolve {error:"MIN_ORDER", minOrderCents, subtotal}
+          if (body?.error === "MIN_ORDER" && typeof body.minOrderCents === "number" && typeof body.subtotal === "number") {
+            const faltam = body.minOrderCents - body.subtotal;
+            throw new Error(`MIN_ORDER:Faltam ${(faltam / 100).toFixed(2).replace(".", ",")} para o pedido mínimo.`);
+          }
+          throw new Error(erroBody(body, res.status));
+        }
         setQuote(body.quote as Quote);
       } catch (e) {
         setErro(e instanceof Error ? e.message : "erro_interno");
@@ -179,6 +187,9 @@ export default function Checkout({
 
   async function resolverEndereco(input: GeocodeInput) {
     setGeoAviso("Buscando endereço…");
+    const timeoutId = setTimeout(() => {
+      setGeoAviso("A busca está demorando — verifique o CEP ou use o GPS.");
+    }, 10000);
     try {
       const res = await fetch("/api/geo/geocode", {
         method: "POST",
@@ -186,6 +197,7 @@ export default function Checkout({
         body: JSON.stringify(input),
       });
       const b = await res.json().catch(() => ({}));
+      clearTimeout(timeoutId);
       if (!res.ok || typeof b.lat !== "number") {
         setGeoAviso("Não encontramos esse endereço — use o GPS ou ajuste o pino no mapa.");
         return;
@@ -197,6 +209,7 @@ export default function Checkout({
           : "",
       );
     } catch {
+      clearTimeout(timeoutId);
       setGeoAviso("Falha ao buscar o endereço — use o GPS ou ajuste o pino.");
     }
   }

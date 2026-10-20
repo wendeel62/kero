@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { mapMenu } from "@/lib/storefront";
 
-const store = { id: "s1", nome: "Pizzaria da Sol", slug: "pizza-do-joao", logo_url: null as string | null };
+const store = { id: "s1", nome: "Pizzaria da Sol", slug: "pizza-do-joao", logo_url: null as string | null, whatsapp: null as string | null };
 const categories = [
   { id: "c1", name: "Pizzas", sort_order: 1, active: true },
   { id: "c2", name: "Oculta", sort_order: 0, active: false },
@@ -11,7 +11,7 @@ const products = [
   { id: "p2", category_id: "c1", name: "Velha", description: "", price_cents: 100, image_url: null, active: false, destaque: false, sort_order: 0 },
 ];
 const groups = [{ id: "g1", name: "adicionais", required: false, max_choices: 3, sort_order: 0 }];
-const addons = [{ id: "a1", product_id: null as string | null, name: "Bacon", price_cents: 600, active: true, group_id: "g1" }];
+const addons = [{ id: "a1", product_id: null as string | null, name: "Bacon", price_cents: 600, active: true, group_id: "g1", is_removal: false, is_separate: false }];
 
 describe("mapMenu (paridade MenuData do original)", () => {
   it("mapeia loja, filtra inativos e converte centavos", () => {
@@ -32,6 +32,6 @@ describe("mapMenu (paridade MenuData do original)", () => {
     const gs = m.business.categories[0].products[0].optionGroups;
     expect(gs).toHaveLength(1);
     expect(gs[0]).toMatchObject({ nome: "adicionais", obrigatorio: false, maxEscolhas: 3 });
-    expect(gs[0].options).toEqual([{ id: "a1", nome: "Bacon", precoExtra: 6 }]);
+    expect(gs[0].options).toEqual([{ id: "a1", nome: "Bacon", precoExtra: 6, is_removal: false, is_separate: false }]);
   });
 });

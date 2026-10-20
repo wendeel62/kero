@@ -97,10 +97,36 @@ begin
         if not found then
           raise exception 'ITEM_UNAVAILABLE: adicional de %', v_prod.name;
         end if;
-        v_unit := v_unit + v_addon.price_cents;
         v_addons_out := v_addons_out ||
-          jsonb_build_object('name', v_addon.name, 'price_cents', v_addon.price_cents);
+          jsonb_build_object('name', v_addon.name, 'price_cents', v_addon.price_cents, 'is_separate', v_addon.is_separate);
       end loop;
+      -- total por grupo: price_rule (sum/max/avg) + free_addons (primeiros X grátis)
+      select coalesce(sum(grp_total), 0) into v_unit
+      from (
+        select
+          case g.price_rule
+            when 'max' then max(a.price_cents)
+            when 'avg' then avg(a.price_cents)::int
+            else (
+              select coalesce(sum(a3.price_cents), 0)
+              from (
+                select a2.price_cents, row_number() over (order by a2.id) as rn
+                from product_addons a2
+                where a2.group_id = g.id and a2.store_id = p_store_id and a2.active
+                  and (a2.product_id is null or a2.product_id = v_prod.id)
+                  and a2.id in (select (e #>> '{}')::uuid from jsonb_array_elements(v_item->'addons') e)
+              ) a3
+              where a3.rn > coalesce(g.free_addons, 0)
+            )
+          end as grp_total
+        from product_addon_groups g
+        join product_addons a on a.group_id = g.id and a.store_id = p_store_id and a.active
+          and (a.product_id is null or a.product_id = v_prod.id)
+        where g.store_id = p_store_id
+          and a.id in (select (e #>> '{}')::uuid from jsonb_array_elements(v_item->'addons') e)
+        group by g.id, g.price_rule, g.free_addons
+      ) sub;
+      v_unit := v_prod.price_cents + v_unit;
     end if;
 
     v_qty := least(greatest(coalesce((v_item->>'qty')::int, 1), 1), 20);   -- clamp 1..20

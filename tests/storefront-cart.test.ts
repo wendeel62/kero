@@ -4,6 +4,7 @@ import { calcularTotal, editarItem, formatarMoeda, montarItem } from "@/lib/stor
 const produto = {
   id: "p1", nome: "X", descricao: "", preco: 25.9, foto_url: null, destaque: false,
   optionGroups: [{ id: "g1", nome: "Adicionais", obrigatorio: false, maxEscolhas: 3, options: [{ id: "a1", nome: "Bacon", precoExtra: 5 }] }],
+  variations: [], customFields: [],
 };
 
 describe("storefront-cart (paridade lib do original)", () => {

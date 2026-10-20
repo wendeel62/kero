@@ -9,6 +9,12 @@ import { StatusBadge } from "@/components/ui/status-badge";
 
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+// Gera QR code simples via Google Charts API (sem dependência extra)
+function QrCode({ data, size = 80 }: { data: string; size?: number }) {
+  const url = `https://chart.googleapis.com/chart?cht=qr&chl=${encodeURIComponent(data)}&chs=${size}x${size}&choe=UTF-8`;
+  return <img src={url} alt="QR code do pedido" width={size} height={size} style={{ display: "block", margin: "0 auto" }} />;
+}
+
 export default function CupomPrint() {
   const id = useParams().id as string;
   const [order, setOrder] = useState<PanelDetail | null | undefined>(undefined);
@@ -56,6 +62,10 @@ export default function CupomPrint() {
             className="bg-stone-900 text-white font-bold rounded-xl px-5 py-2.5 text-sm hover:bg-stone-700 transition-colors">
             🖨 Imprimir
           </button>
+          <button onClick={() => window.open(`${window.location.href}?via=2`, "_blank")}
+            className="bg-stone-600 text-white font-bold rounded-xl px-5 py-2.5 text-sm hover:bg-stone-700 transition-colors">
+            📄 2ª Via
+          </button>
         </div>
         {/* cupom 80mm — spec: bobina, A4 só relatório */}
         <article className="cupom w-[80mm] bg-white shadow-xl font-mono text-[12px] leading-snug p-3">
@@ -101,6 +111,10 @@ export default function CupomPrint() {
           <p className="text-center font-bold text-sm">
             {order.paymentMethod === "cash" && order.changeFor != null ? `*** TROCO P/ ${brl(order.changeFor).toUpperCase()} ***` : order.payment.toUpperCase()}
           </p>
+          <p className="font-bold my-1">--------------------------------</p>
+          <p className="text-center">Acompanhe: {typeof window !== "undefined" ? `${window.location.origin}/${trackPath}` : trackPath}</p>
+          <QrCode data={`${typeof window !== "undefined" ? window.location.origin : ""}/${trackPath}`} size={64} />
+          <p className="text-center font-bold text-[10px] mt-1">Escaneie para acompanhar</p>
           <p className="font-bold my-1">--------------------------------</p>
           <p className="text-center">Acompanhe: {typeof window !== "undefined" ? `${window.location.origin}/${trackPath}` : trackPath}</p>
           <p className="text-center font-bold">Obrigado! Até a próxima 🙏</p>

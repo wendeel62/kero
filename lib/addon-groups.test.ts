@@ -4,7 +4,7 @@ import { groupAddons, priceOf, validateChoice, type AddonGroupRow, type AddonRow
 const a = (id: string, group_id: string | null, cents = 100): AddonRow =>
   ({ id, name: id, price_cents: cents, group_id, active: true });
 const g = (id: string, required = false, max: number | null = null): AddonGroupRow =>
-  ({ id, name: id, required, max_choices: max, sort_order: 0 });
+  ({ id, name: id, required, max_choices: max, sort_order: 0, price_rule: "sum", free_addons: null, min_choices: null, is_preparation: false, is_removal: false, is_separate: false });
 
 test("adicionais sem group_id viram o grupo implicito 'Adicionais'", () => {
   const out = groupAddons([a("bacon", null), a("cheddar", null)], []);
@@ -16,8 +16,8 @@ test("adicionais sem group_id viram o grupo implicito 'Adicionais'", () => {
 test("grupos explicitos vem ordenados e com seus adicionais", () => {
   const out = groupAddons(
     [a("catupiry", "borda"), a("cheddar", "borda"), a("bacon", "extras")],
-    [{ id: "borda", name: "Borda", required: true, max_choices: 1, sort_order: 0 },
-     { id: "extras", name: "Extras", required: false, max_choices: null, sort_order: 1 }]
+    [{ id: "borda", name: "Borda", required: true, max_choices: 1, sort_order: 0, price_rule: "sum", free_addons: null, min_choices: null, is_preparation: false, is_removal: false, is_separate: false },
+     { id: "extras", name: "Extras", required: false, max_choices: null, sort_order: 1, price_rule: "sum", free_addons: null, min_choices: null, is_preparation: false, is_removal: false, is_separate: false }]
   );
   expect(out.map((x) => x.name)).toEqual(["Borda", "Extras"]);
   expect(out[0]).toMatchObject({ required: true, maxChoices: 1 });

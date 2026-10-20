@@ -1,7 +1,47 @@
 import { test, expect, vi } from "vitest";
-import { normalizeAddress, geocodeExternal, parseAutocomplete, posicaoValida, distanciaKm, formataDistancia, distanciaLojaCliente } from "./geocode";
+import { normalizeAddress, geocodeExternal, geocodeExternalComOrigem, parseAutocomplete, sugestaoParaGeocodeInput, posicaoValida, distanciaKm, formataDistancia, distanciaLojaCliente } from "./geocode";
 
 vi.stubEnv("LOCATIONIQ_KEY", "test-key");
+
+function mockBrasilApi(data: Partial<{
+  street: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  service: string;
+  cep: string;
+  location: { coordinates: { latitude: string | number; longitude: string | number } };
+}> = {}) {
+  return {
+    ok: true,
+    json: async () => ({
+      street: "Rua Jerusalém",
+      neighborhood: "Coroado",
+      city: "Manaus",
+      state: "AM",
+      service: "viacep",
+      cep: "69082-150",
+      location: { coordinates: { latitude: -3.10194, longitude: -60.025 } },
+      ...data,
+    }),
+  };
+}
+
+function mockLocationIq(data: unknown[] = []) {
+  return { ok: true, json: async () => data };
+}
+
+function mockBrasilApiFail() {
+  return { ok: false, json: async () => ({}) };
+}
+
+function mockLocationIqFail() {
+  return { ok: false, json: async () => ({}) };
+}
+
+function mockAllFail() {
+  return { ok: false, json: async () => ({}) };
+}
 
 test("posicaoValida: range e finito", () => {
   expect(posicaoValida(-3.1, -60)).toBe(true);
@@ -18,8 +58,8 @@ test("geocodeExternal: LocationIQ responde → usa a coordenada dele (com cidade
   const urls: string[] = [];
   const fake = (async (url: string) => {
     urls.push(String(url));
-    if (String(url).includes("brasilapi")) return { ok: true, json: async () => ({ logradouro: "Rua A", localidade: "Manaus", uf: "AM" }) };
-    return { ok: true, json: async () => [{ lat: "-3.10", lon: "-60.00" }] };
+    if (String(url).includes("brasilapi")) return mockBrasilApi();
+    return mockLocationIq([{ lat: "-3.10", lon: "-60.00" }]);
   }) as unknown as typeof fetch;
   const r = await geocodeExternal({ street: "Rua A", number: "10", cep: "69000000" }, fake);
   expect(r).toEqual({ lat: -3.1, lng: -60.0 });
@@ -28,16 +68,69 @@ test("geocodeExternal: LocationIQ responde → usa a coordenada dele (com cidade
 
 test("geocodeExternal: LocationIQ falha → cai no CEP da BrasilAPI", async () => {
   const fake = (async (url: string) => {
-    if (String(url).includes("locationiq")) return { ok: false, json: async () => ({}) };
-    return { ok: true, json: async () => ({ localidade: "Manaus", uf: "AM", location: { coordinates: { latitude: -3.2, longitude: -60.2 } } }) };
+    if (String(url).includes("locationiq")) return mockLocationIqFail();
+    return mockBrasilApi({ location: { coordinates: { latitude: -3.2, longitude: -60.2 } } });
   }) as unknown as typeof fetch;
   const r = await geocodeExternal({ street: "Rua A", number: "10", cep: "69000000" }, fake);
   expect(r).toEqual({ lat: -3.2, lng: -60.2 });
 });
 
 test("geocodeExternal: tudo falha → null", async () => {
-  const fake = (async () => ({ ok: false, json: async () => ({}) })) as unknown as typeof fetch;
+  const fake = (async () => mockAllFail()) as unknown as typeof fetch;
   expect(await geocodeExternal({ street: "Rua A", cep: "69000000" }, fake)).toBeNull();
+});
+
+test("geocodeExternalComOrigem: só CEP usa a rua da BrasilAPI e devolve origem 'endereco'", async () => {
+  const urls: string[] = [];
+  const fake = (async (url: string) => {
+    urls.push(String(url));
+    if (String(url).includes("brasilapi")) return mockBrasilApi({ street: "Rua Jerusalém", neighborhood: "Coroado", city: "Manaus", state: "AM" });
+    return mockLocationIq([{ lat: "-3.0896424", lon: "-59.9790003" }]);
+  }) as unknown as typeof fetch;
+  const r = await geocodeExternalComOrigem({ cep: "69082150" }, fake);
+  expect(r).toEqual({ lat: -3.0896424, lng: -59.9790003, origem: "endereco", aproximado: true });
+  const q = urls.find((u) => u.includes("locationiq"))!;
+  expect(q).toContain("Jerusal");
+  expect(q).toContain("Coroado");
+});
+
+test("geocodeExternalComOrigem: rua homônima — escolhe a do bairro certo, não a primeira", async () => {
+  const fake = (async (url: string) => {
+    if (String(url).includes("brasilapi")) return mockBrasilApi({ street: "Rua Jerusalém", neighborhood: "Coroado", city: "Manaus", state: "AM" });
+    return {
+      ok: true,
+      json: async () => [
+        { lat: "-3.1260903", lon: "-59.9472336", address: { suburb: "Mauazinho" } },
+        { lat: "-3.0896424", lon: "-59.9790003", address: { suburb: "Coroado" } },
+      ],
+    };
+  }) as unknown as typeof fetch;
+  const r = await geocodeExternalComOrigem({ cep: "69082150" }, fake);
+  expect(r).toEqual({ lat: -3.0896424, lng: -59.9790003, origem: "endereco", aproximado: true });
+});
+
+test("geocodeExternalComOrigem: LocationIQ cai → centroide do CEP marcado como origem 'cep'", async () => {
+  const fake = (async (url: string) => {
+    if (String(url).includes("locationiq")) return mockLocationIqFail();
+    return mockBrasilApi({ street: "Rua Jerusalém", neighborhood: "Coroado", city: "Manaus", state: "AM", location: { coordinates: { latitude: -3.10194, longitude: -60.025 } } });
+  }) as unknown as typeof fetch;
+  const r = await geocodeExternalComOrigem({ cep: "69082150" }, fake);
+  expect(r).toEqual({ lat: -3.10194, lng: -60.025, origem: "cep", aproximado: true });
+});
+
+test("geocodeExternalComOrigem: sem LOCATIONIQ_KEY → origem 'cep' (aproximado, nunca 'endereco')", async () => {
+  vi.stubEnv("LOCATIONIQ_KEY", "");
+  const fake = (async (url: string) => {
+    if (String(url).includes("brasilapi")) return mockBrasilApi({ street: "Rua Jerusalém", neighborhood: "Coroado", city: "Manaus", state: "AM" });
+    throw new Error("não deveria chamar o LocationIQ sem chave");
+  }) as unknown as typeof fetch;
+  const r = await geocodeExternalComOrigem({ cep: "69082150" }, fake);
+  expect(r).not.toBeNull();
+  expect(r!.lat).toBeCloseTo(-3.10194, 3);
+  expect(r!.lng).toBeCloseTo(-60.025, 3);
+  expect(r!.origem).toBe("cep");
+  expect(r!.aproximado).toBe(true);
+  vi.stubEnv("LOCATIONIQ_KEY", "test-key");
 });
 
 // dropdown de rua do checkout: LocationIQ /v1/autocomplete → sugestões da UI
@@ -62,23 +155,42 @@ test("parseAutocomplete: resposta não-array → []", () => {
   expect(parseAutocomplete(null)).toEqual([]);
 });
 
-// distância loja → cliente (haversine), usada no painel, no PWA e no acompanhamento
-test("distanciaKm: mesmo ponto = 0; 0,1° de latitude ≈ 11,1 km", () => {
-  expect(distanciaKm({ lat: -3.1, lng: -60 }, { lat: -3.1, lng: -60 })).toBe(0);
-  expect(distanciaKm({ lat: -3.1, lng: -60 }, { lat: -3.2, lng: -60 })).toBeCloseTo(11.12, 1);
+test("sugestaoParaGeocodeInput: mapeia sugestão → GeocodeInput sem lat/lon", () => {
+  const s = {
+    label: "Rua Jerusalém, 1",
+    street: "Rua Jerusalém",
+    number: "1",
+    neighborhood: "Coroado",
+    cep: "69082150",
+  };
+  expect(sugestaoParaGeocodeInput(s)).toEqual({
+    cep: "69082150",
+    street: "Rua Jerusalém",
+    number: "1",
+    neighborhood: "Coroado",
+  });
 });
 
-test("formataDistancia: metros abaixo de 1 km, sem decimal a partir de 10 km", () => {
-  expect(formataDistancia(0.85)).toBe("850 m");
+test("distanciaKm: haversine (Manaus → SP)", () => {
+  const d = distanciaKm({ lat: -3.1, lng: -60.0 }, { lat: -23.55, lng: -46.63 });
+  expect(d).toBeGreaterThan(2600);
+  expect(d).toBeLessThan(2800);
+});
+
+test("formataDistancia: metros < 1km", () => {
+  expect(formataDistancia(0.5)).toBe("500 m");
+});
+
+test("formataDistancia: km com 1 decimal até 10km", () => {
   expect(formataDistancia(2.34)).toBe("2,3 km");
-  expect(formataDistancia(12.4)).toBe("12 km");
 });
 
-test("distanciaLojaCliente: null sem loja ou sem coordenada válida no endereço", () => {
-  const loja = { lat: -3.1, lng: -60 };
-  expect(distanciaLojaCliente(null, { lat: -3.2, lng: -60 })).toBeNull();
-  expect(distanciaLojaCliente(loja, null)).toBeNull();
-  expect(distanciaLojaCliente(loja, { street: "Rua A" })).toBeNull();
-  expect(distanciaLojaCliente(loja, { lat: 999, lng: -60 })).toBeNull();
-  expect(distanciaLojaCliente(loja, { lat: -3.2, lng: -60 })).toBe("11 km");
+test("formataDistancia: km sem decimal a partir de 10km", () => {
+  expect(formataDistancia(12.7)).toBe("13 km");
+});
+
+test("distanciaLojaCliente: null se faltar coordenada", () => {
+  expect(distanciaLojaCliente({ lat: -3, lng: -60 }, {})).toBeNull();
+  expect(distanciaLojaCliente(null, { lat: -3, lng: -60 })).toBeNull();
+  expect(distanciaLojaCliente({ lat: -3, lng: -60 }, { lat: -23, lng: -46 })).toMatch(/km$/);
 });

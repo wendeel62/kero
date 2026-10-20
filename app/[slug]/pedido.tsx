@@ -87,7 +87,7 @@ export default function Pedido({ token, aoVoltar }: { token: string; aoVoltar: (
   if (erro || !pedido) {
     return (
       <main style={{ padding: "2rem", textAlign: "center" }}>
-        <p>Pedido não encontrado{erro ? `: ${erro}` : ""}.</p>
+        <p>Pedido não encontrado{((erro as { message?: string; error?: { message?: string } })?.message ?? (erro as { error?: { message?: string } })?.error?.message ?? "") ? `: ${(erro as { message?: string; error?: { message?: string } })?.message ?? (erro as { error?: { message?: string } })?.error?.message}` : ""}.</p>
         <div style={{ textAlign: "center", marginTop: "1rem" }}>
           <button
             onClick={aoVoltar}

@@ -6,7 +6,7 @@
 export const IMPLICIT_GROUP_NAME = "Adicionais";
 
 export type AddonRow = { id: string; name: string; price_cents: number; group_id: string | null; active: boolean };
-export type AddonGroupRow = { id: string; name: string; required: boolean; max_choices: number | null; sort_order: number };
+export type AddonGroupRow = { id: string; name: string; required: boolean; max_choices: number | null; sort_order: number; price_rule: string; free_addons: number | null; min_choices: number | null; is_preparation: boolean; is_removal: boolean; is_separate: boolean };
 export type AddonGroup = { id: string | null; name: string; required: boolean; maxChoices: number | null; addons: AddonRow[] };
 
 export function groupAddons(addons: AddonRow[], groups: AddonGroupRow[]): AddonGroup[] {

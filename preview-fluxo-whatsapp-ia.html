@@ -1,0 +1,121 @@
+<div class="wrap">
+  <h1>Fluxo — IA de atendimento no WhatsApp</h1>
+  <p class="sub">3 workflows no n8n (um por gatilho). Cada caixa é um nó; a linha cinza é o <i>porquê</i>.</p>
+
+  <section>
+    <h2>1 · Atendimento <span class="tag">Webhook → resposta</span></h2>
+    <div class="flow">
+      <div class="node n-trigger"><b>Webhook</b><span>gatilho — o WAHA chama essa URL (o <code>connect</code> cria a sessão apontando pra ela)</span></div>
+      <div class="conn"></div>
+      <div class="node"><b>If</b> <code>fromMe = false</code><span>senão a IA responde a si mesma — loop infinito</span></div>
+      <div class="conn"></div>
+      <div class="node"><b>Wait</b> ~6s<span>agrupa "oi" / "quero uma" / "pizza" numa resposta só</span></div>
+      <div class="conn"></div>
+      <div class="node"><b>HTTP</b> última msg do chat + <b>If</b><span>se chegou outra msg depois da nossa, esta execução para — só a última do lote responde (senão responde 3×)</span></div>
+      <div class="conn"></div>
+      <div class="node n-switch"><b>Switch</b> — tipo da mensagem<span>cada tipo tem caminho próprio</span></div>
+      <div class="branches">
+        <div class="b"><b>texto</b><span>segue direto</span></div>
+        <div class="b"><b>áudio</b><span>HTTP baixa a mídia → <b>OpenAI Transcribe</b> (whisper) → vira texto</span></div>
+        <div class="b"><b>localização</b><span>HTTP reverso → vira endereço (o pino)</span></div>
+        <div class="b b-off"><b>foto / outro</b><span>resposta fixa: "me digita que eu te ajudo"</span></div>
+      </div>
+      <div class="conn"></div>
+      <div class="node"><b>HTTP</b> Supabase<span>esse telefone já pediu nesta loja? → novo vs. recorrente</span></div>
+      <div class="conn"></div>
+      <div class="node n-ai"><b>AI Agent</b> — o cérebro<span>modelo + memória (Postgres) + tools</span></div>
+      <div class="tools">
+        <span class="tool">cardapio</span>
+        <span class="tool">bairros_taxa</span>
+        <span class="tool">loja_horario</span>
+        <span class="tool">ultimo_pedido</span>
+        <span class="tool">criar_pedido</span>
+      </div>
+      <div class="conn"></div>
+      <div class="node"><b>Code</b> limpa markdown<span><code>**</code>, <code>##</code>, <code>-</code> viram lixo no WhatsApp</span></div>
+      <div class="conn"></div>
+      <div class="node n-send"><b>HTTP</b> <code>POST /api/sendText</code><span>envia a resposta pelo WAHA</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>2 · Cutucadas <span class="tag">cauda do workflow 1</span></h2>
+    <div class="flow row">
+      <div class="node sm"><b>Wait</b> 5min</div><div class="conn h"></div>
+      <div class="node sm"><b>HTTP</b> última msg</div><div class="conn h"></div>
+      <div class="node sm"><b>If</b> cliente respondeu?</div><div class="conn h"></div>
+      <div class="node sm n-send"><b>sendText</b> cutucada 1</div><div class="conn h"></div>
+      <div class="node sm"><b>Wait</b> 5min</div><div class="conn h"></div>
+      <div class="node sm"><b>HTTP</b> + <b>If</b></div><div class="conn h"></div>
+      <div class="node sm n-send"><b>sendText</b> cutucada 2</div>
+    </div>
+    <p class="note">Se o cliente respondeu em qualquer ponto, a execução para. Máx. 2 cutucadas, depois silêncio.</p>
+  </section>
+
+  <section>
+    <h2>3 · Aviso de entrega <span class="tag">Webhook ← kero</span></h2>
+    <div class="flow row">
+      <div class="node sm n-trigger"><b>Webhook</b><span>kero chama quando o status vira <code>out</code></span></div><div class="conn h"></div>
+      <div class="node sm"><b>Set</b> monta o texto</div><div class="conn h"></div>
+      <div class="node sm n-send"><b>HTTP</b> <code>sendText</code></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Transversal</h2>
+    <div class="flow row">
+      <div class="node sm"><b>Error Trigger</b> workflow<span>falha não passa em silêncio</span></div>
+      <div class="node sm"><b>Retry</b> no Webhook<span>o WAHA reenvia; um 500 nosso duplicaria a resposta</span></div>
+    </div>
+  </section>
+
+  <div class="legend">
+    <span class="dot t"></span> gatilho
+    <span class="dot s"></span> envio
+    <span class="dot a"></span> IA
+    <span class="dot o"></span> descarte
+  </div>
+</div>
+
+<style>
+  .wrap { width: 880px; color: var(--foreground); font-size: 14px; line-height: 1.45; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 0 0 12px; }
+  .sub { color: var(--muted-foreground); margin: 0 0 22px; }
+  .tag { color: var(--muted-foreground); font-weight: 400; font-size: 12px; margin-left: 6px; }
+  section { margin-bottom: 26px; }
+  .flow { display: flex; flex-direction: column; align-items: flex-start; }
+  .flow.row { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 0; }
+  .node { border: 1px solid var(--border); background: var(--card); border-radius: 10px;
+          padding: 9px 13px; min-width: 240px; display: flex; flex-direction: column; gap: 1px; }
+  .node b { font-weight: 600; }
+  .node span { color: var(--muted-foreground); font-size: 12px; }
+  .node.sm { min-width: 0; font-size: 12.5px; padding: 7px 11px; }
+  .node.n-trigger { border-left: 3px solid var(--accent); }
+  .node.n-send { border-left: 3px solid var(--accent); }
+  .node.n-ai { border-left: 3px solid var(--accent); }
+  .node.n-switch { border-left: 3px solid var(--accent); }
+  code { background: var(--accent); border-radius: 4px; padding: 0 4px; font-size: 12px; }
+  .conn { width: 2px; height: 20px; background: var(--border); margin-left: 24px; position: relative; }
+  .conn::after { content: ""; position: absolute; bottom: -1px; left: -4px;
+                 border-left: 5px solid transparent; border-right: 5px solid transparent;
+                 border-top: 6px solid var(--border); }
+  .conn.h { width: 22px; height: 2px; margin: 0 4px; position: relative; }
+  .conn.h::after { bottom: -4px; left: auto; right: -1px; border-top: 5px solid transparent;
+                   border-bottom: 5px solid transparent; border-left: 6px solid var(--border);
+                   border-right: 0; }
+  .branches { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0 24px; }
+  .b { border: 1px dashed var(--border); border-radius: 8px; padding: 6px 10px;
+       display: flex; flex-direction: column; max-width: 200px; }
+  .b b { font-size: 12.5px; }
+  .b span { color: var(--muted-foreground); font-size: 11.5px; }
+  .b-off { opacity: .6; }
+  .tools { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0 24px; }
+  .tool { border: 1px solid var(--border); border-radius: 999px; padding: 2px 9px;
+          font-size: 11.5px; color: var(--muted-foreground); }
+  .note { color: var(--muted-foreground); font-size: 12px; margin: 10px 0 0 24px; }
+  .legend { display: flex; gap: 16px; color: var(--muted-foreground); font-size: 12px; margin-top: 8px; }
+  .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-right: 5px; }
+  .dot.t, .dot.s, .dot.a { background: var(--accent); }
+  .dot.o { background: var(--border); }
+</style>
