@@ -28,7 +28,15 @@ export default function CupomPrint() {
   const items = order.items;
   const subtotal = order.subtotal;
   const fee = order.type === "delivery" ? order.fee : 0;
-  const trackPath = `${order.store.slug}/pedido/${order.trackingToken}`;
+  // acompanhamento e' por query param (deep-link da vitrine), nao sub-rota
+  const trackPath = `${order.store.slug}?pedido=${order.trackingToken}`;
+  // endereco: checkout salva `endereco` (string completa); pedidos antigos
+  // podem ter `street`/`number`. Trata os dois formatos.
+  const addr = order.address as { endereco?: string; street?: string; number?: string; complement?: string | null; cep?: string; neighborhood_name?: string } | null;
+  const enderecoLinha = addr?.endereco?.trim()
+    ? addr.endereco.trim()
+    : [addr?.street?.trim(), addr?.number?.trim()].filter(Boolean).join(", ");
+  const bairroLinha = [addr?.neighborhood_name?.trim(), addr?.cep ? `CEP ${addr.cep}` : ""].filter(Boolean).join(" · ");
 
   return (
     <>
@@ -66,7 +74,7 @@ export default function CupomPrint() {
           <p className="font-bold text-sm">{order.customer.toUpperCase()}</p>
           <p>{order.phone}</p>
           {order.type === "delivery" && order.address && (
-            <p className="font-bold">→ {order.address.street}, {order.address.number}{order.address.complement ? ` · ${order.address.complement}` : ""}<br />→ {order.address.neighborhood_name} · CEP {order.address.cep}</p>
+            <p className="font-bold">→ {enderecoLinha}{addr?.complement?.trim() ? ` · ${addr.complement.trim()}` : ""}<br />→ {bairroLinha}</p>
           )}
           {order.notes && <p>obs: {order.notes}</p>}
           <p className="font-bold my-1">--------------------------------</p>
