@@ -167,8 +167,6 @@ function FormGrupo({
   const [freeAddons, setFreeAddons] = useState(grupo?.free_addons === null || grupo?.free_addons === undefined ? "" : String(grupo.free_addons));
   const [minChoices, setMinChoices] = useState(grupo?.min_choices === null || grupo?.min_choices === undefined ? "" : String(grupo.min_choices));
   const [isPreparation, setIsPreparation] = useState(grupo?.is_preparation ?? false);
-  const [isRemoval, setIsRemoval] = useState(grupo?.is_removal ?? false);
-  const [isSeparate, setIsSeparate] = useState(grupo?.is_separate ?? false);
   const [erro, setErro] = useState("");
   const [salvando, setSalvando] = useState(false);
 
@@ -184,8 +182,6 @@ function FormGrupo({
       freeAddons: freeAddons.trim() === "" ? null : Number(freeAddons),
       minChoices: minChoices.trim() === "" ? null : Number(minChoices),
       isPreparation,
-      isRemoval,
-      isSeparate,
     });
     setSalvando(false);
     if (!r.ok) setErro(r.error ?? "Erro ao salvar.");
@@ -211,12 +207,6 @@ function FormGrupo({
       <input aria-label="Complementos grátis" type="number" min="0" value={freeAddons} onChange={(e) => setFreeAddons(e.target.value)} placeholder="quantidade grátis (vazio = nenhuma)" />
       <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <input type="checkbox" checked={isPreparation} onChange={(e) => setIsPreparation(e.target.checked)} /> tempo de preparo
-      </label>
-      <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
-        <input type="checkbox" checked={isRemoval} onChange={(e) => setIsRemoval(e.target.checked)} /> é remoção
-      </label>
-      <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
-        <input type="checkbox" checked={isSeparate} onChange={(e) => setIsSeparate(e.target.checked)} /> enviar separado
       </label>
       {erro && <p style={{ color: "var(--red)" }}>{erro}</p>}
       <div style={{ display: "flex", gap: 6 }}>

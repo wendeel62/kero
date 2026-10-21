@@ -166,7 +166,6 @@ export async function removeVariation(id: string): Promise<R> {
 export async function saveAddonGroup(input: {
   id?: string; name: string; required: boolean; maxChoices: number | null; sortOrder: number;
   priceRule: string; freeAddons: number | null; minChoices: number | null; isPreparation: boolean;
-  isRemoval: boolean; isSeparate: boolean;
 }): Promise<R & { id?: string }> {
   const { supabase, storeId } = await requireStore();
   const name = input.name.trim();
@@ -174,7 +173,7 @@ export async function saveAddonGroup(input: {
   if (input.maxChoices !== null && input.maxChoices < 1) {
     return { ok: false, error: "Máximo de escolhas precisa ser 1 ou mais (ou vazio)." };
   }
-  const row = { store_id: storeId, name, required: input.required, max_choices: input.maxChoices, sort_order: input.sortOrder, price_rule: input.priceRule, free_addons: input.freeAddons, min_choices: input.minChoices, is_preparation: input.isPreparation, is_removal: input.isRemoval, is_separate: input.isSeparate };
+  const row = { store_id: storeId, name, required: input.required, max_choices: input.maxChoices, sort_order: input.sortOrder, price_rule: input.priceRule, free_addons: input.freeAddons, min_choices: input.minChoices, is_preparation: input.isPreparation };
   return mutate("/painel/cardapio", async () => {
     const q = input.id
       ? supabase.from("product_addon_groups").update(row).eq("id", input.id).eq("store_id", storeId).select("id").single()

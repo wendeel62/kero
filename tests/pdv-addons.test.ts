@@ -24,7 +24,6 @@ test("grupo expoe as regras de preço, escolhas e preparo", () => {
   const group: AddonGroupRow = {
     id: "borda", name: "Borda", required: true, max_choices: 1, sort_order: 0,
     price_rule: "max", free_addons: 1, min_choices: 0, is_preparation: true,
-    is_removal: false, is_separate: false,
   };
   expect(group.price_rule).toBe("max");
   expect(group.free_addons).toBe(1);
