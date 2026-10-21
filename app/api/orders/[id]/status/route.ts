@@ -26,12 +26,18 @@ export async function PATCH(
   if (typeof status !== "string") return apiError("INVALID_STATUS", "Status inválido.", 400);
 
   const { id } = await params;
-  const { error } = await s.supabase.rpc("set_order_status", {
-    p_order_id: id,
-    p_to: status,
-    p_reason: reason ?? null,
-    p_actor: "store",
-  });
+  // .maybeSingle() evita a coercao de escalar do PostgREST: sem ele, o RPC
+  // que retorna uuid (escalar) pode disparar "Cannot coerce the result to a
+  // single JSON object" no servidor. Com .maybeSingle(), o PostgREST trata
+  // o resultado como um unico objeto (ou null) e nao tenta coagir.
+  const { data, error } = await s.supabase
+    .rpc("set_order_status", {
+      p_order_id: id,
+      p_to: status,
+      p_reason: reason ?? null,
+      p_actor: "store",
+    })
+    .maybeSingle();
 
   if (error) {
     const mapped = mapStatusError(error.message);
