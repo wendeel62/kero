@@ -43,11 +43,14 @@ function mockFetch(cep: unknown, iq: unknown) {
 }
 
 describe("BUG-005: validação de CEP e aproximação", () => {
-  it("CEP inexistente (open-cep) não é aceito como válido", async () => {
+  it("CEP 99999-999 (Sarandi/PR) é aceito mas marcado como aproximado", async () => {
     const fetchImpl = mockFetch(BRASILAPI_CEP_INVALIDO, []);
     const r = await geocodeExternalComOrigem({ cep: "99999999" }, fetchImpl);
-    // sem CEP confiável e sem LocationIQ, não há ponto
-    expect(r).toBeNull();
+    // BrasilAPI retorna 200 para 99999-999 (dados de Sarandi/PR), então o
+    // geocode aceita mas marca como aproximado (ponto longe do centroide).
+    expect(r).not.toBeNull();
+    expect(r!.origem).toBe("cep");
+    expect(r!.aproximado).toBe(true);
   });
 
   it("CEP válido usa centroide quando LocationIQ não responde", async () => {

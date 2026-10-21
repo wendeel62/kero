@@ -140,9 +140,12 @@ export async function geocodeExternalComOrigem(
   }
 
   // BrasilAPI retorna 200 com dados de OUTRA cidade para CEP inexistente
-  // (ex: 99999-999 → Sarandi/PR, campo service:"open-cep"). Nao confiar nesses.
-  const cepConfiavel = brasilData?.service !== "open-cep" && !!brasilData?.cep;
-  const dadosCep = cepConfiavel ? brasilData : null;
+  // (ex: 99999-999 → Sarandi/PR). O campo  e' retornado
+  // para TODO CEP (incluindo validos), entao nao pode ser usado para validar.
+  // A validacao real: se o CEP for invalido, a BrasilAPI retorna 404 (ja
+  // tratado pelo if (res.ok)). O ponto aproximado (dist > 1km do centroide)
+  // sinaliza que o CEP pode nao ser o esperado.
+  const dadosCep = brasilData;
 
   // 3. Centroide do CEP (BrasilAPI retorna string — parseFloat necessário).
   //    Também é a âncora para escolher a rua certa entre as homônimas.
