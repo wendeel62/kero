@@ -1331,3 +1331,13 @@
   font-size: 0.75rem;
   color: var(--color-muted);
 }
+
+/* ===== COOKIE BANNER + SACOLA ===== */
+/* Quando o cookie banner esta visivel, empurra a sacola para cima para nao
+   cobrir os botoes do banner. */
+body.cookie-banner-visible .sf .cartbar-wrap {
+  bottom: 80px;
+}
+body.cookie-banner-visible .sf .cartbar {
+  margin-bottom: 0;
+}

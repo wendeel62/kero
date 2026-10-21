@@ -10,11 +10,25 @@ export default function CookieBanner() {
 
   useEffect(() => {
     try {
-      if (window.localStorage.getItem("lgpd-consentimento") === null) setVisivel(true);
+      if (window.localStorage.getItem("lgpd-consentimento") === null) {
+        setVisivel(true);
+        document.body.classList.add("cookie-banner-visible");
+      }
     } catch {
       setVisivel(false);
     }
+    return () => {
+      document.body.classList.remove("cookie-banner-visible");
+    };
   }, []);
+
+  useEffect(() => {
+    if (!visivel) {
+      document.body.classList.remove("cookie-banner-visible");
+    } else {
+      document.body.classList.add("cookie-banner-visible");
+    }
+  }, [visivel]);
 
   function decidir(valor: "aceito" | "recusado") {
     try {

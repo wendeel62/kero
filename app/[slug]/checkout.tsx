@@ -140,7 +140,7 @@ export default function Checkout({
     };
   }, [atualizarQuote]);
 
-  function usarLocalizacao() {
+function usarLocalizacao() {
     setGpsErro("");
     setGeoAviso("");
     if (!navigator.geolocation) {
@@ -153,31 +153,41 @@ export default function Checkout({
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const acc = pos.coords.accuracy;
-        // a 1ª leitura vem de Wi-Fi/torre e é a mais grosseira: guarda a melhor
-        // e só aceita quando boa o bastante (ou quando o watch expirar).
         if (!melhor || acc < melhor.acc) {
           melhor = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc };
         }
         if (acc <= 40) {
           resolvido = true;
           navigator.geolocation.clearWatch(watchId);
-          aplicarPino(melhor.lat, melhor.lng);
+          clearInterval(timerId);
+          aplicarPino(melhor.lat, melhor.lng, melhor.acc <= 40);
         }
       },
       (err) => {
         if (resolvido) return;
         resolvido = true;
         navigator.geolocation.clearWatch(watchId);
-        // timeout mas com leituras ruins: melhor usar o que temos do que nada
-        if (melhor) aplicarPino(melhor.lat, melhor.lng);
+        clearInterval(timerId);
+        if (melhor) aplicarPino(melhor.lat, melhor.lng, melhor.acc <= 40);
         else setGpsErro(err.code === 1 ? "Permissão de GPS negada" : "Não foi possível obter localização");
       },
       { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 },
     );
 
-    function aplicarPino(lat: number, lng: number) {
+    // Timer manual de 15s: se não obter precisão <= 40m, aceita a melhor leitura.
+    const timerId = setTimeout(() => {
+      if (resolvido) return;
+      resolvido = true;
+      navigator.geolocation.clearWatch(watchId);
+      if (melhor) aplicarPino(melhor.lat, melhor.lng, melhor.acc <= 40);
+      else setGpsErro("Não foi possível obter localização");
+    }, 15000);
+
+    function aplicarPino(lat: number, lng: number, preciso: boolean) {
       setCoords({ lat, lng });
-      setGpsErro("");
+      if (!preciso) {
+        setGeoAviso("Localização aproximada. Ajuste o pino se necessário.");
+      }
       fetch(`/api/geo/reverse?lat=${lat}&lng=${lng}`)
         .then((r) => r.json())
         .then((b) => { if (b.endereco) setEndereco(b.endereco); })
@@ -255,7 +265,9 @@ export default function Checkout({
   }
 
   function podeFinalizar(): boolean {
-    return dadosValidos() && !!quote && !carregando;
+    if (!dadosValidos() || !quote || carregando) return false;
+    if (tipo === "delivery" && !coords) return false;
+    return true;
   }
 
   async function handleCriarPedido() {
@@ -562,6 +574,9 @@ export default function Checkout({
           <small>Total</small>
           <strong>{quote ? formatarMoeda(quote.total) : "—"}</strong>
         </div>
+        {tipo === "delivery" && !coords && (
+          <span className="form-hint" style={{ marginRight: "0.5rem" }}>Confirme o ponto de entrega no mapa para finalizar.</span>
+        )}
         <button className="btn-primario btn-finalizar" disabled={!podeFinalizar()} onClick={handleCriarPedido}>
           {carregando ? "Processando…" : "Finalizar pedido"}
         </button>
