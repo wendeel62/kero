@@ -6,8 +6,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 // Cron diário (SPEC §2.22/§2.29): garante o salt do dia + cancela `new` > 24h.
 // GET e POST no mesmo handler — o plano manda POST, o Vercel Cron invoca com GET.
 async function run(req: Request) {
+  // sempre exigido: sem CRON_SECRET configurado, a rota fica PÚBLICA sem isso
   const secret = process.env.CRON_SECRET;
-  if (secret && req.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) {
     return apiError("UNAUTHORIZED", "Não autorizado.", 401);
   }
   if (process.env.DAILY_SALT_ROTATION_ENABLED !== "true") {

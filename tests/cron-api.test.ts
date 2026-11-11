@@ -11,6 +11,10 @@ import { GET, POST } from "@/app/api/cron/daily-salt/route";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const db = createAdminClient();
+// a rota exige Authorization (audit 2026-11): stub do secret p/ todos os casos,
+// exceto o 5 que manipula o env por conta própria.
+const CRON_SECRET_PREV = process.env.CRON_SECRET;
+process.env.CRON_SECRET = "s3cr3t";
 const t = Date.now();
 const OPEN = Object.fromEntries(
   [...Array(7)].map((_, d) => [String(d), [["00:00", "23:59"]]]),
@@ -27,7 +31,12 @@ const todayManaus = () =>
   }).format(new Date());
 
 const post = (headers?: Record<string, string>) =>
-  POST(new Request("http://l/api/cron/daily-salt", { method: "POST", headers }));
+  POST(
+    new Request("http://l/api/cron/daily-salt", {
+      method: "POST",
+      headers: { authorization: "Bearer s3cr3t", ...headers },
+    }),
+  );
 
 let storeId = "";
 let staleOrderId = "";
@@ -67,7 +76,9 @@ test("1. chamada cria linha do dia → 200 {ok, day, auto_cancelled}", async () 
 });
 
 test("2. idempotente: segunda chamada (GET) → 200 e uma única linha p/ hoje", async () => {
-  const res = await GET(new Request("http://l/api/cron/daily-salt"));
+  const res = await GET(
+    new Request("http://l/api/cron/daily-salt", { headers: { authorization: "Bearer s3cr3t" } }),
+  );
   const body = await res.json();
   expect(res.status).toBe(200);
   expect(body).toMatchObject({ ok: true, day: todayManaus() });
@@ -148,11 +159,9 @@ test("4. gate desligado → 200 {ok, skipped} sem chamar RPCs", async () => {
   }
 });
 
-test("5. porta do secret: sem header → 401; com Bearer → 200", async () => {
-  const prev = process.env.CRON_SECRET;
-  process.env.CRON_SECRET = "s3cr3t";
+test("5. porta do secret: token errado → 401; com Bearer correto → 200", async () => {
   try {
-    const denied = await post();
+    const denied = await post({ authorization: "Bearer errado" });
     const deniedBody = await denied.json();
     expect(denied.status).toBe(401);
     expect(deniedBody.error.code).toBe("UNAUTHORIZED");
@@ -160,7 +169,7 @@ test("5. porta do secret: sem header → 401; com Bearer → 200", async () => {
     expect(allowed.status).toBe(200);
     expect((await allowed.json()).ok).toBe(true);
   } finally {
-    if (prev === undefined) delete process.env.CRON_SECRET;
-    else process.env.CRON_SECRET = prev;
+    if (CRON_SECRET_PREV === undefined) delete process.env.CRON_SECRET;
+    else process.env.CRON_SECRET = CRON_SECRET_PREV;
   }
 });

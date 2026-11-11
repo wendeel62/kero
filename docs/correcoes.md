@@ -1,5 +1,7 @@
 # Kero — Correções (levantamento 2026-10-10 → correções aplicadas)
 
+> ⚠️ **Nota (2026-11):** o código foi reestruturado após este levantamento — caminhos de arquivo citados abaixo (ex.: `vitrine-client.tsx`, `queries.ts`, `menu-data.ts`) não existem mais; use os equivalentes atuais (`app/[slug]/page.tsx`, `lib/storefront.ts` etc.). O conteúdo/decisões continuam válidos.
+
 > Relatos do lojista após navegar o sistema + confirmação técnica + correções.
 > **Metodo**: Playwright somente-leitura, SQL somente `SELECT`, leitura de código + aplicação de fixes.
 > **Base**: loja `pizza-do-joao` · app em `http://localhost:3000` (dev, 0 erros de console).
