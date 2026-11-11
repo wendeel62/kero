@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { getEntregas, getRealtimeContext } from "@/lib/painel";
-import { assignEntrega, criarMotoboy, encerrarRota } from "@/lib/painel-actions";
+import { assignEntrega, criarMotoboy, encerrarRota, toggleMotoboy } from "@/lib/painel-actions";
 import type { Courier, MapPoint } from "@/lib/deliveries";
 import { useCouriersLive } from "@/lib/painel-live";
 import type { PanelOrder } from "@/lib/painel-utils";
@@ -33,6 +33,7 @@ export default function Entregas() {
   const [motoboyForm, setMotoboyForm] = useState({ name: "", phone: "", email: "", password: "" });
   const [salvando, setSalvando] = useState(false);
   const [motoboyError, setMotoboyError] = useState("");
+  const [togglingId, setTogglingId] = useState<string | null>(null);
   const [storeId, setStoreId] = useState<string | null>(null);
   const [courierPositions, setCourierPositions] = useState<EntregasData["courierPositions"]>([]);
 
@@ -155,16 +156,52 @@ export default function Entregas() {
         {col("concluidas", "Concluídas", data.concluidas, "bg-[var(--pill-bg)] border-[var(--border)]", "bg-[var(--muted)]")}
       </div>
 
+      <section className="mt-6 card p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-extrabold">Motoboys cadastrados</h2>
+            <p className="text-xs text-[var(--muted)] mt-0.5">{data.couriers.length} cadastrado(s) · {data.couriers.filter((c) => c.active).length} ativo(s)</p>
+          </div>
+        </div>
+        {data.couriers.length === 0 && (
+          <p className="text-sm text-[var(--muted)] mt-3">Nenhum motoboy cadastrado ainda. Use "Novo motoboy" acima.</p>
+        )}
+        <ul className="mt-3 divide-y divide-[var(--border)]">
+          {data.couriers.map((c) => (
+            <li key={c.id} className="flex items-center justify-between gap-3 py-2.5">
+              <div className="min-w-0">
+                <p className="text-sm font-bold truncate">{c.name} {!c.vinculado && <span className="text-[10px] font-bold text-[var(--muted)] ml-1">· sem acesso</span>}</p>
+                <p className="text-xs text-[var(--muted)] truncate">{c.phone || "—"} · {c.active ? "ativo" : "inativo"}</p>
+              </div>
+              <button
+                disabled={togglingId === c.id}
+                onClick={() => {
+                  setTogglingId(c.id);
+                  void toggleMotoboy(c.id, !c.active).then((r) => {
+                    setTogglingId(null);
+                    if (!r.ok) setError(r.error ?? "Erro ao atualizar.");
+                    load();
+                  }).catch(() => { setTogglingId(null); setError("Erro ao atualizar."); });
+                }}
+                className={`btn btn--ghost !min-h-0 px-3 py-1.5 text-[12px] font-extrabold shrink-0 ${c.active ? "text-[var(--red)]" : ""}`}
+              >
+                {togglingId === c.id ? "…" : (c.active ? "Desativar" : "Ativar")}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
+
       {assignId && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-[2px] p-4" onClick={() => setAssignId(null)}>
           <div className="anim-pop w-full max-w-sm card p-5" onClick={(e) => e.stopPropagation()}>
             <p className="font-extrabold text-lg">Atribuir motoboy</p>
             <p className="text-sm text-[var(--muted)] mt-0.5">Escolha um motoboy ativo.</p>
             <div className="mt-3 space-y-2">
-              {data.couriers.length === 0 && (
+              {data.couriers.filter((c) => c.active).length === 0 && (
                 <p className="text-sm text-[var(--muted)]">Nenhum motoboy ativo cadastrado.</p>
               )}
-              {data.couriers.map((c) => {
+              {data.couriers.filter((c) => c.active).map((c) => {
                 const busy = data.courierOnRoute.has(c.id);
                 return (
                   <button key={c.id} disabled={busy} onClick={() => doAssign(assignId, c.id)}

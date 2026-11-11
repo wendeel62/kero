@@ -1,5 +1,5 @@
 import { test, expect, vi } from "vitest";
-import { normalizeAddress, geocodeExternal, geocodeExternalComOrigem, parseAutocomplete, sugestaoParaGeocodeInput, posicaoValida, distanciaKm, formataDistancia, distanciaLojaCliente } from "./geocode";
+import { normalizeAddress, geocodeExternal, geocodeExternalComOrigem, parseAutocomplete, sugestaoParaGeocodeInput, posicaoValida, distanciaKm, formataDistancia, distanciaLojaCliente, normalizaNome, bairrosCompativeis, ufDeEstado, parseViaCep } from "./geocode";
 
 vi.stubEnv("LOCATIONIQ_KEY", "test-key");
 
@@ -134,20 +134,24 @@ test("geocodeExternalComOrigem: sem LOCATIONIQ_KEY → origem 'cep' (aproximado,
 });
 
 // dropdown de rua do checkout: LocationIQ /v1/autocomplete → sugestões da UI
-test("parseAutocomplete: rua/bairro/CEP e descarta entradas sem label", () => {
+test("parseAutocomplete: rua/bairro/cidade/CEP com label curto e descarta sem label", () => {
   const s = parseAutocomplete([
     {
-      display_address: "Rua Ouro Preto, Coroado, Manaus, 69000-000, Brasil",
-      address: { road: "Rua Ouro Preto", suburb: "Coroado", postcode: "69000-000" },
+      display_address: "Vila Cidade de Deus, Cidade de Deus, Manaus, Região Geográfica Intermediária de Manaus, Amazonas, 69000-000, Brasil",
+      display_place: "Rua Jerusalém",
+      address: { name: "Rua Jerusalém", house_number: "123", suburb: "Cidade de Deus", city: "Manaus", state: "Amazonas", postcode: "69000-000" },
     },
     { display_place: "Rua Sem Endereço" },
     { foo: "bar" },
   ]);
   expect(s).toHaveLength(2);
   expect(s[0]).toEqual({
-    label: "Rua Ouro Preto, Coroado, Manaus, 69000-000, Brasil",
-    street: "Rua Ouro Preto", number: "", neighborhood: "Coroado", cep: "69000000",
+    label: "Rua Jerusalém, 123 — Cidade de Deus, Manaus",
+    street: "Rua Jerusalém", number: "123", neighborhood: "Cidade de Deus", city: "Manaus", uf: "Amazonas", cep: "69000000",
   });
+  // sem address.road, street cai no name/display_place; label não pode virar o
+  // display_address quilométrico
+  expect(s[0].label).not.toContain("Região");
 });
 
 test("parseAutocomplete: resposta não-array → []", () => {
@@ -161,6 +165,8 @@ test("sugestaoParaGeocodeInput: mapeia sugestão → GeocodeInput sem lat/lon", 
     street: "Rua Jerusalém",
     number: "1",
     neighborhood: "Coroado",
+    city: "Manaus",
+    uf: "Amazonas",
     cep: "69082150",
   };
   expect(sugestaoParaGeocodeInput(s)).toEqual({
@@ -168,6 +174,7 @@ test("sugestaoParaGeocodeInput: mapeia sugestão → GeocodeInput sem lat/lon", 
     street: "Rua Jerusalém",
     number: "1",
     neighborhood: "Coroado",
+    city: "Manaus",
   });
 });
 
@@ -193,4 +200,38 @@ test("distanciaLojaCliente: null se faltar coordenada", () => {
   expect(distanciaLojaCliente({ lat: -3, lng: -60 }, {})).toBeNull();
   expect(distanciaLojaCliente(null, { lat: -3, lng: -60 })).toBeNull();
   expect(distanciaLojaCliente({ lat: -3, lng: -60 }, { lat: -23, lng: -46 })).toMatch(/km$/);
+});
+
+// bairro sem acento/maiúscula — "Cidade de Deus" ≈ "cidade de deus"
+test("normalizaNome + bairrosCompativeis", () => {
+  expect(normalizaNome("Cidade de Deus")).toBe("cidade de deus");
+  expect(bairrosCompativeis("Cidade de Deus", "cidade de deus")).toBe(true);
+  expect(bairrosCompativeis("Coroado", "Coroado")).toBe(true);
+  expect(bairrosCompativeis("Centro", "")).toBe(false);
+  expect(bairrosCompativeis("Vila Nova", "Vila Nova do Sul")).toBe(true);
+});
+
+test("ufDeEstado: nome → sigla (com/sem acento)", () => {
+  expect(ufDeEstado("Amazonas")).toBe("AM");
+  expect(ufDeEstado("São Paulo")).toBe("SP");
+  expect(ufDeEstado("Rio Grande do Sul")).toBe("RS");
+  expect(ufDeEstado("AM")).toBeNull();
+});
+
+test("parseViaCep: prefere o CEP do bairro certo", () => {
+  const r = parseViaCep(
+    [
+      { cep: "69082-150", bairro: "Coroado" },
+      { cep: "69099-000", bairro: "Cidade de Deus" },
+    ],
+    "Cidade de Deus",
+  );
+  expect(r).toEqual({ cep: "69099000", bairro: "Cidade de Deus" });
+});
+
+test("parseViaCep: sem bairro pedido → primeira; erro/inválido → null", () => {
+  expect(parseViaCep([{ cep: "69082-150", bairro: "Coroado" }], "")).toEqual({ cep: "69082150", bairro: "Coroado" });
+  expect(parseViaCep([{ erro: true }], "Coroado")).toBeNull();
+  expect(parseViaCep({ erro: true }, "Coroado")).toBeNull();
+  expect(parseViaCep([], "Coroado")).toBeNull();
 });

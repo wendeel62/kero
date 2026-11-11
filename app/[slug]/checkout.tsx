@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import type { SfMenuData } from "@/lib/storefront";
 import { parseBRLToCents } from "@/lib/pricing";
 import { formatarMoeda, type SfCarrinhoItem } from "@/lib/storefront-cart";
-import { type GeocodeInput, type AddressSuggestion, sugestaoParaGeocodeInput } from "@/lib/geocode";
+import { type GeocodeInput, type AddressSuggestion, sugestaoParaGeocodeInput, bairrosCompativeis } from "@/lib/geocode";
 
 const CheckoutMap = dynamic(() => import("@/components/checkout-map"), { ssr: false, loading: () => <div style={{ height: 260, borderRadius: 12, background: "#f0f0f0" }} /> });
 
@@ -45,10 +45,11 @@ export default function Checkout({
   aoConcluir: (token: string) => void;
   aoVoltar: () => void;
 }) {
-  const [tipo, setTipo] = useState<TipoPedido>("delivery");
+  const [tipo, setTipo] = useState<TipoPedido>(neighborhoods.length > 0 ? "delivery" : "retirada");
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
   const [endereco, setEndereco] = useState("");
+  const [numero, setNumero] = useState("");
   const [cep, setCep] = useState("");
   const [bairro, setBairro] = useState("");
   const [gpsErro, setGpsErro] = useState("");
@@ -61,8 +62,12 @@ export default function Checkout({
   const [troco, setTroco] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debounceAutocompleteRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const numeroDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sugestaoBoxRef = useRef<HTMLUListElement | null>(null);
+  const numeroRef = useRef<HTMLInputElement | null>(null);
   const honeypotRef = useRef<HTMLInputElement | null>(null);
+  // último input de geocode resolvido — base para re-resolver ao digitar o número
+  const enderecoBaseRef = useRef<GeocodeInput>({});
   const [sugestoes, setSugestoes] = useState<AddressSuggestion[]>([]);
   const [sugestaoAberta, setSugestaoAberta] = useState(false);
   // O autocomplete (LocationIQ) devolve, ora, itens com o display_address
@@ -77,7 +82,9 @@ export default function Checkout({
     });
   }, [sugestoes]);
   const lojaFechada = !menu.business.aberto_fechado;
-
+  // SPEC §3.1: loja sem bairros de entrega ativos é pickup-only (RPC rejeita
+  // delivery com BAIRROS_NAO_CONFIGURADOS) — o checkout nem oferece a opção.
+  const entregaDisponivel = neighborhoods.length > 0;
   function erroBody(body: unknown, status: number): string {
     if (body && typeof body === "object") {
       const b = body as { error?: unknown; code?: unknown; message?: unknown };
@@ -227,16 +234,22 @@ function usarLocalizacao() {
   function buscarEndereco() {
     if (!cep.trim()) return;
     const hood = neighborhoods.find((n) => n.id === bairro)?.name;
-    resolverEndereco({
+    const base = enderecoBaseRef.current;
+    const input: GeocodeInput = {
       cep: cep.replace(/\D/g, ""),
-      street: endereco.split(/,\s*/)[0]?.trim() || undefined,
-      number: endereco.match(/(?:^|[\s,])\d+[a-zA-Z]?(?:$|[\s,])/)?.[0]?.trim() || undefined,
-      neighborhood: hood,
-    });
+      street: base.street ?? (endereco.split(/,\s*/)[0]?.trim() || undefined),
+      number: numero.trim() || base.number || undefined,
+      neighborhood: hood ?? base.neighborhood,
+      city: base.city,
+    };
+    enderecoBaseRef.current = input;
+    resolverEndereco(input);
   }
 
   function onEnderecoChange(v: string) {
     setEndereco(v);
+    // rua nova → o bairro casado na seleção anterior não vale mais
+    setBairro("");
     if (v.trim().length < 3) {
       setSugestoes([]);
       setSugestaoAberta(false);
@@ -245,8 +258,11 @@ function usarLocalizacao() {
     if (debounceAutocompleteRef.current) clearTimeout(debounceAutocompleteRef.current);
     debounceAutocompleteRef.current = setTimeout(async () => {
       try {
+        // viés espacial da loja: sem isso o LocationIQ ranqueia o Brasil inteiro
+        const { lat, lng } = menu.business;
+        const bias = lat != null && lng != null ? `&lat=${lat}&lng=${lng}` : "";
         const res = await fetch(
-          `/api/geo/autocomplete?q=${encodeURIComponent(v.trim())}`,
+          `/api/geo/autocomplete?q=${encodeURIComponent(v.trim())}${bias}`,
         );
         const b = await res.json().catch(() => ({}));
         setSugestoes(b.suggestions || []);
@@ -260,7 +276,7 @@ function usarLocalizacao() {
 
   function dadosValidos(): boolean {
     if (!nome.trim() || !telefone.trim()) return false;
-    if (tipo === "delivery" && (!endereco.trim() || !cep.trim() || !bairro)) return false;
+    if (tipo === "delivery" && (!endereco.trim() || !cep.trim() || !bairro || !numero.trim())) return false;
     return true;
   }
 
@@ -301,7 +317,8 @@ function usarLocalizacao() {
           notes: notes.trim(),
           address: tipo === "delivery"
             ? {
-                endereco: endereco.trim(),
+                // número entra no texto do endereço (shape do RPC não muda)
+                endereco: [endereco.trim(), numero.trim()].filter(Boolean).join(", "),
                 cep: cep.replace(/\D/g, ""),
                 neighborhood_id: bairro,
                 // o ponto que o cliente arrasta no mapa é a origem da distância
@@ -327,9 +344,50 @@ function usarLocalizacao() {
 
   function selecionarSugestao(s: AddressSuggestion) {
     setEndereco(s.label || [s.street, s.number].filter(Boolean).join(", "));
+    setNumero(s.number ?? "");
     setSugestaoAberta(false);
     setSugestoes([]);
-    resolverEndereco(sugestaoParaGeocodeInput(s));
+    const input = sugestaoParaGeocodeInput(s);
+    enderecoBaseRef.current = input;
+    resolverEndereco(input);
+    casarBairroECep(s);
+    numeroRef.current?.focus();
+  }
+
+  // Bairro automático (sugestão + ViaCEP) e CEP real da rua — best-effort:
+  // falha não bloqueia (select de bairro reaparece e o CEP da sugestão fica).
+  function casarBairroECep(s: AddressSuggestion) {
+    const achar = (nome: string) => neighborhoods.find((n) => bairrosCompativeis(n.name, nome));
+    const nb = achar(s.neighborhood);
+    if (nb) setBairro(nb.id);
+    fetch(
+      `/api/geo/cep?street=${encodeURIComponent(s.street)}&city=${encodeURIComponent(s.city)}` +
+        `&state=${encodeURIComponent(s.uf)}&bairro=${encodeURIComponent(s.neighborhood)}`,
+    )
+      .then((r) => r.json())
+      .then((b: { cep: string | null; bairro: string }) => {
+        if (b.cep) setCep(b.cep);
+        else if (s.cep) setCep(s.cep);
+        if (!nb && b.bairro) {
+          const nb2 = achar(b.bairro);
+          if (nb2) setBairro(nb2.id);
+        }
+      })
+      .catch(() => {
+        if (s.cep) setCep(s.cep);
+      });
+  }
+
+  function onNumeroChange(v: string) {
+    const n = v.replace(/\D/g, "").slice(0, 6);
+    setNumero(n);
+    if (numeroDebounceRef.current) clearTimeout(numeroDebounceRef.current);
+    if (!n) return;
+    // re-resolve o pino com o número: pin na porta em vez de só na rua
+    numeroDebounceRef.current = setTimeout(() => {
+      const base = enderecoBaseRef.current;
+      if (base.street || base.cep) resolverEndereco({ ...base, number: n });
+    }, 600);
   }
 
   useEffect(() => {
@@ -381,12 +439,15 @@ function usarLocalizacao() {
         <h2 id="etapa-tipo">Como você quer receber?</h2>
         <div className="tipo-cards" role="radiogroup" aria-label="Tipo de pedido">
           {(["delivery", "retirada"] as TipoPedido[]).map((t) => (
-            <button key={t} type="button" role="radio" aria-checked={tipo === t} className={`tipo-card${tipo === t ? " selected" : ""}`} onClick={() => setTipo(t)}>
+            <button key={t} type="button" role="radio" aria-checked={tipo === t} disabled={t === "delivery" && !entregaDisponivel} className={`tipo-card${tipo === t ? " selected" : ""}`} onClick={() => setTipo(t)}>
               <span className="tipo-label">{TIPO_LABELS[t].label}</span>
-              <span className="tipo-desc">{TIPO_LABELS[t].desc}</span>
+              <span className="tipo-desc">{t === "delivery" && !entregaDisponivel ? "Indisponível" : TIPO_LABELS[t].desc}</span>
             </button>
           ))}
         </div>
+        {!entregaDisponivel && (
+          <p className="form-hint">Esta loja ainda não configurou bairros de entrega — só retirada no momento.</p>
+        )}
       </section>
 
       <section className="checkout-etapa" aria-labelledby="etapa-dados">
@@ -426,7 +487,11 @@ function usarLocalizacao() {
                       maxHeight: 240,
                       overflowY: "auto",
                       border: "1px solid var(--color-border)",
-                      backgroundColor: "var(--color-card)",
+                      // --color-surface é a variável que existe no storefront.css
+                      // (--color-card não está definida — dropdown ficava transparente)
+                      backgroundColor: "var(--color-surface)",
+                      borderRadius: "var(--radius-button)",
+                      boxShadow: "0 8px 24px rgba(0, 0, 0, 0.12)",
                       zIndex: 50,
                       listStyle: "none",
                       margin: 0,
@@ -456,16 +521,25 @@ function usarLocalizacao() {
                 <input type="text" required inputMode="numeric" maxLength={9} autoComplete="postal-code" placeholder="00000-000" value={cep} onChange={(e) => setCep(e.target.value.replace(/\D/g, ""))} />
               </label>
               <label className="form-field">
-                <span>Bairro *</span>
-                <select required value={bairro} onChange={(e) => setBairro(e.target.value)} style={{ padding: "0.75rem", border: "1px solid var(--color-border)", borderRadius: "var(--radius-button)", fontSize: "1rem", minHeight: 44, background: "#fff" }}>
-                  <option value="">Selecione…</option>
-                  {neighborhoods.map((n) => (
-                    <option key={n.id} value={n.id}>
-                      {n.name} · {formatarMoeda(n.fee_cents / 100)}
-                    </option>
-                  ))}
-                </select>
+                <span>Número *</span>
+                <input ref={numeroRef} type="text" required inputMode="numeric" maxLength={6} autoComplete="address-line2" placeholder="Número" value={numero} onChange={(e) => onNumeroChange(e.target.value)} />
               </label>
+              {/* bairro sai da tela quando a sugestão já casou com um bairro da
+                  loja; reaparece se não casar (ou se o endereço foi digitado à
+                  mão) — a taxa de entrega depende dele */}
+              {!bairro && endereco.trim() !== "" && (
+                <label className="form-field">
+                  <span>Bairro *</span>
+                  <select required value={bairro} onChange={(e) => setBairro(e.target.value)} style={{ padding: "0.75rem", border: "1px solid var(--color-border)", borderRadius: "var(--radius-button)", fontSize: "1rem", minHeight: 44, background: "#fff" }}>
+                    <option value="">Selecione…</option>
+                    {neighborhoods.map((n) => (
+                      <option key={n.id} value={n.id}>
+                        {n.name} · {formatarMoeda(n.fee_cents / 100)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
               <div className="form-field full-width">
                 <button type="button" className="btn-mapa" onClick={buscarEndereco}>
                   Buscar endereço no mapa

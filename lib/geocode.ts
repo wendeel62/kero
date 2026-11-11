@@ -213,30 +213,39 @@ export async function geocodeExternal(
 }
 
 export type AddressSuggestion = {
-  label: string; street: string; number: string; neighborhood: string; cep: string;
+  label: string; street: string; number: string; neighborhood: string; city: string; uf: string; cep: string;
 };
 
 type LocationIqAutocomplete = {
   display_place?: string;
   display_address?: string;
   address?: {
-    road?: string; house_number?: string; suburb?: string;
-    neighbourhood?: string; postcode?: string; city?: string;
+    road?: string; name?: string; house_number?: string; suburb?: string;
+    neighbourhood?: string; postcode?: string; city?: string; state?: string;
   };
 }[];
 
 // LocationIQ /v1/autocomplete → sugestões do dropdown de rua. Só o que a UI usa.
+// Label curto ("Rua X, 123 — Bairro, Cidade"): o display_address vem com
+// "Região Geográfica Intermediária de …" e não cabe no dropdown.
 export function parseAutocomplete(data: unknown): AddressSuggestion[] {
   if (!Array.isArray(data)) return [];
   return (data as LocationIqAutocomplete)
     .slice(0, 6)
-    .map((d) => ({
-      label: d.display_address || d.display_place || "",
-      street: d.address?.road ?? d.display_place ?? "",
-      number: d.address?.house_number ?? "",
-      neighborhood: d.address?.suburb ?? d.address?.neighbourhood ?? "",
-      cep: (d.address?.postcode ?? "").replace(/\D/g, ""),
-    }))
+    .map((d) => {
+      const street = d.address?.road ?? d.address?.name ?? d.display_place ?? "";
+      const city = d.address?.city ?? "";
+      const local = [d.address?.suburb ?? d.address?.neighbourhood ?? "", city].filter(Boolean).join(", ");
+      return {
+        label: [[street, d.address?.house_number].filter(Boolean).join(", "), local].filter(Boolean).join(" — "),
+        street,
+        number: d.address?.house_number ?? "",
+        neighborhood: d.address?.suburb ?? d.address?.neighbourhood ?? "",
+        city,
+        uf: d.address?.state ?? "",
+        cep: (d.address?.postcode ?? "").replace(/\D/g, ""),
+      };
+    })
     .filter((s) => s.label !== "");
 }
 
@@ -248,7 +257,49 @@ export function sugestaoParaGeocodeInput(s: AddressSuggestion): GeocodeInput {
     street: s.street || undefined,
     number: s.number || undefined,
     neighborhood: s.neighborhood || undefined,
+    city: s.city || undefined,
   };
+}
+
+// Comparação de bairro sem acento/maiúscula ("Cidade de Deus" ≈ "cidade de deus").
+export function normalizaNome(s: string): string {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+}
+
+export function bairrosCompativeis(a: string, b: string): boolean {
+  const x = normalizaNome(a);
+  const y = normalizaNome(b);
+  return x !== "" && y !== "" && (x.includes(y) || y.includes(x));
+}
+
+// LocationIQ devolve o nome do estado ("Amazonas"); o ViaCEP exige a sigla ("AM").
+const UF_SIGLA: Record<string, string> = {
+  acre: "AC", alagoas: "AL", amapa: "AP", amazonas: "AM", bahia: "BA", ceara: "CE",
+  "distrito federal": "DF", "espirito santo": "ES", goias: "GO", maranhao: "MA",
+  "mato grosso": "MT", "mato grosso do sul": "MS", "minas gerais": "MG", para: "PA",
+  paraiba: "PB", parana: "PR", pernambuco: "PE", piaui: "PI", "rio de janeiro": "RJ",
+  "rio grande do norte": "RN", "rio grande do sul": "RS", rondonia: "RO", roraima: "RR",
+  "santa catarina": "SC", "sao paulo": "SP", sergipe: "SE", tocantins: "TO",
+};
+
+export function ufDeEstado(nome: string): string | null {
+  return UF_SIGLA[normalizaNome(nome)] ?? null;
+}
+
+export type ViaCepResult = { cep: string; bairro: string } | null;
+
+type ViaCepEntry = { cep?: string; bairro?: string; erro?: boolean };
+
+// ViaCEP rua → CEP real. Prefere a entrada do bairro certo (rua que cruza
+// bairros tem um CEP por trecho). `erro: true` (rua inexistente) é descartado.
+export function parseViaCep(data: unknown, bairro: string): ViaCepResult {
+  if (!Array.isArray(data)) return null;
+  const lista = (data as ViaCepEntry[])
+    .filter((d) => !d.erro && typeof d.cep === "string")
+    .map((d) => ({ cep: d.cep!.replace(/\D/g, ""), bairro: d.bairro ?? "" }))
+    .filter((d) => d.cep.length === 8);
+  if (lista.length === 0) return null;
+  return lista.find((d) => bairrosCompativeis(d.bairro, bairro)) ?? lista[0];
 }
 
 export async function geocodeAddress(input: GeocodeInput): Promise<GeocodeResult | null> {

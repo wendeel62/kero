@@ -478,7 +478,7 @@ export async function getEntregas() {
       .in("status", ["ready", "out"]).order("created_at", { ascending: false }),
     supabase.from("orders").select(ORDER_COLS + ",address").eq("store_id", storeId)
       .eq("status", "delivered").gte("created_at", manausDayStartISO()).order("created_at", { ascending: false }),
-    supabase.from("couriers").select("id,name,phone,active,user_id").eq("store_id", storeId).eq("active", true).order("name"),
+    supabase.from("couriers").select("id,name,phone,active,user_id").eq("store_id", storeId).order("name"),
     supabase.from("routes").select("id,courier_id,status").eq("store_id", storeId).eq("status", "open"),
     supabase.from("courier_positions").select("courier_id,lat,lng,atualizado_em,couriers(name)").eq("store_id", storeId),
     supabase.from("stores").select("lat,lng").eq("id", storeId).single(),

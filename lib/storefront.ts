@@ -18,11 +18,11 @@ export type SfCombo = {
 };
 export type SfCategory = { id: string; nome: string; products: SfProduct[] };
 export type SfMenuData = {
-  business: { id: string; nome: string; slug: string; logo_url: string | null; whatsapp: string | null; aberto_fechado: boolean; categories: SfCategory[] };
+  business: { id: string; nome: string; slug: string; logo_url: string | null; whatsapp: string | null; aberto_fechado: boolean; lat: number | null; lng: number | null; categories: SfCategory[] };
   combos: SfCombo[];
 };
 
-type StoreRow = { id: string; nome: string; slug: string; logo_url: string | null; whatsapp: string | null };
+type StoreRow = { id: string; nome: string; slug: string; logo_url: string | null; whatsapp: string | null; lat?: number | null; lng?: number | null };
 type CatRow = { id: string; name: string; sort_order: number; active: boolean };
 type ProdRow = {
   id: string; category_id: string; name: string; description: string | null;
@@ -110,7 +110,7 @@ export function mapMenu(input: {
         .map((ci) => ({ productId: ci.product_id, qty: ci.qty, optional: ci.optional })),
     }));
   return {
-    business: { id: store.id, nome: store.nome, slug: store.slug, logo_url: store.logo_url, whatsapp: store.whatsapp ?? null, aberto_fechado: aberto, categories },
+    business: { id: store.id, nome: store.nome, slug: store.slug, logo_url: store.logo_url, whatsapp: store.whatsapp ?? null, aberto_fechado: aberto, lat: store.lat ?? null, lng: store.lng ?? null, categories },
     combos,
   };
 }

@@ -28,6 +28,8 @@ export async function createE2EStore(): Promise<E2EStore> {
     .insert({
       slug, name: "Loja E2E", whatsapp: "92911119999", min_order_cents: 1000,
       prep_time_min: 20, prep_time_max: 40, open_hours: OPEN, active: true,
+      // Manaus: o teste de endereço do checkout espera sugestões desta cidade
+      lat: -3.10194, lng: -59.98173,
     })
     .select("id")
     .single();
@@ -39,6 +41,11 @@ export async function createE2EStore(): Promise<E2EStore> {
     .insert({ store_id: store.id, category_id: cat.id, name: "Produto E2E", price_cents: 5000 })
     .select("id").single();
   if (!prod) throw new Error("product insert falhou");
+  // bairro de entrega: o teste de endereço valida o auto-match do checkout
+  const { error: nErr } = await client
+    .from("neighborhoods")
+    .insert({ store_id: store.id, name: "Cidade de Deus", fee_cents: 500 });
+  if (nErr) throw nErr;
   const st: E2EStore = { slug, storeId: store.id, productId: prod.id, price: 5000 };
   fs.writeFileSync(STATE, JSON.stringify(st));
   return st;

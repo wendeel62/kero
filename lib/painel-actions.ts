@@ -757,3 +757,16 @@ export async function criarMotoboy(input: { name: string; phone: string; email: 
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
 }
+
+// Ativa/desativa um motoboy cadastrado (não apaga — preserva histórico).
+export async function toggleMotoboy(id: string, active: boolean): Promise<R> {
+  try {
+    const { supabase, storeId } = await requireStore();
+    const { error } = await supabase.from("couriers").update({ active }).eq("id", id).eq("store_id", storeId);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath("/painel/entregas");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}

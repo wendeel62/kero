@@ -34,8 +34,8 @@ export default function CupomPrint() {
   const items = order.items;
   const subtotal = order.subtotal;
   const fee = order.type === "delivery" ? order.fee : 0;
-  // acompanhamento e' por query param (deep-link da vitrine), nao sub-rota
-  const trackPath = `${order.store.slug}?pedido=${order.trackingToken}`;
+  // acompanhamento tem página própria: /[slug]/pedido/[token]
+  const trackPath = `${order.store.slug}/pedido/${order.trackingToken}`;
   // endereco: checkout salva `endereco` (string completa); pedidos antigos
   // podem ter `street`/`number`. Trata os dois formatos.
   const addr = order.address as { endereco?: string; street?: string; number?: string; complement?: string | null; cep?: string; neighborhood_name?: string } | null;

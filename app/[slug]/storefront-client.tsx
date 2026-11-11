@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import type { SfCombo, SfMenuData, SfProduct } from "@/lib/storefront";
 import { calcularTotal, editarItem, formatarMoeda, montarItem, type SfCarrinhoItem, type SfEscolha } from "@/lib/storefront-cart";
 import Checkout from "./checkout";
-import Pedido from "./pedido";
 
 // Vitrine pública — transcrição fiel de cardapio-digital App.tsx.
-// Roteamento por estado (sem rotas): cardápio → checkout → pedido.
+// Roteamento por estado (sem rotas): cardápio → checkout. O pós-venda é
+// página própria (/[slug]/pedido/[token]), pra onde o checkout navega.
 export default function StorefrontClient({ menu, isOpen, neighborhoods, storeId }: { menu: SfMenuData; isOpen: boolean; neighborhoods: Array<{ id: string; name: string; fee_cents: number }>; storeId: string }) {
+  const router = useRouter();
   const [erro] = useState("");
   const [categoriaAtiva, setCategoriaAtiva] = useState<string>(menu.business.categories[0]?.id ?? "");
   const [busca, setBusca] = useState("");
@@ -24,17 +26,16 @@ export default function StorefrontClient({ menu, isOpen, neighborhoods, storeId 
   const [notes, setNotes] = useState("");
   const [edicaoIndex, setEdicaoIndex] = useState<number | null>(null);
   const [emCheckout, setEmCheckout] = useState(false);
-  const [emPedido, setEmPedido] = useState<string | null>(null);
 
-  // Deep-link ?pedido=<token> abre o acompanhamento direto.
+  // Deep-link legado ?pedido=<token> (links antigos impressos/WhatsApp) —
+  // redireciona para a página própria do pedido.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const pedidoParam = params.get("pedido");
     if (pedidoParam) {
-      setEmPedido(pedidoParam);
-      window.history.replaceState({}, document.title, window.location.pathname);
+      router.replace(`/${menu.business.slug}/pedido/${pedidoParam}`);
     }
-  }, []);
+  }, [router, menu.business.slug]);
 
   // Persistência do carrinho no localStorage (por slug da loja).
   // Chave: kero:carrinho:{slug}
@@ -84,7 +85,7 @@ export default function StorefrontClient({ menu, isOpen, neighborhoods, storeId 
             aoConcluir={(token) => {
               limparCarrinho();
               setEmCheckout(false);
-              setEmPedido(token);
+              router.push(`/${menu.business.slug}/pedido/${token}`);
             }}
             aoVoltar={() => setEmCheckout(false)}
           />
@@ -524,7 +525,6 @@ export default function StorefrontClient({ menu, isOpen, neighborhoods, storeId 
           </div>
         )}
 
-        {emPedido !== null && <Pedido token={emPedido} aoVoltar={() => setEmPedido(null)} />}
       </main>
       <footer className="ifood-footer" role="contentinfo">
         <div className="ifood-footer-content">
