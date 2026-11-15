@@ -1,0 +1,8 @@
+# Arquivos que não devem subir para a Vercel (o build ignora, mas o upload pesa).
+.gitnexus/
+.playwright-mcp/
+.vitest-cache/
+qa-screenshots/
+test-results/
+qa-out/
+*.log
