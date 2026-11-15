@@ -46,6 +46,36 @@ test("criarSessao: POST com name, engine dentro de config, metadata e webhook; e
   expect(calls.some((c) => c.init?.method === "POST" && c.url.endsWith("/api/sessions/kero_loja1/start"))).toBe(true);
 });
 
+test("criarSessao: sessão FAILED é recriada (senão o lojista fica sem QR)", async () => {
+  const calls: string[] = [];
+  let gets = 0;
+  let creates = 0;
+  fetchMock((url, init) => {
+    const u = url as string;
+    const m = init?.method ?? "GET";
+    calls.push(`${m} ${u}`);
+    if (m === "POST" && u.endsWith("/api/sessions")) {
+      creates += 1;
+      // 1a create: sessão já existe (422). Depois do DELETE: cria de verdade (200).
+      return creates === 1 ? new Response("exists", { status: 422 }) : ok({});
+    }
+    if (m === "DELETE") return ok({});
+    if (m === "POST" && u.endsWith("/start")) return ok({});
+    if (m === "GET") {
+      gets += 1;
+      // 1a leitura: FAILED (sessão quebrada). Depois do recreate: STOPPED e SCAN_QR_CODE.
+      if (gets === 1) return ok({ status: "FAILED", me: null });
+      if (gets === 2) return ok({ status: "STOPPED", me: null });
+      return ok({ status: "SCAN_QR_CODE", me: null });
+    }
+    return ok({});
+  });
+  const s = await criarSessao("loja1", "https://exemplo/hook");
+  expect(s).toEqual({ status: "SCAN_QR_CODE", me: null });
+  expect(calls.some((c) => c.startsWith("DELETE")), "sessão FAILED é deletada").toBe(true);
+  expect(calls.filter((c) => c === "POST http://localhost:3100/api/sessions").length, "recria a sessão").toBe(2);
+});
+
 test("criarSessao: 409 cai para GET do status em vez de explodir", async () => {
   const calls: string[] = [];
   fetchMock((url, init) => {

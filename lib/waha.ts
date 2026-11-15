@@ -30,29 +30,33 @@ export function sessionName(storeId: string): string {
   return `kero_${storeId}`;
 }
 
+function corpoSessao(name: string, storeId: string, webhookUrl: string) {
+  return {
+    name,
+    config: {
+      // live: engine só aplica dentro de config (na raiz é ignorado).
+      engine: { engine: "GOWS" },
+      metadata: { store_id: storeId },
+      webhooks: [
+        {
+          url: webhookUrl,
+          events: ["message"],
+          retries: { policy: "exponential", attempts: 3 },
+          // o n8n só aceita webhook com este header (403 sem ele)
+          customHeaders: [{ name: "X-Kero-Webhook-Secret", value: webhookSecret() }],
+        },
+      ],
+    },
+  };
+}
+
 export async function criarSessao(storeId: string, webhookUrl: string) {
   const { url } = conf();
   const name = sessionName(storeId);
   let res = await fetch(`${url}/api/sessions`, {
     method: "POST",
     headers: headers(),
-    body: JSON.stringify({
-      name,
-      config: {
-        // live: engine só aplica dentro de config (na raiz é ignorado).
-        engine: { engine: "GOWS" },
-        metadata: { store_id: storeId },
-        webhooks: [
-          {
-            url: webhookUrl,
-            events: ["message"],
-            retries: { policy: "exponential", attempts: 3 },
-            // o n8n só aceita webhook com este header (403 sem ele)
-            customHeaders: [{ name: "X-Kero-Webhook-Secret", value: webhookSecret() }],
-          },
-        ],
-      },
-    }),
+    body: JSON.stringify(corpoSessao(name, storeId, webhookUrl)),
   });
   // Já existe → cai para o status em vez de falhar (live: 422; 400/409 por garantia).
   if (!res.ok && res.status !== 400 && res.status !== 409 && res.status !== 422) {
@@ -61,6 +65,18 @@ export async function criarSessao(storeId: string, webhookUrl: string) {
   // Sessão nova nasce STOPPED — só serve QR depois de start. WORKING nunca
   // reinicia (desconectaria o WhatsApp vivo do lojista).
   const s = await statusSessao(name);
+  // FAILED = sessão quebrada (QR expirado, crash do GOWS). Sem isso o lojista
+  // fica preso: "Conectar" não recupera e o QR nunca aparece. Recria do zero.
+  if (s.status === "FAILED") {
+    await desconectar(name).catch(() => {});
+    const r2 = await fetch(`${url}/api/sessions`, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify(corpoSessao(name, storeId, webhookUrl)),
+    });
+    if (!r2.ok) throw await erro(r2);
+    return iniciarSePreciso(name, await statusSessao(name));
+  }
   return iniciarSePreciso(name, s);
 }
 
