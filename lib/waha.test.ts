@@ -8,6 +8,7 @@ const ok = (body: unknown) =>
 afterEach(() => vi.unstubAllGlobals());
 process.env.WAHA_URL = "http://localhost:3100";
 process.env.WAHA_API_KEY = "test-key";
+process.env.WHATSAPP_WEBHOOK_SECRET = "test-secret";
 
 const fetchMock = (impl: (url: string, init?: RequestInit) => Response | Promise<Response>) =>
   vi.stubGlobal("fetch", vi.fn(impl));
@@ -37,6 +38,10 @@ test("criarSessao: POST com name, engine dentro de config, metadata e webhook; e
   expect(body.config.metadata).toEqual({ store_id: "loja1" });
   expect(body.config.webhooks[0].url).toBe("https://exemplo/hook");
   expect(body.config.webhooks[0].events).toEqual(["message"]);
+  // o n8n recusa (403) webhook sem o header do segredo
+  expect(body.config.webhooks[0].customHeaders).toEqual([
+    { name: "X-Kero-Webhook-Secret", value: "test-secret" },
+  ]);
   // sessão nova STOPPED → precisa do start
   expect(calls.some((c) => c.init?.method === "POST" && c.url.endsWith("/api/sessions/kero_loja1/start"))).toBe(true);
 });

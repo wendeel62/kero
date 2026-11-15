@@ -11,6 +11,13 @@ function conf() {
   return { url: url.replace(/\/+$/, ""), key };
 }
 
+// Segredo do webhook: o n8n responde 403 sem esse header (o WAHA manda).
+function webhookSecret(): string {
+  const s = process.env.WHATSAPP_WEBHOOK_SECRET;
+  if (!s) throw new Error("WHATSAPP_WEBHOOK_SECRET é obrigatório no .env");
+  return s;
+}
+
 function headers(json = true): Record<string, string> {
   const { key } = conf();
   const h: Record<string, string> = { "X-Api-Key": key };
@@ -36,7 +43,13 @@ export async function criarSessao(storeId: string, webhookUrl: string) {
         engine: { engine: "GOWS" },
         metadata: { store_id: storeId },
         webhooks: [
-          { url: webhookUrl, events: ["message"], retries: { policy: "exponential", attempts: 3 } },
+          {
+            url: webhookUrl,
+            events: ["message"],
+            retries: { policy: "exponential", attempts: 3 },
+            // o n8n só aceita webhook com este header (403 sem ele)
+            customHeaders: [{ name: "X-Kero-Webhook-Secret", value: webhookSecret() }],
+          },
         ],
       },
     }),

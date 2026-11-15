@@ -8,6 +8,7 @@ node_modules/
 *.tsbuildinfo
 .vitest-cache/
 test-results/
+qa-screenshots/
 tests/e2e/.store.json
 next-env.d.ts
 .DS_Store
