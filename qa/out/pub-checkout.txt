@@ -1,0 +1,16 @@
+
+[carrinho vazio] "Finalizar pedido" disabled = false | texto sacola = P | Pizzaria do kabeça | ● Aberto | promoções | Pizzas | promoções | x-salada | um delicioso x-salada artesanal | R$ 10,00 | + | Pizzas | pizzas tradicionais | 
+[carrinho vazio → checkout] url = /pizzariadokbc | texto = ← | Pizzaria do kabeça | ● Aberto | Como você quer receber? | Entrega | Receba no endereço | Retirada | Busque no local | Seus dados | Nome * | Telefone * | Endereço completo * | CEP * | Número * | Buscar endereço no mapa | Ou use sua localização | Usar localização atual | Pagamento | Pix | Aprovação rápida | Dinheiro | Na entrega | Maquininha | Na entrega | Resumo do pedido | Erro: itens_invalido
+[CEP] valor exibido após digitar "69000-000" = "69000000"
+[telefone] valor exibido após digitar "(92) 99153-2662" = "(92) 99153-2662"
+[CEP inexistente + botão] texto =  do kabeça | ● Aberto | Como você quer receber? | Entrega | Receba no endereço | Retirada | Busque no local | Seus dados | Nome * | Telefone * | End || ereço completo * | CEP * | Número * | Buscar endereço no mapa | Buscando endereço… | Ou use sua localização | Usar localiza
+[telefone inválido] erro exibido = null
+[bairro] select = {"bairro":["Selecione…"],"opts":[["Selecione…","coroado · R$ 5,00","japiim · R$ 10,00","petropolis · R$ 7,00"]]}
+
+[retirada] erro = null | total = R$ 30,00
+[retirada] finalizar disabled = false
+[duplo clique] url = /pizzariadokbc
+[duplo clique] texto = ← | Pizzaria do kabeça | ● Aberto | Como você quer receber? | Entrega | Receba no endereço | Retirada | Busque no local | Seus dados | Nome * | Telefone * | Apresente seu nome no balcão para retirar. | Pagamento | Pix | Aprovação rápida | Dinheiro | Na entrega | Maquininha | Na entrega | Resumo do pedido | Resumo (Retirada) | x-salada × 3 | R$ 30,00 | Subtotal | R$ 30,00 | Total | R$ 30,00 | Valores calculados pelo servidor. | Total | R$ 30,00 | Processando…
+
+[acompanhamento] texto = Carregando pedido...
+[acompanhamento token inválido] texto = Carregando pedido...

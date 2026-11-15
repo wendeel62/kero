@@ -85,13 +85,25 @@ export default function Checkout({
   // SPEC §3.1: loja sem bairros de entrega ativos é pickup-only (RPC rejeita
   // delivery com BAIRROS_NAO_CONFIGURADOS) — o checkout nem oferece a opção.
   const entregaDisponivel = neighborhoods.length > 0;
+  // Erros gerados pelo frontend (não vêm do backend) — sempre em PT-BR p/ o cliente.
+  const ERROS_CLIENTE: Record<string, string> = {
+    telefone_invalido: "Telefone inválido — use 10 a 15 dígitos.",
+    troco_invalido: "Valor de troco inválido.",
+    erro_interno: "Erro inesperado. Tente de novo.",
+    itens_invalido: "Itens do pedido inválidos. Atualize a sacola e tente de novo.",
+  };
+
   function erroBody(body: unknown, status: number): string {
     if (body && typeof body === "object") {
       const b = body as { error?: unknown; code?: unknown; message?: unknown };
       if (b.error && typeof b.error === "object") {
         const e = b.error as { code?: unknown; message?: unknown };
         // Prioriza a mensagem em PT-BR (error.message) antes do código
-        if (typeof e.message === "string" && e.message) return e.message;
+        if (typeof e.message === "string" && e.message) {
+          const m = e.message;
+          // Remove prefixo de código quando presente (ex: "MIN_ORDER:Faltam…")
+          return m.replace(/^[A-Z_]+:/, "");
+        }
         if (typeof e.code === "string" && e.code) return e.code;
       }
       if (typeof b.error === "string" && b.error) return b.error;
@@ -219,7 +231,12 @@ function usarLocalizacao() {
         setGeoAviso("Não encontramos esse endereço — use o GPS ou ajuste o pino no mapa.");
         return;
       }
-      setCoords({ lat: b.lat, lng: b.lng });
+      // Só define as coordenadas automaticamente se o ponto vier de um endereço
+      // confirmado (rua via LocationIQ). Se vier apenas do centroide do CEP,
+      // o cliente deve confirmar o pino no mapa antes de finalizar.
+      if (b.origem === "endereco") {
+        setCoords({ lat: b.lat, lng: b.lng });
+      }
       setGeoAviso(
         b.origem === "cep"
           ? "Achamos só a região do CEP. Arraste o pino até a sua porta."
@@ -290,14 +307,14 @@ function usarLocalizacao() {
     if (!podeFinalizar() || !quote) return;
     const fone = telefone.replace(/\D/g, "");
     if (fone.length < 10 || fone.length > 15) {
-      setErro("telefone_invalido");
+      setErro(ERROS_CLIENTE.telefone_invalido);
       return;
     }
     let trocoCents: number | null = null;
     if (metodo === "cash" && troco.trim() !== "") {
       trocoCents = parseBRLToCents(troco);
       if (!Number.isFinite(trocoCents)) {
-        setErro("troco_invalido");
+        setErro(ERROS_CLIENTE.troco_invalido);
         return;
       }
     }
@@ -333,10 +350,11 @@ function usarLocalizacao() {
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(erroBody(body, res.status));
-      if (!body.tracking_token) throw new Error("erro_interno");
+      if (!body.tracking_token) throw new Error(ERROS_CLIENTE.erro_interno);
       aoConcluir(body.tracking_token as string);
     } catch (e) {
-      setErro(e instanceof Error ? e.message : "erro_interno");
+      const msg = e instanceof Error ? e.message : "";
+      setErro(ERROS_CLIENTE[msg as keyof typeof ERROS_CLIENTE] ?? msg ?? ERROS_CLIENTE.erro_interno);
     } finally {
       setCarregando(false);
     }
@@ -518,7 +536,11 @@ function usarLocalizacao() {
               </label>
               <label className="form-field">
                 <span>CEP *</span>
-                <input type="text" required inputMode="numeric" maxLength={9} autoComplete="postal-code" placeholder="00000-000" value={cep} onChange={(e) => setCep(e.target.value.replace(/\D/g, ""))} />
+                <input type="text" required inputMode="numeric" maxLength={9} autoComplete="postal-code" placeholder="00000-000" value={cep} onChange={(e) => {
+                  let v = e.target.value.replace(/\D/g, "");
+                  if (v.length > 5) v = v.slice(0, 5) + "-" + v.slice(5, 8);
+                  setCep(v);
+                }} />
               </label>
               <label className="form-field">
                 <span>Número *</span>

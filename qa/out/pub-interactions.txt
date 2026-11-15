@@ -1,0 +1,30 @@
+[grupo] texto: Escolha 2 opções.
+[grupo] inputs: checkbox,checkbox
+[CTA] disabled com 0 escolhidas = true
+[CTA] disabled com 1 escolhida (min_choices=1) = false
+[preço modal] R$ 10,00
+[grupo 2 marcadas] true,true
+[CTA] disabled após desmarcar 1 de 2 (restou 1) = false
+[modal] stepper = 3
+[modal] CTA preço = Adicionar R$ 30,00
+[carrinho] cartbar = "Ver sacola | 3 itens · R$ 30,00"
+[sacola] Sacola | 3× x-salada | R$ 30,00 | R$ 10,00 cada | Mussarela | Portuguesa | − | 3 | + | Editar | Observações | Total: R$ 30,00 | Finalizar pedido
+[sacola +1] Sacola | 4× x-salada | R$ 40,00 | R$ 10,00 cada | Mussarela | Portuguesa | − | 4 | + | Editar | Observações | Total: R$ 40,00 | Finalizar pedido
+[sacola -1] Sacola | 3× x-salada | R$ 30,00 | R$ 10,00 cada | Mussarela | Portuguesa | − | 3 | + | Editar | Observações | Total: R$ 30,00 | Finalizar pedido
+[editar] {"modalAberto":true,"ctaCobertoPor":"DIV.sheet-body","ctaVisivel":true} -> CTA inalcançável (ver bug-editar-item-zindex.png)
+[editar] modal fechado? false
+[modal fecha fora] sacola aberta? false
+[sacola esvaziada] Sacola | Observações | Total: R$ 0,00 | Finalizar pedido
+[sacola esvaziada] cartbar visível? false
+
+[checkout etapa1] ← | Pizzaria do kabeça | ● Aberto | Como você quer receber? | Entrega | Receba no endereço | Retirada | Busque no local | Seus dados | Nome * | Telefone * | Endereço completo * | CEP * | Número * | Buscar endereço no mapa | Ou use sua localização | Usar localização atual | Pagamento | Pix | Aprovação rápida | Dinheiro | Na entrega | Maquininha | Na entrega | Resumo do pedido | Calculando total… | Total | — | Confirme o ponto de entrega no mapa para finalizar. | Processando…
+[tipo retirada] marcado=Retirada
+Busque no local | campos endereco visiveis=false
+[tipo entrega] marcado=Entrega
+Receba no endereço
+[checkout] finalizar disabled = true
+[checkout vazio] msgs de erro: ["Please fill out this field.","Please fill out this field.","Please fill out this field.","Please fill out this field.","Please fill out this field."]
+[checkout lixo] finalizar disabled = true
+[CEP 99999-999] ← | Pizzaria do kabeça | ● Aberto | Como você quer receber? | Entrega | Receba no endereço | Retirada | Busque no local | Seus dados | Nome * | Telefone * | Endereço completo * | CEP * | Número * | Buscar endereço no mapa | Ou use sua localização | Usar localização atual | Pagamento | Pix | Aprovação rápida | Dinheiro | Na entrega | Maquininha | Na entrega | Resumo do pedido | Erro: MIN_ORDER:Faltam 10,00 para o pedido mínimo. | Total | — | Confirme o ponto de entrega no mapa para finalizar. | Finalizar pedido
+[CEP] teste interno: null
+[geo negada] | Endereço completo * | CEP * | Número * | Buscar endereço no mapa | Ou use sua localização | Usar localização atual | Permissão de GPS negada | Pagamento | Pix | Aprov || o rápida | Dinheiro | Na entrega | Maquininha | Na entrega | Resumo do pedido | Erro: MIN_ORDER:Faltam 10,00 para o pedido mínimo. | Total | — | Confirme o ponto de

@@ -1,0 +1,511 @@
+root                         status=200 -> /pizzariadokbc
+privacidade                  status=200 -> /privacidade
+login                        status=200 -> /login
+esqueci-senha                status=200 -> /login/esqueci-senha
+motoboy-login                status=200 -> /motoboy/login
+motoboy-sem-login            status=200 -> /motoboy/login
+admin-sem-login              status=200 -> /login
+admin-lojas-sem-login        status=200 -> /login
+admin-config-sem-login       status=200 -> /login
+painel-sem-login             status=200 -> /login
+painel-pedidos-sem-login     status=200 -> /login
+painel-pdv-sem-login         status=200 -> /login
+painel-entregas-sem-login    status=200 -> /login
+painel-cardapio-sem-login    status=200 -> /login
+painel-clientes-sem-login    status=200 -> /login
+painel-config-sem-login      status=200 -> /login
+painel-whatsapp-sem-login    status=200 -> /login
+painel-financeiro-sem-login  status=200 -> /login
+rota-404                     status=404 -> /rota-que-nao-existe-xyz
+loja-404                     status=404 -> /loja-inexistente-abc
+loja-inativa                 status=404 -> /pizzariadasol
+
+======== root (/) ========
+status=200 ms=7422 final=http://localhost:3000/pizzariadokbc
+title="Pizzaria do kabeça — Cardápio" overflowX=false (1440/1440) imgs=2 broken=0 noalt=0 dialogs=1 skeletons=0
+TINY TARGETS: [{"tag":"A","label":"WhatsApp: 0000000000","w":352,"h":21},{"tag":"A","label":"Política de Privacidade","w":352,"h":21},{"tag":"A","label":"Termos de Uso","w":352,"h":21},{"tag":"A","label":"Contato","w":352,"h":21}]
+TEXT:
+P
+Pizzaria do kabeça
+● Aberto
+promoções
+Pizzas
+promoções
+x-salada
+
+um delicioso x-salada artesanal
+
+R$ 10,00
+
++
+Pizzas
+pizzas tradicionais
+
+R$ 60,00
+
++
+Pizzaria do kabeça
+
+WhatsApp: 0000000000
+
+Links
+Política de Privacidade
+Termos de Uso
+Contato
+Kero
+
+Plataforma de delivery para lojas locais
+
+© 2026 Kero. Todos os direitos reservados.
+
+🍪 Usamos cookies para melhorar sua experiência e medir visitas. Você pode aceitar ou recusar — a recusa não bloqueia o cardápio.
+
+Recusar
+Aceitar
+BTNS: ["promoções","Pizzas","+","Recusar","Aceitar"]
+LINKS: ["https://wa.me/550000000000","/privacidade","#termos","#contato"]
+INPUTS: [{"tag":"INPUT","type":"search","name":null,"id":null,"ph":"Buscar no cardápio","label":null,"aria":"Buscar no cardápio","required":false,"value":null}]
+
+======== privacidade (/privacidade) ========
+status=200 ms=4594 final=http://localhost:3000/privacidade
+title="Política de Privacidade — Kero" overflowX=false (1440/1440) imgs=0 broken=0 noalt=0 dialogs=0 skeletons=0
+TEXT:
+Política de Privacidade
+
+Usamos seus dados (nome, telefone e endereço) apenas para preparar e entregar seu pedido, conforme a Lei 13.709/2018 (LGPD).
+
+Rastreamento (Pixel/GA4) só acontece com seu aceite no banner de cookies. Você pode pedir a remoção dos seus dados a qualquer momento pelo WhatsApp da loja.
+BTNS: []
+LINKS: []
+
+======== login (/login) ========
+status=200 ms=3299 final=http://localhost:3000/login
+title="Entrar · Kero" overflowX=false (1440/1440) imgs=0 broken=0 noalt=0 dialogs=0 skeletons=0
+TINY TARGETS: [{"tag":"A","label":"Esqueci minha senha","w":137,"h":17}]
+TEXT:
+K
+
+Kero.
+
+acesso do lojista
+
+E-mail
+Senha
+
+ 
+
+Esqueci minha senha
+
+Entrar
+BTNS: ["Entrar"]
+LINKS: ["/login/esqueci-senha"]
+INPUTS: [{"tag":"INPUT","type":"email","name":null,"id":"email","ph":"voce@loja.com","label":"E-mail","aria":null,"required":false,"value":null},{"tag":"INPUT","type":"password","name":null,"id":"senha","ph":"••••••••","label":"Senha","aria":null,"required":false,"value":"***"}]
+
+======== esqueci-senha (/login/esqueci-senha) ========
+status=200 ms=5818 final=http://localhost:3000/login/esqueci-senha
+title="Kero — Delivery" overflowX=false (1440/1440) imgs=0 broken=0 noalt=0 dialogs=0 skeletons=0
+TINY TARGETS: [{"tag":"A","label":"Voltar para o login","w":119,"h":17}]
+TEXT:
+K
+
+Kero.
+
+recuperar senha
+
+E-mail
+
+ 
+
+ 
+
+Enviar e-mail de recuperação
+
+Voltar para o login
+BTNS: ["Enviar e-mail de recuperação"]
+LINKS: ["/login"]
+INPUTS: [{"tag":"INPUT","type":"email","name":null,"id":"email","ph":"voce@loja.com","label":"E-mail","aria":null,"required":false,"value":null}]
+
+======== motoboy-login (/motoboy/login) ========
+status=200 ms=4866 final=http://localhost:3000/motoboy/login
+title="Kero — Delivery" overflowX=false (1440/1440) imgs=0 broken=0 noalt=0 dialogs=0 skeletons=0
+TEXT:
+K
+
+Kero.
+
+acesso do motoboy
+
+E-mail
+Senha
+
+ 
+
+Entrar
+BTNS: ["Entrar"]
+LINKS: []
+INPUTS: [{"tag":"INPUT","type":"email","name":null,"id":"email","ph":"voce@loja.com","label":"E-mail","aria":null,"required":false,"value":null},{"tag":"INPUT","type":"password","name":null,"id":"senha","ph":"••••••••","label":"Senha","aria":null,"required":false,"value":"***"}]
+
+======== motoboy-sem-login (/motoboy) ========
+status=200 ms=5220 final=http://localhost:3000/motoboy/login
+title="Kero — Delivery" overflowX=false (1440/1440) imgs=0 broken=0 noalt=0 dialogs=0 skeletons=0
+TEXT:
+K
+
+Kero.
+
+acesso do motoboy
+
+E-mail
+Senha
+
+ 
+
+Entrar
+BTNS: ["Entrar"]
+LINKS: []
+INPUTS: [{"tag":"INPUT","type":"email","name":null,"id":"email","ph":"voce@loja.com","label":"E-mail","aria":null,"required":false,"value":null},{"tag":"INPUT","type":"password","name":null,"id":"senha","ph":"••••••••","label":"Senha","aria":null,"required":false,"value":"***"}]
+
+======== admin-sem-login (/admin) ========
+status=200 ms=4052 final=http://localhost:3000/login
+title="Entrar · Kero" overflowX=false (1440/1440) imgs=0 broken=0 noalt=0 dialogs=0 skeletons=0
+TINY TARGETS: [{"tag":"A","label":"Esqueci minha senha","w":137,"h":17}]
+TEXT:
+K
+
+Kero.
+
+acesso do lojista
+
+E-mail
+Senha
+
+ 
+
+Esqueci minha senha
+
+Entrar
+BTNS: ["Entrar"]
+LINKS: ["/login/esqueci-senha"]
+INPUTS: [{"tag":"INPUT","type":"email","name":null,"id":"email","ph":"voce@loja.com","label":"E-mail","aria":null,"required":false,"value":null},{"tag":"INPUT","type":"password","name":null,"id":"senha","ph":"••••••••","label":"Senha","aria":null,"required":false,"value":"***"}]
+
+======== admin-lojas-sem-login (/admin/lojas) ========
+status=200 ms=6582 final=http://localhost:3000/login
+title="Entrar · Kero" overflowX=false (1440/1440) imgs=0 broken=0 noalt=0 dialogs=0 skeletons=0
+TINY TARGETS: [{"tag":"A","label":"Esqueci minha senha","w":137,"h":17}]
+TEXT:
+K
+
+Kero.
+
+acesso do lojista
+
+E-mail
+Senha
+
+ 
+
+Esqueci minha senha
+
+Entrar
+BTNS: ["Entrar"]
+LINKS: ["/login/esqueci-senha"]
+INPUTS: [{"tag":"INPUT","type":"email","name":null,"id":"email","ph":"voce@loja.com","label":"E-mail","aria":null,"required":false,"value":null},{"tag":"INPUT","type":"password","name":null,"id":"senha","ph":"••••••••","label":"Senha","aria":null,"required":false,"value":"***"}]
+
+======== admin-config-sem-login (/admin/configuracoes) ========
+status=200 ms=3642 final=http://localhost:3000/login
+title="Entrar · Kero" overflowX=false (1440/1440) imgs=0 broken=0 noalt=0 dialogs=0 skeletons=0
+TINY TARGETS: [{"tag":"A","label":"Esqueci minha senha","w":137,"h":17}]
+TEXT:
+K
+
+Kero.
+
+acesso do lojista
+
+E-mail
+Senha
+
+ 
+
+Esqueci minha senha
+
+Entrar
+BTNS: ["Entrar"]
+LINKS: ["/login/esqueci-senha"]
+INPUTS: [{"tag":"INPUT","type":"email","name":null,"id":"email","ph":"voce@loja.com","label":"E-mail","aria":null,"required":false,"value":null},{"tag":"INPUT","type":"password","name":null,"id":"senha","ph":"••••••••","label":"Senha","aria":null,"required":false,"value":"***"}]
+
+======== painel-sem-login (/painel) ========
+status=200 ms=3788 final=http://localhost:3000/login
+title="Entrar · Kero" overflowX=false (1440/1440) imgs=0 broken=0 noalt=0 dialogs=0 skeletons=0
+TINY TARGETS: [{"tag":"A","label":"Esqueci minha senha","w":137,"h":17}]
+TEXT:
+K
+
+Kero.
+
+acesso do lojista
+
+E-mail
+Senha
+
+ 
+
+Esqueci minha senha
+
+Entrar
+BTNS: ["Entrar"]
+LINKS: ["/login/esqueci-senha"]
+INPUTS: [{"tag":"INPUT","type":"email","name":null,"id":"email","ph":"voce@loja.com","label":"E-mail","aria":null,"required":false,"value":null},{"tag":"INPUT","type":"password","name":null,"id":"senha","ph":"••••••••","label":"Senha","aria":null,"required":false,"value":"***"}]
+
+======== painel-pedidos-sem-login (/painel/pedidos) ========
+status=200 ms=6014 final=http://localhost:3000/login
+title="Entrar · Kero" overflowX=false (1440/1440) imgs=0 broken=0 noalt=0 dialogs=0 skeletons=0
+TINY TARGETS: [{"tag":"A","label":"Esqueci minha senha","w":137,"h":17}]
+TEXT:
+K
+
+Kero.
+
+acesso do lojista
+
+E-mail
+Senha
+
+ 
+
+Esqueci minha senha
+
+Entrar
+BTNS: ["Entrar"]
+LINKS: ["/login/esqueci-senha"]
+INPUTS: [{"tag":"INPUT","type":"email","name":null,"id":"email","ph":"voce@loja.com","label":"E-mail","aria":null,"required":false,"value":null},{"tag":"INPUT","type":"password","name":null,"id":"senha","ph":"••••••••","label":"Senha","aria":null,"required":false,"value":"***"}]
+
+======== painel-pdv-sem-login (/painel/pdv) ========
+status=200 ms=44574 final=http://localhost:3000/login
+title="Entrar · Kero" overflowX=false (1440/1440) imgs=0 broken=0 noalt=0 dialogs=0 skeletons=0
+TINY TARGETS: [{"tag":"A","label":"Esqueci minha senha","w":137,"h":17}]
+TEXT:
+K
+
+Kero.
+
+acesso do lojista
+
+E-mail
+Senha
+
+ 
+
+Esqueci minha senha
+
+Entrar
+BTNS: ["Entrar"]
+LINKS: ["/login/esqueci-senha"]
+INPUTS: [{"tag":"INPUT","type":"email","name":null,"id":"email","ph":"voce@loja.com","label":"E-mail","aria":null,"required":false,"value":null},{"tag":"INPUT","type":"password","name":null,"id":"senha","ph":"••••••••","label":"Senha","aria":null,"required":false,"value":"***"}]
+
+======== painel-entregas-sem-login (/painel/entregas) ========
+status=200 ms=21428 final=http://localhost:3000/login
+title="Entrar · Kero" overflowX=false (1440/1440) imgs=0 broken=0 noalt=0 dialogs=0 skeletons=0
+TINY TARGETS: [{"tag":"A","label":"Esqueci minha senha","w":137,"h":17}]
+TEXT:
+K
+
+Kero.
+
+acesso do lojista
+
+E-mail
+Senha
+
+ 
+
+Esqueci minha senha
+
+Entrar
+BTNS: ["Entrar"]
+LINKS: ["/login/esqueci-senha"]
+INPUTS: [{"tag":"INPUT","type":"email","name":null,"id":"email","ph":"voce@loja.com","label":"E-mail","aria":null,"required":false,"value":null},{"tag":"INPUT","type":"password","name":null,"id":"senha","ph":"••••••••","label":"Senha","aria":null,"required":false,"value":"***"}]
+
+======== painel-cardapio-sem-login (/painel/cardapio) ========
+status=200 ms=9398 final=http://localhost:3000/login
+title="Entrar · Kero" overflowX=false (1440/1440) imgs=0 broken=0 noalt=0 dialogs=0 skeletons=0
+TINY TARGETS: [{"tag":"A","label":"Esqueci minha senha","w":137,"h":17}]
+TEXT:
+K
+
+Kero.
+
+acesso do lojista
+
+E-mail
+Senha
+
+ 
+
+Esqueci minha senha
+
+Entrar
+BTNS: ["Entrar"]
+LINKS: ["/login/esqueci-senha"]
+INPUTS: [{"tag":"INPUT","type":"email","name":null,"id":"email","ph":"voce@loja.com","label":"E-mail","aria":null,"required":false,"value":null},{"tag":"INPUT","type":"password","name":null,"id":"senha","ph":"••••••••","label":"Senha","aria":null,"required":false,"value":"***"}]
+
+======== painel-clientes-sem-login (/painel/clientes) ========
+status=200 ms=18401 final=http://localhost:3000/login
+title="Entrar · Kero" overflowX=false (1440/1440) imgs=0 broken=0 noalt=0 dialogs=0 skeletons=0
+TINY TARGETS: [{"tag":"A","label":"Esqueci minha senha","w":137,"h":17}]
+TEXT:
+K
+
+Kero.
+
+acesso do lojista
+
+E-mail
+Senha
+
+ 
+
+Esqueci minha senha
+
+Entrar
+BTNS: ["Entrar"]
+LINKS: ["/login/esqueci-senha"]
+INPUTS: [{"tag":"INPUT","type":"email","name":null,"id":"email","ph":"voce@loja.com","label":"E-mail","aria":null,"required":false,"value":null},{"tag":"INPUT","type":"password","name":null,"id":"senha","ph":"••••••••","label":"Senha","aria":null,"required":false,"value":"***"}]
+
+======== painel-config-sem-login (/painel/configuracoes) ========
+status=200 ms=12667 final=http://localhost:3000/login
+title="Entrar · Kero" overflowX=false (1440/1440) imgs=0 broken=0 noalt=0 dialogs=0 skeletons=0
+TINY TARGETS: [{"tag":"A","label":"Esqueci minha senha","w":137,"h":17}]
+TEXT:
+K
+
+Kero.
+
+acesso do lojista
+
+E-mail
+Senha
+
+ 
+
+Esqueci minha senha
+
+Entrar
+BTNS: ["Entrar"]
+LINKS: ["/login/esqueci-senha"]
+INPUTS: [{"tag":"INPUT","type":"email","name":null,"id":"email","ph":"voce@loja.com","label":"E-mail","aria":null,"required":false,"value":null},{"tag":"INPUT","type":"password","name":null,"id":"senha","ph":"••••••••","label":"Senha","aria":null,"required":false,"value":"***"}]
+
+======== painel-whatsapp-sem-login (/painel/whatsapp) ========
+status=200 ms=8423 final=http://localhost:3000/login
+title="Entrar · Kero" overflowX=false (1440/1440) imgs=0 broken=0 noalt=0 dialogs=0 skeletons=0
+TINY TARGETS: [{"tag":"A","label":"Esqueci minha senha","w":137,"h":17}]
+TEXT:
+K
+
+Kero.
+
+acesso do lojista
+
+E-mail
+Senha
+
+ 
+
+Esqueci minha senha
+
+Entrar
+BTNS: ["Entrar"]
+LINKS: ["/login/esqueci-senha"]
+INPUTS: [{"tag":"INPUT","type":"email","name":null,"id":"email","ph":"voce@loja.com","label":"E-mail","aria":null,"required":false,"value":null},{"tag":"INPUT","type":"password","name":null,"id":"senha","ph":"••••••••","label":"Senha","aria":null,"required":false,"value":"***"}]
+
+======== painel-financeiro-sem-login (/painel/financeiro) ========
+status=200 ms=8092 final=http://localhost:3000/login
+title="Entrar · Kero" overflowX=false (1440/1440) imgs=0 broken=0 noalt=0 dialogs=0 skeletons=0
+TINY TARGETS: [{"tag":"A","label":"Esqueci minha senha","w":137,"h":17}]
+TEXT:
+K
+
+Kero.
+
+acesso do lojista
+
+E-mail
+Senha
+
+ 
+
+Esqueci minha senha
+
+Entrar
+BTNS: ["Entrar"]
+LINKS: ["/login/esqueci-senha"]
+INPUTS: [{"tag":"INPUT","type":"email","name":null,"id":"email","ph":"voce@loja.com","label":"E-mail","aria":null,"required":false,"value":null},{"tag":"INPUT","type":"password","name":null,"id":"senha","ph":"••••••••","label":"Senha","aria":null,"required":false,"value":"***"}]
+
+======== rota-404 (/rota-que-nao-existe-xyz) ========
+status=404 ms=4229 final=http://localhost:3000/rota-que-nao-existe-xyz
+title="404: This page could not be found." overflowX=false (1440/1440) imgs=0 broken=0 noalt=0 dialogs=0 skeletons=0
+TEXT:
+404
+This page could not be found.
+BTNS: []
+LINKS: []
+CONSOLE: [
+ {
+  "page": "rota-404",
+  "type": "error",
+  "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ }
+]
+NET: [
+ {
+  "page": "rota-404",
+  "url": "http://localhost:3000/rota-que-nao-existe-xyz",
+  "status": 404
+ }
+]
+
+======== loja-404 (/loja-inexistente-abc) ========
+status=404 ms=4312 final=http://localhost:3000/loja-inexistente-abc
+title="404: This page could not be found." overflowX=false (1440/1440) imgs=0 broken=0 noalt=0 dialogs=0 skeletons=0
+TEXT:
+404
+This page could not be found.
+BTNS: []
+LINKS: []
+CONSOLE: [
+ {
+  "page": "loja-404",
+  "type": "error",
+  "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ }
+]
+NET: [
+ {
+  "page": "loja-404",
+  "url": "http://localhost:3000/loja-inexistente-abc",
+  "status": 404
+ }
+]
+
+======== loja-inativa (/pizzariadasol) ========
+status=404 ms=3637 final=http://localhost:3000/pizzariadasol
+title="404: This page could not be found." overflowX=false (1440/1440) imgs=0 broken=0 noalt=0 dialogs=0 skeletons=0
+TEXT:
+404
+This page could not be found.
+BTNS: []
+LINKS: []
+CONSOLE: [
+ {
+  "page": "loja-inativa",
+  "type": "error",
+  "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ }
+]
+NET: [
+ {
+  "page": "loja-inativa",
+  "url": "http://localhost:3000/pizzariadasol",
+  "status": 404
+ }
+]

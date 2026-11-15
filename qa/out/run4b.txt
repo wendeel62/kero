@@ -1,0 +1,39 @@
+
+=== PEDIDOS (cards) ===
+#PNKH | há 30 min 🔴 | QA Playwright | Retirada | Pix | R$ 30,00 | Aguardando 30 min | Confirmar → | ✕
+#KXN3 | há 28 min 🔴 | QA Playwright 2 | Retirada | Pix | R$ 30,00 | Aguardando 28 min | Confirmar → | ✕
+#SU7V | HELLEN FRANCE DE SOUZA ROZENO | Entrega | Pix | R$ 65,00
+#44D5 | Probe Playwright | Retirada | Pix | R$ 50,00
+
+[após Confirmar] Hoje | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | tempo real · não finalizados + hoje | · 2 aguardando ação | Hoje | 7 dias | 30 dias | 90 dias | Personalizado | Todos | Entrega | Retirada | NOVOS | 2 | #PNKH | há 30 min 🔴 | QA Playwright | Retirada | Pix | R$ 30,00 | Aguardando 30 min | Confirmar → | ✕ | #KXN3 | há 28 min 🔴 | QA Playwright 2 | Retirada | Pix | R$ 30,00 | Aguardando 28 min | Confirmar → | ✕ | CONFIRMADOS | 0 | coluna zerada ✓ | EM PREPARO | 0 | coluna zerada ✓ | PRONTO / EM ROTA | 0 | coluna zerada ✓ | ENTREGUES | 0 | coluna zerada ✓ | ANTERIORES | 3 | #SU7V | HELLEN FRANCE DE SOUZA ROZENO | Entrega | Pix | R$ 65,00 | #44D5 | Prob
+
+[detalhe] url=/painel/pedidos
+[detalhe] Hoje | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | tempo real · não finalizados + hoje | · 2 aguardando ação | Hoje | 7 dias | 30 dias | 90 dias | Personalizado | Todos | Entrega | Retirada | NOVOS | 2 | #PNKH | há 30 min 🔴 | QA Playwright | Retirada | Pix | R$ 30,00 | Aguardando 30 min | Confirmar → | ✕ | #KXN3 | há 28 min 🔴 | QA Playwright 2 | Retirada | Pix | R$ 30,00 | Aguardando 28 min | Confirmar → | ✕ | CONFIRMADOS | 0 | coluna zerada ✓ | EM PREPARO | 0 | coluna zerada ✓ | PRONTO / EM ROTA | 0 | coluna zerada ✓ | ENTREGUES | 0 | coluna zerada ✓ | ANTERIORES | 3 | #SU7V | HELLEN FRANCE DE SOUZA ROZENO | Entrega | Pix | R$ 65,00 | #44D5 | Probe Playwright | Retirada | Pix | R$ 50,00 | #U5VD | HELLEN FRANCE DE SOUZA ROZENO | Entrega | Pix | R$ 65,00 | CANCELADOS · HOJE | 0
+[detalhe] botões/links: ["Hoje","Pedidos","PDV","Entregas","Cardápio","Clientes","Config","WhatsApp","Financeiro","Usar tema escuro","☰","2","7 dias","30 dias","90 dias","Personalizado","Todos","Entrega","Retirada","Confirmar →","✕"]
+[detalhe] scrollW=1440 clientW=1440
+
+[links de impressão] []
+
+=== CARDÁPIO ===
+Hoje | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | Categorias | 2 | Produtos | 2 | Complementos | 2 | Combos | 0 | Categorias | Organize as categorias e a ordem de exibição no cardápio. | promoções | 1 item | Desativar | Pizzas | 1 item | Desativar | Nova Categoria
+[abas/botões] ["☰","Categorias/2","Produtos/2","Complementos/2","Combos/0","Desativar","Desativar","Nova Categoria"]
+  aba produtos: locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - w
+[aba produtos] Hoje | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | Categorias | 2 | Produtos | 2 | Complementos | 2 | Combos | 0 | Categorias | Organize as categorias e a ordem de exibição no cardápio. | promoções | 1 item | Desativar | Pizzas | 1 item | Desativar | Nova Categoria
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: /Categorias/ }).first()[22m
+
+    at /home/david/kero/qa/run4b-admin.mjs:85:63 {
+  log: [
+    "  - waiting for getByRole('button', { name: /Categorias/ }).first()"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.2

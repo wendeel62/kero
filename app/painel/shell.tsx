@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import "./_sidebar.css";
 import { getAwaitingCount, getStoreName } from "@/lib/painel";
 import RouteTransition from "@/components/route-transition";
+import { logout } from "@/app/actions/logout";
 
 // Grupos no mesmo espírito do cardápio-digital (Operação / Gestão)
 const GRUPOS = [
@@ -167,6 +168,13 @@ export default function PainelShell({ children }: { children: React.ReactNode })
               onClick={() => setTema(tema === "dark" ? "light" : "dark")}>
               <IconeTema tema={tema} />
             </button>
+            <form action={logout} className="sb-logout-form">
+              <button type="submit" className="sb-theme-btn" aria-label="Sair">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+              </button>
+            </form>
           </div>
         </footer>
       </aside>
@@ -192,7 +200,7 @@ export default function PainelShell({ children }: { children: React.ReactNode })
           ))}
         </nav>
       </div>
-      <div className="flex-1 min-w-0 flex flex-col">
+      <div className="flex-1 min-w-0 flex flex-col overflow-x-hidden">
         <RouteTransition>{children}</RouteTransition>
       </div>
     </div>

@@ -1,0 +1,42 @@
+
+===== CARDÁPIO CRUD =====
+[labels cardápio] sem nome acessível: nenhum
+[modal] textboxes=1
+[após criar categoria] contém "QA Categoria Teste"? true
+  Categorias | 3 | Produtos | 2 | Complementos | 2 | Combos | 0 | Categorias | Organize as categorias e a ordem de exibição no cardápio. | promoções | 1 item | Desativar | QA Categoria Teste | 0 itens | Desativar | Pizzas | 1 item | Desativar | Nova Categoria
+[modal produto] je | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | Categorias | 3 | Produtos | 2 | Complementos | 2 | Combos | 0 | Produtos | Gerencie nome, preço, foto e disponibilidade. | Todos | promoções | QA Categoria Teste | Pizzas | x-salada | R$ 10,00 | Ativo | promoções | pizzas tradicionais | R$ 60,00 | Ativo | Pizzas | Novo Produto | ← Voltar | Novo Produto | FOTO | 📷 | enviar foto | NOME * | DESCRIÇÃO | PREÇO * | CATEGORIA | promoções | QA Categoria Teste | Pizzas | ORDEM | STATUS | Ativo | Inativo | COMPLEMENTOS | Mussarela | +R$ 0,00 | Portuguesa | +R$ 0,00 | VARIAÇÕES | Adicionar variação | CAMPOS DE PERSONALIZAÇÃO | Adicionar campo | Cancelar | Salvar
+[modal produto campos] [{"tag":"INPUT","type":"text","ph":"Buscar por nome...","label":null,"aria":null},{"tag":"INPUT","type":"file","ph":"","label":"📷\nenviar foto","aria":null},{"tag":"INPUT","type":"text","ph":"","label":null,"aria":null},{"tag":"TEXTAREA","type":"textarea","ph":"","label":null,"aria":null},{"tag":"INPUT","type":"text","ph":"49,90","label":null,"aria":null},{"tag":"SELECT","type":"select-one","label":null,"aria":null},{"tag":"INPUT","type":"number","ph":"","label":null,"aria":null},{"tag":"SELECT","type":"select-one","label":null,"aria":null},{"tag":"INPUT","type":"checkbox","ph":"","label":"Mussarela\n+R$ 0,00","aria":null},{"tag":"INPUT","type":"checkbox","ph":"","label":"Portuguesa\n+R$ 0,00","aria":null}]
+[modal produto] textboxes=4
+[após salvar produto] ponibilidade. | Todos | promoções | QA Categoria Teste | Pizzas | x-salada | R$ 10,00 | Ativo | promoções | pizzas tradicionais | R$ 60,00 | Ativo | Pizzas | Novo Produto | ← Voltar | Novo Produto | FOTO | 📷 | enviar foto | NOME * | DESCRIÇÃO | PREÇO * | CATEGORIA | promoções | QA Categoria Teste | Pizzas | ORDEM | STATUS | Ativo | Inativo | COMPLEMENTOS | Mussarela | +R$ 0,00 | Portuguesa | +R$ 0,00 | VARIAÇÕES | Adicionar variação | CAMPOS DE PERSONALIZAÇÃO | Adicionar campo | Erro: Nome ≥2 letras e preço no formato 49,90. | Cancelar | Salvar
+
+===== CONFIGURAÇÕES =====
+Hoje | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | configurações da vitrine e do checkout | Loja | Horários | Entrega | Salão | Rastreamento | Conta | Nome da loja | WhatsApp (só dígitos) | Descrição | Chave Pix | Logo | 🏪 | enviar foto | Trocar logo · WebP ≤1MB | Texto do letreiro | Deixe vazio para esconder a barra. | Capa da loja | 🖼️ | enviar foto | Foto da capa · WebP ≤1MB | Salvar loja
+[labels config] sem nome acessível: nenhum
+[abas] ["☰","Loja","Horários","Entrega","Salão","Rastreamento","Conta","Salvar loja"]
+
+===== WHATSAPP =====
+Hoje | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | assistente de WhatsApp com IA (pt-BR) | Desconectado | Conecte o WhatsApp da sua loja e a atendente de IA responde seus clientes no zap — 24h por dia, em português. Você escaneia o QR uma vez e pronto. | A conexão falhou. Tente conectar de novo. | Conectar WhatsApp
+[elementos clicáveis] ["Pedidos","Entregas","Cardápio","Clientes","Config","WhatsApp","Financeiro","Conectar WhatsApp"]
+
+===== ENTREGAS =====
+Hoje | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | Entregas | Prontas e em rota: não finalizadas, qualquer dia · concluídas: hoje. | Novo motoboy | 🗺️ | Nenhuma entrega no mapa agora | Pedidos em rota aparecem aqui automaticamente. | PRONTAS | 0 | coluna zerada ✓ | EM ROTA | 0 | coluna zerada ✓ | CONCLUÍDAS | 0 | coluna zerada ✓ | Motoboys cadastrados | 1 cadastrado(s) · 1 ativo(s) | davi | 92991532662 · ativo | Desativar
+[botões] ["Usar tema escuro","☰","Novo motoboy","Desativar"]
+
+===== PAINEL CLIENTES =====
+Hoje | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | Clientes | perfil de consumo gerado a partir dos pedidos | TODOS | 2 | clientes com pedido | VIP | 0 | >5 pedidos ou ≥ R$ 500 | RECORRENTES | 1 | 2+ pedidos | NOVOS | 1 | 1 pedido válido | Clientes | ordenado por gasto · toque p/ ver o histórico | Q | QA Playwright 2 | Recorrente | (92) 99153-2662 · 4 pedidos · último: hoje | R$ 190,00 | total gasto | P | Probe Playwright | Novo | (92) 99999-9999 · 1 pedido · último há 2 dias | R$ 50,00 | total gasto
+[labels clientes] sem nome acessível: nenhum
+
+===== PAINEL FINANCEIRO =====
+Hoje | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | Financeiro | caixa, contas a pagar e resultado | Hoje | 7 dias | 30 dias | 90 dias | Personalizado | FATURAMENTO · 7 DIAS | R$ 240,00 | 08/11/2026 — 14/11/2026 | DESPESAS PAGAS · 7 DIAS | R$ 0,00 | contas a pagar quitadas no período | LÍQUIDO · 7 DIAS | R$ 240,00 | faturamento − despesas pagas | carregando relatório… | Caixa | abra o caixa para começar o dia | Fundo inicial (R$) | Abrir caixa | Contas a pagar | cadastre, edite e quite contas | Descrição | Valor (R$) | Vencimento | Adicionar | nenhuma conta cadastrada
+[labels financeiro] sem nome acessível: [{"tag":"INPUT","type":"date","name":"due","id":null}]
+
+===== PAINEL PDV =====
+Hoje | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | PDV | Mesa | Retirada | Mesa | Produtos | pizzas tradicionais | R$ 60,00 | x-salada | R$ 10,00 | Total: R$ 0,00 | Dinheiro | Pix | Maquininha | Criar pedido
+[labels pdv] sem nome acessível: nenhum
+
+===== MOTOboy =====
+K | Kero. | acesso do motoboy | E-mail | Senha |   | Entrar
+[labels motoboy login] sem nome acessível: nenhum
+
+===== ADMIN (operador) =====
+Hoje | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | Sábado, 14 de novembro | Boa tarde, Pizzaria do kabeça 👋 | loja aberta · operação em tempo real | Fechar agora | Hoje | 7 dias | 30 dias | 90 dias | Personalizado | PEDIDOS · HOJE | 2 | válidos · exc. cancelados | FATURAMENTO · HOJE | R$ 60,00 | exc. cancelados | TICKET MÉDIO · HOJE | R$ 30,00 | por pedido válido | AGUARDANDO AÇÃO | → | 1 | 1 há +10 min 🔴 — toque p/ atender | ENTREGAS EM ANDAMENTO | → | 0 | nenhuma no momento | TAXA DE CANCELAMENTO | 0% | 0 de 2 pedidos | RECEITA PERDIDA | R$ 0,00 | nenhum cancelamento ✓ | DELIVERY · RETIRADA · MESA | 0 | Entrega | 0% | 2 | Retirada | 100% | 0 | Mesa | 0% | pedidos válidos no período | Meta de faturamento | Dia | Mês | R$ 60,00 de R$ 1.000,00 | 6% | 6% | da meta | Entregadores em rota | 0 ativos | 🏪 | + | − |  Leaflet | © OpenStreetMap | Nenhum entregador em rota agora. | Últimos pedidos | o movimento agora mesmo | Ver kanban → | Q | QA Playwright 2 | Novo | #KXN3 · há 170 min · precisa de você 🔴 · Retirada · Pix | R$ 30,00 | › | Q | QA Playwright | Confirmado | #PNKH · há 172 min · Retirada · Pix | R$ 30,00 | ›

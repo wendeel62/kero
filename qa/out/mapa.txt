@@ -1,0 +1,10 @@
+[após P/ preparo] Novos=1 | Confirmados=1 | Em preparo=0 | Pronto / Em rota=0
+[Pronto] botão não encontrado
+
+[ENTREGAS com pedido em rota]
+Hoje | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | Entregas | Prontas e em rota: não finalizadas, qualquer dia · concluídas: hoje. | Novo motoboy | 🗺️ | Nenhuma entrega no mapa agora | Pedidos em rota aparecem aqui automaticamente. | PRONTAS | 0 | coluna zerada ✓ | EM ROTA | 0 | coluna zerada ✓ | CONCLUÍDAS | 0 | coluna zerada ✓ | Motoboys cadastrados | 1 cadastrado(s) · 1 ativo(s) | davi | 92991532662 · ativo | Desativar
+[mapa] {"leaflet":false,"tiles":0,"pins":0,"polyline":0,"rect":null}
+[tiles] (nenhum)
+CONSOLE[error] Failed to load resource: the server responded with a status of 400 (Bad Request)
+[PATCH para out] 400 {"error":{"code":"INVALID_TRANSITION","message":"Transição de status não permitida."}}
+[após out] Hoje | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | Entregas | Prontas e em rota: não finalizadas, qualquer dia · concluídas: hoje. | Novo motoboy | 🗺️ | Nenhuma entrega no mapa agora | Pedidos em rota aparecem aqui automaticamente. | PRONTAS | 0 | coluna zerada ✓ | EM ROTA | 0 | coluna zerada ✓ | CONCLUÍDAS | 0 | coluna zerada ✓ | Motoboys cadastrados | 1 cadastrado(s) · 1 ativo(s) | davi | 92991532662 · ativo | Desativar

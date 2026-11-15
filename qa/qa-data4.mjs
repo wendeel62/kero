@@ -1,0 +1,17 @@
+import { createClient } from "@supabase/supabase-js";
+import fs from "fs";
+const env = Object.fromEntries(fs.readFileSync(".env.local","utf8").split("\n").filter(l=>l.includes("=")&&!l.startsWith("#")).map(l=>[l.slice(0,l.indexOf("=")), l.slice(l.indexOf("=")+1)]));
+const sb = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth:{persistSession:false} });
+const SID = "cda9a418-1995-4c6f-86db-cc112fdd3def";
+const { data: g } = await sb.from("product_addon_groups").select("*").eq("store_id", SID);
+const { data: a } = await sb.from("product_addons").select("id,name,price_cents,group_id,active,product_id").eq("store_id", SID);
+const { data: p } = await sb.from("products").select("id,name,price_cents,active").eq("store_id", SID);
+const { data: c } = await sb.from("categories").select("id,name,active").eq("store_id", SID);
+const { data: v } = await sb.from("product_variations").select("*").eq("store_id", SID);
+const { data: cf } = await sb.from("product_custom_fields").select("*").eq("store_id", SID);
+console.log("GROUPS:", JSON.stringify(g));
+console.log("ADDONS:", JSON.stringify(a));
+console.log("PRODS:", JSON.stringify(p));
+console.log("CATS:", JSON.stringify(c));
+console.log("VARIATIONS:", JSON.stringify(v));
+console.log("CUSTOM FIELDS:", JSON.stringify(cf));

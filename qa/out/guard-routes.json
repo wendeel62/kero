@@ -1,0 +1,149 @@
+[
+  {
+    "label": "root",
+    "url": "/",
+    "status": 200,
+    "final": "http://localhost:3000/pizzariadokbc",
+    "ms": 7422
+  },
+  {
+    "label": "privacidade",
+    "url": "/privacidade",
+    "status": 200,
+    "final": "http://localhost:3000/privacidade",
+    "ms": 4594
+  },
+  {
+    "label": "login",
+    "url": "/login",
+    "status": 200,
+    "final": "http://localhost:3000/login",
+    "ms": 3299
+  },
+  {
+    "label": "esqueci-senha",
+    "url": "/login/esqueci-senha",
+    "status": 200,
+    "final": "http://localhost:3000/login/esqueci-senha",
+    "ms": 5818
+  },
+  {
+    "label": "motoboy-login",
+    "url": "/motoboy/login",
+    "status": 200,
+    "final": "http://localhost:3000/motoboy/login",
+    "ms": 4866
+  },
+  {
+    "label": "motoboy-sem-login",
+    "url": "/motoboy",
+    "status": 200,
+    "final": "http://localhost:3000/motoboy/login",
+    "ms": 5220
+  },
+  {
+    "label": "admin-sem-login",
+    "url": "/admin",
+    "status": 200,
+    "final": "http://localhost:3000/login",
+    "ms": 4052
+  },
+  {
+    "label": "admin-lojas-sem-login",
+    "url": "/admin/lojas",
+    "status": 200,
+    "final": "http://localhost:3000/login",
+    "ms": 6582
+  },
+  {
+    "label": "admin-config-sem-login",
+    "url": "/admin/configuracoes",
+    "status": 200,
+    "final": "http://localhost:3000/login",
+    "ms": 3642
+  },
+  {
+    "label": "painel-sem-login",
+    "url": "/painel",
+    "status": 200,
+    "final": "http://localhost:3000/login",
+    "ms": 3788
+  },
+  {
+    "label": "painel-pedidos-sem-login",
+    "url": "/painel/pedidos",
+    "status": 200,
+    "final": "http://localhost:3000/login",
+    "ms": 6014
+  },
+  {
+    "label": "painel-pdv-sem-login",
+    "url": "/painel/pdv",
+    "status": 200,
+    "final": "http://localhost:3000/login",
+    "ms": 44574
+  },
+  {
+    "label": "painel-entregas-sem-login",
+    "url": "/painel/entregas",
+    "status": 200,
+    "final": "http://localhost:3000/login",
+    "ms": 21428
+  },
+  {
+    "label": "painel-cardapio-sem-login",
+    "url": "/painel/cardapio",
+    "status": 200,
+    "final": "http://localhost:3000/login",
+    "ms": 9398
+  },
+  {
+    "label": "painel-clientes-sem-login",
+    "url": "/painel/clientes",
+    "status": 200,
+    "final": "http://localhost:3000/login",
+    "ms": 18401
+  },
+  {
+    "label": "painel-config-sem-login",
+    "url": "/painel/configuracoes",
+    "status": 200,
+    "final": "http://localhost:3000/login",
+    "ms": 12667
+  },
+  {
+    "label": "painel-whatsapp-sem-login",
+    "url": "/painel/whatsapp",
+    "status": 200,
+    "final": "http://localhost:3000/login",
+    "ms": 8423
+  },
+  {
+    "label": "painel-financeiro-sem-login",
+    "url": "/painel/financeiro",
+    "status": 200,
+    "final": "http://localhost:3000/login",
+    "ms": 8092
+  },
+  {
+    "label": "rota-404",
+    "url": "/rota-que-nao-existe-xyz",
+    "status": 404,
+    "final": "http://localhost:3000/rota-que-nao-existe-xyz",
+    "ms": 4229
+  },
+  {
+    "label": "loja-404",
+    "url": "/loja-inexistente-abc",
+    "status": 404,
+    "final": "http://localhost:3000/loja-inexistente-abc",
+    "ms": 4312
+  },
+  {
+    "label": "loja-inativa",
+    "url": "/pizzariadasol",
+    "status": 404,
+    "final": "http://localhost:3000/pizzariadasol",
+    "ms": 3637
+  }
+]

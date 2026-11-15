@@ -66,7 +66,7 @@ export default function CookieBanner() {
       <p style={{ flex: 1, minWidth: 220, margin: 0, fontSize: "0.85rem" }}>
         🍪 Usamos cookies para melhorar sua experiência e medir visitas. Você pode aceitar ou recusar — a recusa não bloqueia o cardápio.
       </p>
-      <button onClick={() => decidir("recusado")} style={{ background: "var(--color-surface, #fff)", color: "var(--color-text, #333)", border: "1px solid var(--color-border)" }}>
+      <button onClick={() => decidir("recusado")} style={{ background: "var(--color-surface, #fff)", color: "var(--color-text, #333)", border: "1px solid var(--color-border)", minHeight: 44, minWidth: 220 }}>
         Recusar
       </button>
       <button onClick={() => decidir("aceito")} style={{ background: "var(--color-primary)", minHeight: 44 }}>

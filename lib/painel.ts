@@ -516,7 +516,7 @@ export async function getEntregas() {
   );
   const routeIdPorCourier: Record<string, string> = {};
   for (const r of routesList) routeIdPorCourier[r.courier_id] = r.id;
-  const outOrders = ((orders ?? []) as unknown as PanelRow[]).filter((o) => o.status === "out");
+  const outOrders = ((orders ?? []) as unknown as PanelRow[]).filter((o) => o.status === "out" || o.status === "ready");
   return {
     prontas: panelOrders.filter((o) => o.status === "ready"),
     emRota: panelOrders.filter((o) => o.status === "out"),

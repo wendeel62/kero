@@ -95,15 +95,17 @@ export default function Entregas() {
               {o.distKm && <span className="text-[11px] font-bold bg-[var(--pill-bg)] rounded-full px-2 py-0.5">📍 {o.distKm} da loja</span>}
             </div>
             <p className="font-extrabold tabular-nums mt-1.5">{brl(o.total_cents)}</p>
-            {o.status === "out" && (() => {
+            {(o.status === "out" || o.status === "delivered") && o.courierId && (() => {
               const cid = o.courierId;
               const rid = cid ? data.routeIdPorCourier[cid] : undefined;
               return (
                 <>
-                  <button onClick={() => { setAssignId(o.id); setError(""); }}
-                    className="btn btn--primary w-full mt-2.5 !min-h-0 text-[13px] font-extrabold py-2 transition-all active:scale-[0.98]">
-                    Atribuir motoboy
-                  </button>
+                  {!rid && (
+                    <button onClick={() => { setAssignId(o.id); setError(""); }}
+                      className="btn btn--primary w-full mt-2.5 !min-h-0 text-[13px] font-extrabold py-2 transition-all active:scale-[0.98]">
+                      Atribuir motoboy
+                    </button>
+                  )}
                   {rid && (
                     <button onClick={() => { void encerrarRota(rid).then((r) => { if (!r.ok) setError(r.error ?? "Erro ao encerrar rota."); load(); }); }}
                       className="btn btn--ghost w-full mt-1.5 !min-h-0 text-[13px] font-extrabold py-2 transition-all active:scale-[0.98]">
@@ -223,13 +225,13 @@ export default function Entregas() {
             <p className="text-sm text-[var(--muted)] mt-0.5">Cadastre um motoboy com acesso ao PWA.</p>
             <div className="mt-3 space-y-2">
               <input value={motoboyForm.name} onChange={(e) => setMotoboyForm({ ...motoboyForm, name: e.target.value })}
-                placeholder="Nome completo" className="input w-full" />
+                placeholder="Nome completo" aria-label="Nome completo" className="input w-full" />
               <input value={motoboyForm.phone} onChange={(e) => setMotoboyForm({ ...motoboyForm, phone: e.target.value })}
-                placeholder="Telefone" className="input w-full" />
+                placeholder="Telefone" aria-label="Telefone" className="input w-full" />
               <input value={motoboyForm.email} onChange={(e) => setMotoboyForm({ ...motoboyForm, email: e.target.value })}
-                placeholder="E-mail" type="email" className="input w-full" />
+                placeholder="E-mail" type="email" aria-label="E-mail" className="input w-full" />
               <input value={motoboyForm.password} onChange={(e) => setMotoboyForm({ ...motoboyForm, password: e.target.value })}
-                placeholder="Senha (mín. 8 caracteres)" type="password" className="input w-full" />
+                placeholder="Senha (mín. 8 caracteres)" type="password" aria-label="Senha" className="input w-full" />
             </div>
             {motoboyError && <p className="text-xs font-bold text-[var(--red)] mt-1.5">{motoboyError}</p>}
             <button onClick={() => {

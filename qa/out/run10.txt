@@ -1,0 +1,69 @@
+
+=== ADMIN PLATAFORMA ===
+login → /admin
+Kero. operador | Dashboard | Lojas | Configurações | acesso total · service role no backend | Painel executivo | SaaS do dono · fuso America/Manaus | Ver todas as lojas | + Nova loja | MRR | R$ 114,00 | 2 básico · 0 completo | ADESÃO NO MÊS | R$ 0,00 | taxa paga no mês | LOJAS | 1 / 3 | ativas / total | CHURN DE LOJAS | 0.0% | 0 pararam (30d) | ATIVAÇÃO 7D | 0.0% | base 3 lojas | CAC | — | 0 novas no mês | Calculado com: básico R$ 57,00 · completo R$ 97,00 · adesão R$ 100,00 · gasto/dia R$ 50,00 | Coortes (6 meses) | MÊS	NOVAS	RETIDAS (PEDIDO 30D) | 2026-06	0	0 | 2026-07	0	0 | 2026-08	0	0 | 2026-09	0	0 | 2026-10	3	1 | 2026-11	0	0 | Segmentos | pizzaria | 2 lojas · 7 pedidos (30d) | sem segmento | 1 lojas · 0 pedidos (30d) | Últimas lojas cadastradas | Ver todas → | PQ | Pizzaria QA Hermes | kero.app/loja-qa-hermes · lojista.qa@teste.local | › | Pd | Pizzaria da Sol | kero.app/pizzariadasol · pizzariadasol62@gmail.com | › | Pd | Pizzaria do kabeça | kero.app/pizzariadokbc · pizzaria123@gmail.com | ›
+[/admin/lojas] Kero. operador | Dashboard | Lojas | Configurações | acesso total · service role no backend | ← Voltar ao dashboard | Lojas | 3 lojas · 50 por página | Exportar CSV | + Nova loja | LOJAS | 3 | ATIVAS | 2 | PEDIDOS HOJE | 4 | Todas | Ativas | Inativas | Selecionar todas da página | PQ | Pizzaria QA Hermes | ativa | Básico | kero.app/loja-qa-hermes · lojista.qa@teste.local | Adesão pendente | 0 | pedidos hoje | desde 19/10/2026 | Último: 19/10, 16:11 | Redefinir senha | Marcar adesão paga | › | Pd | Pizzaria da Sol | inativa → 404 público | Completo | pizzaria | kero.app/pizzariadasol · pizzariadasol62@gmail.com | Adesão pendente | 0 | pedidos hoje | desde 16/10/2026 | Último: Nenhum pedido | Redefinir senha | Marcar adesão paga | › | Pd | Pizzaria do kabeça | ativa | Básico | pizzaria | kero.app/pizzariadokbc · pizzaria123@gmail.com | Adesão pendente | 4 | pedidos hoje | desde 16/10/2026 
+[/admin/configuracoes] Kero. operador | Dashboard | Lojas | Configurações | acesso total · service role no backend | ← Voltar ao dashboard | Configurações | Os valores abaixo espelham no dashboard. | PLANO BÁSICO R$ | PLANO COMPLETO R$ | TAXA DE ADESÃO R$ | GASTO DIÁRIO EM ANÚNCIOS R$ | Salvar
+[loja] Kero. operador | Dashboard | Lojas | Configurações | acesso total · service role no backend | ← Voltar ao dashboard | Pd | Pizzaria do kabeça | kero.app/pizzariadokbc · pizzaria123@gmail.com · desde 16/10/2026 | Plano Básico | pizzaria | Adesão pendente | PEDIDOS HOJE | 4 | FATURAMENTO | R$ 190,00 | SLUG | pizzariadokbc | slug imutável · `active` só via service role · dados sensíveis só aqui, nunca na vitrine | Loja ativa | Acesso do lojista | pizzaria123@gmail.com · gera provisória via Auth Admin API, mostra 1 vez | Resetar senha | Excluir loja | Apaga a loja, o cardápio, os pedidos e o login do dono · sem volta. | Excluir loja
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('.pdetail-cta')[22m
+[2m    - locator resolved to <button class="pdetail-cta">…</button>[22m
+[2m  - attempting click action[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div role="dialog" data-testid="cookie-banner" aria-label="Consentimento de cookies">…</div> intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m    - waiting 20ms[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div role="dialog" data-testid="cookie-banner" aria-label="Consentimento de cookies">…</div> intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m      - waiting 100ms[22m
+[2m    54 × waiting for element to be visible, enabled and stable[22m
+[2m       - element is visible, enabled and stable[22m
+[2m       - scrolling into view if needed[22m
+[2m       - done scrolling[22m
+[2m       - <div role="dialog" data-testid="cookie-banner" aria-label="Consentimento de cookies">…</div> intercepts pointer events[22m
+[2m     - retrying click action[22m
+[2m       - waiting 500ms[22m
+
+    at /home/david/kero/qa/run10-plataforma-mobile.mjs:53:35 {
+  log: [
+    "  - waiting for locator('.pdetail-cta')",
+    '    - locator resolved to <button class="pdetail-cta">…</button>',
+    '  - attempting click action',
+    '    2 × waiting for element to be visible, enabled and stable',
+    '      - element is visible, enabled and stable',
+    '      - scrolling into view if needed',
+    '      - done scrolling',
+    '      - <div role="dialog" data-testid="cookie-banner" aria-label="Consentimento de cookies">…</div> intercepts pointer events',
+    '    - retrying click action',
+    '    - waiting 20ms',
+    '    2 × waiting for element to be visible, enabled and stable',
+    '      - element is visible, enabled and stable',
+    '      - scrolling into view if needed',
+    '      - done scrolling',
+    '      - <div role="dialog" data-testid="cookie-banner" aria-label="Consentimento de cookies">…</div> intercepts pointer events',
+    '    - retrying click action',
+    '      - waiting 100ms',
+    '    54 × waiting for element to be visible, enabled and stable',
+    '       - element is visible, enabled and stable',
+    '       - scrolling into view if needed',
+    '       - done scrolling',
+    '       - <div role="dialog" data-testid="cookie-banner" aria-label="Consentimento de cookies">…</div> intercepts pointer events',
+    '     - retrying click action',
+    '       - waiting 500ms'
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.2

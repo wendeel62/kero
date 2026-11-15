@@ -1,0 +1,12 @@
+[banner cookies mobile] {"rect":{"y":673,"h":171,"bottom":844},"viewportH":844,"btns":[{"t":"Recusar","x":312,"y":718,"w":62,"h":26,"vis":true},{"t":"Aceitar","x":16,"y":784,"w":53,"h":44,"vis":true}],"role":"dialog","aria":"Consentimento de cookies"}
+[banner após Recusar] presente=false
+[cookie storage] ["lgpd-consentimento=recusado","kero:carrinho:pizzariadokbc=[]"]
+[mob sacola] Sacola | 1× x-salada | R$ 10,00 | R$ 10,00 cada | Mussarela | − | 1 | + | Editar | Observações | Total: R$ 10,00 | Finalizar pedido
+[mob checkout] scrollW=390 clientW=390 overflowX=false
+[mob alvos <32px] []
+[mob scroll] scrollY=600
+
+[tab order vitrine] ["INPUTBuscar no cardápio","BUTTONpromoções","BUTTONPizzas","BUTTONAdicionar x-salada","BUTTONAdicionar pizzas tradicion","AWhatsApp: 0000000000","APolítica de Privacidade","ATermos de Uso","AContato","NEXTJS-PORTAL"]
+[tab order modal produto] ["BUTTONAdicionar pizzas tradici","BUTTONFechar","INPUT","INPUT","BUTTONDiminuir quantidade","BUTTONAumentar quantidade","AWhatsApp: 0000000000","APolítica de Privacidade"]
+[foco dentro do modal?]
+  modal após ESC: true | banner presente: false

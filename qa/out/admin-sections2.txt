@@ -1,0 +1,46 @@
+
+===== CONFIG — abas =====
+  [Horários] locator.click: Timeout 30000ms exceeded.
+[Horários] configurações da vitrine e do checkout | Loja | Horários | Entrega | Salão | Rastreamento | Conta | Nome da loja | WhatsApp (só dígitos) | Descrição | Chave Pix | Logo | 🏪 | enviar foto | Trocar logo · WebP ≤1MB | Texto do letreiro | Deixe vazio para esconder a barra. | Capa da loja | 🖼️ | enviar foto | Foto da capa · WebP ≤1MB | Salvar loja
+  [labels sem nome] nenhum
+  [Entrega] locator.click: Timeout 30000ms exceeded.
+[Entrega] configurações da vitrine e do checkout | Loja | Horários | Entrega | Salão | Rastreamento | Conta | Nome da loja | WhatsApp (só dígitos) | Descrição | Chave Pix | Logo | 🏪 | enviar foto | Trocar logo · WebP ≤1MB | Texto do letreiro | Deixe vazio para esconder a barra. | Capa da loja | 🖼️ | enviar foto | Foto da capa · WebP ≤1MB | Salvar loja
+  [labels sem nome] nenhum
+  [Salão] locator.click: Timeout 30000ms exceeded.
+[Salão] configurações da vitrine e do checkout | Loja | Horários | Entrega | Salão | Rastreamento | Conta | Nome da loja | WhatsApp (só dígitos) | Descrição | Chave Pix | Logo | 🏪 | enviar foto | Trocar logo · WebP ≤1MB | Texto do letreiro | Deixe vazio para esconder a barra. | Capa da loja | 🖼️ | enviar foto | Foto da capa · WebP ≤1MB | Salvar loja
+  [labels sem nome] nenhum
+  [Rastreamento] locator.click: Timeout 30000ms exceeded.
+[Rastreamento] configurações da vitrine e do checkout | Loja | Horários | Entrega | Salão | Rastreamento | Conta | Nome da loja | WhatsApp (só dígitos) | Descrição | Chave Pix | Logo | 🏪 | enviar foto | Trocar logo · WebP ≤1MB | Texto do letreiro | Deixe vazio para esconder a barra. | Capa da loja | 🖼️ | enviar foto | Foto da capa · WebP ≤1MB | Salvar loja
+  [labels sem nome] nenhum
+  [Conta] locator.click: Timeout 30000ms exceeded.
+[Conta] configurações da vitrine e do checkout | Loja | Horários | Entrega | Salão | Rastreamento | Conta | Nome da loja | WhatsApp (só dígitos) | Descrição | Chave Pix | Logo | 🏪 | enviar foto | Trocar logo · WebP ≤1MB | Texto do letreiro | Deixe vazio para esconder a barra. | Capa da loja | 🖼️ | enviar foto | Foto da capa · WebP ≤1MB | Salvar loja
+  [labels sem nome] nenhum
+
+===== ENTREGAS — modal novo motoboy =====
+Hoje | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | Entregas | Prontas e em rota: não finalizadas, qualquer dia · concluídas: hoje. | Novo motoboy | 🗺️ | Nenhuma entrega no mapa agora | Pedidos em rota aparecem aqui automaticamente. | PRONTAS | 0 | coluna zerada ✓ | EM ROTA | 0 | coluna zerada ✓ | CONCLUÍDAS | 0 | coluna zerada ✓ | Motoboys cadastrados | 1 cadastrado(s) · 1 ativo(s) | davi | 92991532662 · ativo | Desativar | Novo motoboy | Cadastre um motoboy com acesso ao PWA. | Cadastrar motoboyVoltar
+[campos] [{"tag":"INPUT","type":"text","ph":"Nome completo","label":null,"aria":null},{"tag":"INPUT","type":"text","ph":"Telefone","label":null,"aria":null},{"tag":"INPUT","type":"email","ph":"E-mail","label":null,"aria":null},{"tag":"INPUT","type":"password","ph":"Senha (mín. 8 caracteres)","label":null,"aria":null}]
+
+===== FINANCEIRO — abrir caixa =====
+[financeiro] Hoje | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | Financeiro | caixa, contas a pagar e resultado | Hoje | 7 dias | 30 dias | 90 dias | Personalizado | FATURAMENTO · 7 DIAS | R$ 240,00 | 08/11/2026 — 14/11/2026 | DESPESAS PAGAS · 7 DIAS | R$ 0,00 | contas a pagar quitadas no período | LÍQUIDO · 7 DIAS | R$ 240,00 | faturamento − despesas pagas | PEDIDOS · 7 DIAS | 5 | pedidos válidos no período | TICKET MÉDIO · 7 DIAS | R$ 48,00 | faturamento ÷ pedidos | Metas de faturamento | defina o alvo — a janela é calculada automaticamente | Meta do dia | 6% | R$ 60,00 / R$ 1.000,00 | Alterar | Meta da semana | 3% | R$ 240,00 / R$ 7.000,00 | Alterar | Meta do m
+[modal abrir caixa]  | Meta do dia | 6% | R$ 60,00 / R$ 1.000,00 | Alterar | Meta da semana | 3% | R$ 240,00 / R$ 7.000,00 | Alterar | Meta do mês | 1% | R$ 240,00 / R$ 21.000,00 | Alterar | Mais vendidos | top 10 por faturamento no período | 1 | pizzas tradicionais | 2× | R$ 120,00 | 2 | x-salada | 11× | R$ 110,00 | Caixa | abra o caixa para começar o dia | Fundo inicial (R$) | Abrir caixa | Contas a pagar | cadastre, edite e quite contas | Descrição | Valor (R$) | Vencimento | Adicionar | nenhuma conta cadastrada
+[inputs] [{"type":"text","ph":"R$ 0,00","label":null},{"type":"text","ph":"R$ 0,00","label":null},{"type":"text","ph":"R$ 0,00","label":null},{"type":"text","ph":"0,00","label":null},{"type":"text","ph":"ex.: fornecedor, aluguel…","label":null},{"type":"text","ph":"0,00","label":null},{"type":"date","ph":"","label":null}]
+
+===== ISOLAMENTO MULTI-LOJA (lojista pizzariadokbc) =====
+[pedido da loja-qa-hermes] url=/painel/pedidos/116062ee-5550-41d2-8f19-5704d34144ca
+   404 | This page could not be found.
+   >>> vazou dado de outra loja? false
+[cupom da loja-qa-hermes] url=/painel/pedidos/116062ee-5550-41d2-8f19-5704d34144ca/print
+   404 | This page could not be found.
+   >>> vazou dado de outra loja? false
+[pedido de outra loja (id real)] url=/painel/pedidos/272d6fbe-6be0-4270-b3f7-7e65bf662769
+   Hoje | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | ← Voltar ao kanban | #SU7V | Entregue | há 4251 min | Entrega | Pix | R$ 65,00 | CLIENTE | HELLEN FRANCE DE SOUZA ROZENO | (92) 99153-2662 | Chamar no WhatsApp | ENTREGA | , · coroado | CEP 69082150 · taxa R$ 5,00 | Pagamento: Pix | ITENS · SNAPSHOT DO PEDIDO | 1× pizzas tradicionais | + Mussarela | R$ 60,00 | Subtotal | R$ 60,00 | Entrega | R$ 5,00 | Total | R$ 65,00 | LINHA DO TEMPO | Entregue · por lo
+   >>> vazou dado de outra loja? false
+[lista filtrada por store_id] url=/painel/pedidos?id=cda9a418-1995-4c6f-86db-cc112fdd3def
+   Hoje | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | tempo real · não finalizados + hoje | · 1 aguardando ação | Hoje | 7 dias | 30 dias | 90 dias | Personalizado | Todos | Entrega | Retirada | NOVOS | 1 | #KXN3 | há 177 min 🔴 | QA Playwright 2 | Retirada | Pix | R$ 30,00 | Aguardando 177 min | Confirmar → | ✕ | CONFIRMADOS | 1 | #PNKH | há 144 min 🔴 | QA Playwright | Retirada | Pix | R$ 30,00 | P/ preparo → | ✕ | EM PREPARO | 0 | coluna zerada ✓ | PRONT
+   >>> vazou dado de outra loja? false
+[API /api/admin/stores/cda9a418-1995-4c6f-86db-cc112fdd3def] 405 
+[API /api/whatsapp/chats] 502 {"error":{"code":"WAHA_ERROR","message":"Não foi possível consultar o WhatsApp."}}
+
+===== FIM DE SESSÃO / EXPIRAÇÃO =====
+[sem sessão → /painel] url=/login
+  K | Kero. | acesso do lojista | E-mail | Senha |   | Esqueci minha senha | Entrar

@@ -2,22 +2,19 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { notFound, useParams } from "next/navigation";
+import { notFound, useParams, useSearchParams } from "next/navigation";
 import { getPedido } from "@/lib/painel";
 import type { PanelDetail } from "@/lib/painel-utils";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { QrCode } from "@/components/qrcode";
 
 const brl = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-// Gera QR code simples via Google Charts API (sem dependência extra)
-function QrCode({ data, size = 80 }: { data: string; size?: number }) {
-  const url = `https://chart.googleapis.com/chart?cht=qr&chl=${encodeURIComponent(data)}&chs=${size}x${size}&choe=UTF-8`;
-  return <img src={url} alt="QR code do pedido" width={size} height={size} style={{ display: "block", margin: "0 auto" }} />;
-}
-
 export default function CupomPrint() {
   const id = useParams().id as string;
+  const searchParams = useSearchParams();
   const [order, setOrder] = useState<PanelDetail | null | undefined>(undefined);
+  const isVia2 = searchParams.get("via") === "2";
   useEffect(() => {
     getPedido(id).then(({ order: o }) => setOrder(o)).catch(() => setOrder(null));
   }, [id]);
@@ -75,6 +72,7 @@ export default function CupomPrint() {
           </div>
           <p className="font-bold my-1">================================</p>
           <p className="text-center font-bold text-[28px] tracking-[0.2em]">#{order.code}</p>
+          {isVia2 && <p className="text-center font-bold text-sm text-[var(--red)]">*** 2ª VIA ***</p>}
           <p className="text-center font-bold text-sm">
             *** {order.type === "delivery" ? "ENTREGA" : "RETIRADA"} ***
           </p>
@@ -116,7 +114,6 @@ export default function CupomPrint() {
           <QrCode data={`${typeof window !== "undefined" ? window.location.origin : ""}/${trackPath}`} size={64} />
           <p className="text-center font-bold text-[10px] mt-1">Escaneie para acompanhar</p>
           <p className="font-bold my-1">--------------------------------</p>
-          <p className="text-center">Acompanhe: {typeof window !== "undefined" ? `${window.location.origin}/${trackPath}` : trackPath}</p>
           <p className="text-center font-bold">Obrigado! Até a próxima 🙏</p>
           <p className="no-print text-center text-stone-400 font-sans text-[11px] mt-1">pré-visualização em tela — na bobina sai sem sombras</p>
         </article>

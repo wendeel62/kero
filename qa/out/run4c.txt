@@ -1,0 +1,28 @@
+
+=== DETALHE DO PEDIDO ===
+Hoje | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | ← Voltar ao kanban | #PNKH | Confirmado | há 167 min | Retirada | Pix | R$ 30,00 | CLIENTE | QA Playwright | (92) 99153-2662 | Chamar no WhatsApp | RETIRADA | Balcão — avisar quando chegar 📍 | Pagamento: Pix | ITENS · SNAPSHOT DO PEDIDO | 3× x-salada | + Mussarela | R$ 30,00 | Subtotal | R$ 30,00 | Total | R$ 30,00 | LINHA DO TEMPO | Confirmado · por loja · há 132 min | Novo · por cliente · há 167 min | Avançar → Em preparo | Cancelar pedido | 🖨 Imprimir 80mm
+[botões/links] ["Hoje","Pedidos","PDV","Entregas","Cardápio","Clientes","Config","WhatsApp","Financeiro","Usar tema escuro","☰","1","← Voltar ao kanban","Chamar no WhatsApp","Avançar → Em preparo","Cancelar pedido","🖨 Imprimir 80mm"]
+[overflow] {"w":1440,"c":1440}
+
+=== CARDÁPIO ===
+Hoje | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | Categorias | 2 | Produtos | 2 | Complementos | 2 | Combos | 0 | Categorias | Organize as categorias e a ordem de exibição no cardápio. | promoções | 1 item | Desativar | Pizzas | 1 item | Desativar | Nova Categoria
+[aba Produtos]  | 0 | Produtos | Gerencie nome, preço, foto e disponibilidade. | Todos | promoções | Pizzas | x-salada | R$ 10,00 | Ativo | promoções | pizzas tradicionais | R$ 60,00 | Ativo | Pizzas | Novo Produto
+[aba Complementos]  | 0 | Complementos | Adicionais globais válidos para todo o cardápio. | Grupos de opção | Um grupo junta adicionais com uma regra: obrigatório e máximo de escolhas. | Sabores | obrigatório | máx 2 | mín 1 | soma | Mussarela | R$ 0,00 | remoção | separado | remover do grupo | Portuguesa | R$ 0,00 | remoção | separado | remover do grupo | Novo grupo | Mussarela | +R$ 0,00 | Portuguesa | +R$ 0,00 | Novo Complemento
+[aba Combos]  | 0 | Combos | Agrupe produtos em um combo com preço único. | Nenhum combo cadastrado. | Novo Combo
+
+[modal nova categoria] Hoje | Pedidos | PDV | Entregas | Cardápio | Clientes | Config | WhatsApp | Financeiro | K | Categorias | 2 | Produtos | 2 | Complementos | 2 | Combos | 0 | Categorias | Organize as categorias e a ordem de exibição no cardápio. | promoções | 1 item | Desativar | Pizzas | 1 item | Desativar | Nova Categoria | ← Voltar | Nova Categoria | NOME * | ORDEM | STATUS | Ativa | Inativa | Cancelar | Salvar
+[campos] [{"tag":"INPUT","type":"text","ph":"","label":null,"id":"","name":"","required":false},{"tag":"INPUT","type":"number","ph":"","label":null,"id":"","name":"","required":false},{"tag":"SELECT","type":"select-one","label":null,"id":"","name":"","required":false}]
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.fill: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('input[type=\'text\']').first()[22m
+
+    at /home/david/kero/qa/run4c-admin.mjs:59:14 {
+  log: [ "  - waiting for locator('input[type=\\'text\\']').first()" ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.2

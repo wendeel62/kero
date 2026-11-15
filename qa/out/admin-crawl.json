@@ -1,0 +1,2750 @@
+[
+  {
+    "label": "adm-hoje-desktop",
+    "url": "/painel",
+    "status": 200,
+    "ms": 8427,
+    "console": [],
+    "net": [
+      {
+        "page": "adm-hoje-desktop",
+        "url": "http://localhost:3000/painel",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-desktop",
+        "url": "https://a.tile.openstreetmap.org/15/10924/16664.png",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-desktop",
+        "url": "https://c.tile.openstreetmap.org/15/10923/16664.png",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-desktop",
+        "url": "https://b.tile.openstreetmap.org/15/10925/16664.png",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-desktop",
+        "url": "https://a.tile.openstreetmap.org/15/10923/16665.png",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-desktop",
+        "url": "https://c.tile.openstreetmap.org/15/10925/16665.png",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-desktop",
+        "url": "http://localhost:3000/painel",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-desktop",
+        "url": "http://localhost:3000/painel",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-desktop",
+        "url": "http://localhost:3000/painel",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "api": [],
+    "overflowX": false,
+    "over": [],
+    "tiny": [
+      {
+        "tag": "A",
+        "label": "Leaflet",
+        "w": 51,
+        "h": 14
+      },
+      {
+        "tag": "A",
+        "label": "OpenStreetMap",
+        "w": 85,
+        "h": 14
+      },
+      {
+        "tag": "A",
+        "label": "Ver kanban →",
+        "w": 89,
+        "h": 20
+      }
+    ],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Fechar agora",
+      "Hoje",
+      "7 dias",
+      "30 dias",
+      "90 dias",
+      "Personalizado",
+      "Dia",
+      "Mês"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel/pedidos",
+      "#",
+      "#",
+      "https://leafletjs.com",
+      "https://www.openstreetmap.org/copyright",
+      "/painel/pedidos",
+      "/painel/pedidos/848d35e6-9eb3-41c2-bb62-d4b0674a77c8",
+      "/painel/pedidos/a673aec4-8681-4f6c-aef8-965a8bbc7c13"
+    ],
+    "inputs": [],
+    "tables": [],
+    "text": "Hoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\nK\n\nSábado, 14 de novembro\n\nBoa tarde, Pizzaria do kabeça 👋\n\nloja aberta · operação em tempo real\n\nFechar agora\nHoje\n7 dias\n30 dias\n90 dias\nPersonalizado\nPEDIDOS · HOJE\n2\nválidos · exc. cancelados\nFATURAMENTO · HOJE\nR$ 60,00\nexc. cancelados\nTICKET MÉDIO · HOJE\nR$ 30,00\npor pedido válido\nAGUARDANDO AÇÃO\n→\n2\n1 há +10 min 🔴 — toque p/ atender\nENTREGAS EM ANDAMENTO\n→\n0\nnenhuma no momento\nTAXA DE CANCELAMENTO\n0%\n0 de 2 pedidos\nRECEITA PERDIDA\nR$ 0,00\nnenhum cancelamento ✓\nDELIVERY · RETIRADA · MESA\n0\nEntrega\n0%\n2\nRetirada\n100%\n0\nMesa\n0%\npedidos válidos no período\nMeta de faturamento\nDia\nMês\nR$ 60,00 de R$ 1.000,00\n6%\n6%\nda meta\nEntregadores em rota\n0 ativos\n🏪\n+\n−\n Leaflet | © OpenStreetMap\n\nNenhum entregador em rota agora.\n\nÚltimos pedidos\n\no movimento agora mesmo\n\nVer kanban →\nQ\nQA Playwright 2\nNovo\n#KXN3 · há 9 min · Retirada · Pix\nR$ 30,00\n›\nQ\nQA Playwright\nNovo\n#PNKH · há 11 min · precisa de você 🔴 · Retirada · Pix\nR$ 30,00\n›"
+  },
+  {
+    "label": "adm-pedidos-desktop",
+    "url": "/painel/pedidos",
+    "status": 200,
+    "ms": 7939,
+    "console": [],
+    "net": [
+      {
+        "page": "adm-pedidos-desktop",
+        "url": "http://localhost:3000/painel/pedidos",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-pedidos-desktop",
+        "url": "http://localhost:3000/painel/pedidos",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-pedidos-desktop",
+        "url": "http://localhost:3000/painel/pedidos",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "api": [],
+    "overflowX": false,
+    "over": [
+      {
+        "tag": "SECTION",
+        "cls": "anim-rise snap-start shrink-0 w-[280px] rounded-[var(--radiu",
+        "right": 1524,
+        "text": "ENTREGUES\n0\n\ncoluna zerada ✓"
+      },
+      {
+        "tag": "HEADER",
+        "cls": "flex items-center gap-2 px-1.5 py-1.5",
+        "right": 1513,
+        "text": "ENTREGUES\n0"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "ml-auto text-[11px] font-extrabold tabular-nums text-[var(--",
+        "right": 1507,
+        "text": "0"
+      },
+      {
+        "tag": "DIV",
+        "cls": "space-y-2",
+        "right": 1513,
+        "text": "coluna zerada ✓"
+      },
+      {
+        "tag": "P",
+        "cls": "text-center text-xs text-[var(--pill-ink)] py-6",
+        "right": 1513,
+        "text": "coluna zerada ✓"
+      },
+      {
+        "tag": "SECTION",
+        "cls": "anim-rise snap-start shrink-0 w-[280px] rounded-[var(--radiu",
+        "right": 1816,
+        "text": "ANTERIORES\n3\n#SU7V\n\nHELLEN FRANCE DE SOU"
+      },
+      {
+        "tag": "HEADER",
+        "cls": "flex items-center gap-2 px-1.5 py-1.5",
+        "right": 1805,
+        "text": "ANTERIORES\n3"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "w-2 h-2 rounded-full bg-[var(--muted)]",
+        "right": 1561,
+        "text": ""
+      },
+      {
+        "tag": "H2",
+        "cls": "text-[11px] font-extrabold uppercase tracking-[0.14em] text-",
+        "right": 1654,
+        "text": "ANTERIORES"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "ml-auto text-[11px] font-extrabold tabular-nums text-[var(--",
+        "right": 1799,
+        "text": "3"
+      },
+      {
+        "tag": "DIV",
+        "cls": "space-y-2",
+        "right": 1805,
+        "text": "#SU7V\n\nHELLEN FRANCE DE SOUZA ROZENO\n\nEn"
+      },
+      {
+        "tag": "ARTICLE",
+        "cls": "card p-3.5 cursor-pointer hover:bg-[var(--surface-2)] transi",
+        "right": 1805,
+        "text": "#SU7V\n\nHELLEN FRANCE DE SOUZA ROZENO\n\nEn"
+      }
+    ],
+    "tiny": [],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Hoje",
+      "7 dias",
+      "30 dias",
+      "90 dias",
+      "Personalizado",
+      "Todos",
+      "Entrega",
+      "Retirada",
+      "Confirmar →",
+      "✕",
+      "Confirmar →",
+      "✕"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [],
+    "tables": [],
+    "text": "Hoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\nK\n\ntempo real · não finalizados + hoje\n· 2 aguardando ação\n\nHoje\n7 dias\n30 dias\n90 dias\nPersonalizado\nTodos\nEntrega\nRetirada\nNOVOS\n2\n#PNKH\nhá 11 min 🔴\n\nQA Playwright\n\nRetirada\nPix\n\nR$ 30,00\n\nAguardando 11 min\n\nConfirmar →\n✕\n#KXN3\nhá 9 min\n\nQA Playwright 2\n\nRetirada\nPix\n\nR$ 30,00\n\nAguardando 9 min\n\nConfirmar →\n✕\nCONFIRMADOS\n0\n\ncoluna zerada ✓\n\nEM PREPARO\n0\n\ncoluna zerada ✓\n\nPRONTO / EM ROTA\n0\n\ncoluna zerada ✓\n\nENTREGUES\n0\n\ncoluna zerada ✓\n\nANTERIORES\n3\n#SU7V\n\nHELLEN FRANCE DE SOUZA ROZENO\n\nEntrega\nPix\n\nR$ 65,00\n\n#44D5\n\nProbe Playwright\n\nRetirada\nPix\n\nR$ 50,00\n\n#U5VD\n\nHELLEN FRANCE DE SOUZA ROZENO\n\nEntrega\nPix\n\nR$ 65,00\n\nCANCELADOS · HOJE\n0"
+  },
+  {
+    "label": "adm-pdv-desktop",
+    "url": "/painel/pdv",
+    "status": 200,
+    "ms": 8242,
+    "console": [],
+    "net": [
+      {
+        "page": "adm-pdv-desktop",
+        "url": "http://localhost:3000/painel/pdv",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-pdv-desktop",
+        "url": "http://localhost:3000/painel/pdv",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-pdv-desktop",
+        "url": "http://localhost:3000/painel/pdv",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-pdv-desktop",
+        "url": "http://localhost:3000/painel/pdv",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "api": [],
+    "overflowX": false,
+    "over": [],
+    "tiny": [],
+    "noLabel": [
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "",
+        "ph": "Nome do cliente"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "",
+        "ph": "Telefone (só dígitos)"
+      }
+    ],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Mesa",
+      "Retirada",
+      "pizzas tradicionais / /R$ 60,00",
+      "x-salada / /R$ 10,00",
+      "Dinheiro",
+      "Pix",
+      "Maquininha",
+      "Criar pedido"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": null,
+        "id": null,
+        "ph": "Nome do cliente",
+        "label": null,
+        "aria": null,
+        "required": false,
+        "value": null
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": null,
+        "id": null,
+        "ph": "Telefone (só dígitos)",
+        "label": null,
+        "aria": null,
+        "required": false,
+        "value": null
+      }
+    ],
+    "tables": [],
+    "text": "Hoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\nK\nPDV\nMesa\nRetirada\n\nMesa\n\nProdutos\n\npizzas tradicionais\n\nR$ 60,00\n\nx-salada\n\nR$ 10,00\n\nTotal: R$ 0,00\n\nDinheiro\nPix\nMaquininha\nCriar pedido"
+  },
+  {
+    "label": "adm-entregas-desktop",
+    "url": "/painel/entregas",
+    "status": 200,
+    "ms": 8010,
+    "console": [],
+    "net": [
+      {
+        "page": "adm-entregas-desktop",
+        "url": "http://localhost:3000/painel/entregas",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-entregas-desktop",
+        "url": "http://localhost:3000/painel/entregas",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-entregas-desktop",
+        "url": "http://localhost:3000/painel/entregas",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-entregas-desktop",
+        "url": "http://localhost:3000/painel/entregas",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-entregas-desktop",
+        "url": "http://localhost:3000/painel/entregas",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "api": [],
+    "overflowX": false,
+    "over": [],
+    "tiny": [
+      {
+        "tag": "BUTTON",
+        "label": "Novo motoboy",
+        "w": 137,
+        "h": 23
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Desativar",
+        "w": 99,
+        "h": 23
+      }
+    ],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Novo motoboy",
+      "Desativar"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [],
+    "tables": [],
+    "text": "Hoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\nK\nEntregas\n\nProntas e em rota: não finalizadas, qualquer dia · concluídas: hoje.\n\nNovo motoboy\n\n🗺️\n\nNenhuma entrega no mapa agora\n\nPedidos em rota aparecem aqui automaticamente.\n\nPRONTAS\n0\n\ncoluna zerada ✓\n\nEM ROTA\n0\n\ncoluna zerada ✓\n\nCONCLUÍDAS\n0\n\ncoluna zerada ✓\n\nMotoboys cadastrados\n\n1 cadastrado(s) · 1 ativo(s)\n\ndavi\n\n92991532662 · ativo\n\nDesativar"
+  },
+  {
+    "label": "adm-cardapio-desktop",
+    "url": "/painel/cardapio",
+    "status": 200,
+    "ms": 8449,
+    "console": [],
+    "net": [],
+    "api": [],
+    "overflowX": false,
+    "over": [],
+    "tiny": [],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [],
+    "tables": [],
+    "text": "Hoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\nK\n\nCarregando cardápio…"
+  },
+  {
+    "label": "adm-clientes-desktop",
+    "url": "/painel/clientes",
+    "status": 200,
+    "ms": 8987,
+    "console": [],
+    "net": [
+      {
+        "page": "adm-clientes-desktop",
+        "url": "http://localhost:3000/painel/clientes",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "api": [],
+    "overflowX": false,
+    "over": [],
+    "tiny": [],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/clientes?telefone=92991532662",
+      "/painel/clientes?telefone=92999999999"
+    ],
+    "inputs": [],
+    "tables": [],
+    "text": "Hoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\nK\nClientes\n\nperfil de consumo gerado a partir dos pedidos\n\nTODOS\n\n2\n\nclientes com pedido\n\nVIP\n\n0\n\n>5 pedidos ou ≥ R$ 500\n\nRECORRENTES\n\n1\n\n2+ pedidos\n\nNOVOS\n\n1\n\n1 pedido válido\n\nClientes\n\nordenado por gasto · toque p/ ver o histórico\n\nQ\nQA Playwright 2\nRecorrente\n(92) 99153-2662 · 4 pedidos · último: hoje\nR$ 190,00\ntotal gasto\nP\nProbe Playwright\nNovo\n(92) 99999-9999 · 1 pedido · último há 2 dias\nR$ 50,00\ntotal gasto"
+  },
+  {
+    "label": "adm-config-desktop",
+    "url": "/painel/configuracoes",
+    "status": 200,
+    "ms": 15364,
+    "console": [],
+    "net": [
+      {
+        "page": "adm-config-desktop",
+        "url": "http://localhost:3000/painel/configuracoes",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-config-desktop",
+        "url": "http://localhost:3000/painel/configuracoes",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "api": [],
+    "overflowX": false,
+    "over": [],
+    "tiny": [
+      {
+        "tag": "INPUT",
+        "label": "?",
+        "w": 1,
+        "h": 1
+      },
+      {
+        "tag": "INPUT",
+        "label": "?",
+        "w": 1,
+        "h": 1
+      }
+    ],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Loja",
+      "Horários",
+      "Entrega",
+      "Salão",
+      "Rastreamento",
+      "Conta",
+      "Salvar loja"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": null,
+        "id": "c-nome",
+        "ph": null,
+        "label": "Nome da loja",
+        "aria": null,
+        "required": false,
+        "value": "Pizzaria do kabeça"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": null,
+        "id": "c-zap",
+        "ph": null,
+        "label": "WhatsApp (só dígitos)",
+        "aria": null,
+        "required": false,
+        "value": "0000000000"
+      },
+      {
+        "tag": "TEXTAREA",
+        "type": "textarea",
+        "name": null,
+        "id": "c-desc",
+        "ph": null,
+        "label": "Descrição",
+        "aria": null,
+        "required": false,
+        "value": null
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": null,
+        "id": "c-pix",
+        "ph": "CPF, e-mail ou aleatória",
+        "label": "Chave Pix",
+        "aria": null,
+        "required": false,
+        "value": null
+      },
+      {
+        "tag": "INPUT",
+        "type": "file",
+        "name": null,
+        "id": null,
+        "ph": null,
+        "label": "🏪\nenviar foto",
+        "aria": null,
+        "required": false,
+        "value": null
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": null,
+        "id": "c-marquee",
+        "ph": "Ex: 🔥 saindo do forno agora · entrega grátis",
+        "label": "Texto do letreiro",
+        "aria": null,
+        "required": false,
+        "value": null
+      },
+      {
+        "tag": "INPUT",
+        "type": "file",
+        "name": null,
+        "id": null,
+        "ph": null,
+        "label": "🖼️\nenviar foto",
+        "aria": null,
+        "required": false,
+        "value": null
+      }
+    ],
+    "tables": [],
+    "text": "Hoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\nK\n\nconfigurações da vitrine e do checkout\n\nLoja\nHorários\nEntrega\nSalão\nRastreamento\nConta\nNome da loja\nWhatsApp (só dígitos)\nDescrição\nChave Pix\nLogo\n🏪\nenviar foto\nTrocar logo · WebP ≤1MB\nTexto do letreiro\n\nDeixe vazio para esconder a barra.\n\nCapa da loja\n🖼️\nenviar foto\nFoto da capa · WebP ≤1MB\nSalvar loja"
+  },
+  {
+    "label": "adm-whatsapp-desktop",
+    "url": "/painel/whatsapp",
+    "status": 200,
+    "ms": 8555,
+    "console": [],
+    "net": [],
+    "api": [
+      {
+        "page": "adm-whatsapp-desktop",
+        "method": "GET",
+        "url": "http://localhost:3000/api/whatsapp/status",
+        "status": 200
+      },
+      {
+        "page": "adm-whatsapp-desktop",
+        "method": "GET",
+        "url": "http://localhost:3000/api/whatsapp/status",
+        "status": 200
+      }
+    ],
+    "overflowX": false,
+    "over": [],
+    "tiny": [],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Conectar WhatsApp"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [],
+    "tables": [],
+    "text": "Hoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\nK\n\nassistente de WhatsApp com IA (pt-BR)\n\nDesconectado\n\nConecte o WhatsApp da sua loja e a atendente de IA responde seus clientes no zap — 24h por dia, em português. Você escaneia o QR uma vez e pronto.\n\nA conexão falhou. Tente conectar de novo.\n\nConectar WhatsApp"
+  },
+  {
+    "label": "adm-financeiro-desktop",
+    "url": "/painel/financeiro",
+    "status": 200,
+    "ms": 13448,
+    "console": [],
+    "net": [],
+    "api": [],
+    "overflowX": false,
+    "over": [],
+    "tiny": [],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Hoje",
+      "7 dias",
+      "30 dias",
+      "90 dias",
+      "Personalizado"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [],
+    "tables": [],
+    "text": "Hoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\nK\nFinanceiro\n\ncaixa, contas a pagar e resultado\n\nHoje\n7 dias\n30 dias\n90 dias\nPersonalizado\ncarregando…"
+  },
+  {
+    "label": "adm-hoje-tablet",
+    "url": "/painel",
+    "status": 200,
+    "ms": 8859,
+    "console": [],
+    "net": [
+      {
+        "page": "adm-hoje-tablet",
+        "url": "http://localhost:3000/painel",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-tablet",
+        "url": "https://a.tile.openstreetmap.org/15/10924/16664.png",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-tablet",
+        "url": "https://c.tile.openstreetmap.org/15/10923/16664.png",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-tablet",
+        "url": "https://b.tile.openstreetmap.org/15/10925/16664.png",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-tablet",
+        "url": "https://a.tile.openstreetmap.org/15/10923/16665.png",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-tablet",
+        "url": "https://c.tile.openstreetmap.org/15/10925/16665.png",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-tablet",
+        "url": "https://b.tile.openstreetmap.org/15/10924/16665.png",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-tablet",
+        "url": "http://localhost:3000/painel",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "api": [],
+    "overflowX": false,
+    "over": [],
+    "tiny": [
+      {
+        "tag": "A",
+        "label": "Leaflet",
+        "w": 51,
+        "h": 14
+      },
+      {
+        "tag": "A",
+        "label": "OpenStreetMap",
+        "w": 85,
+        "h": 14
+      },
+      {
+        "tag": "A",
+        "label": "Ver kanban →",
+        "w": 89,
+        "h": 20
+      }
+    ],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Fechar agora",
+      "Hoje",
+      "7 dias",
+      "30 dias",
+      "90 dias",
+      "Personalizado",
+      "Dia",
+      "Mês"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel/pedidos",
+      "#",
+      "#",
+      "https://leafletjs.com",
+      "https://www.openstreetmap.org/copyright",
+      "/painel/pedidos",
+      "/painel/pedidos/848d35e6-9eb3-41c2-bb62-d4b0674a77c8",
+      "/painel/pedidos/a673aec4-8681-4f6c-aef8-965a8bbc7c13"
+    ],
+    "inputs": [],
+    "tables": [],
+    "text": "K\n☰\nKero.\n🍕 Pizzaria do kabeça\n2\nHoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\n\nSábado, 14 de novembro\n\nBoa tarde, Pizzaria do kabeça 👋\n\nloja aberta · operação em tempo real\n\nFechar agora\nHoje\n7 dias\n30 dias\n90 dias\nPersonalizado\nPEDIDOS · HOJE\n2\nválidos · exc. cancelados\nFATURAMENTO · HOJE\nR$ 60,00\nexc. cancelados\nTICKET MÉDIO · HOJE\nR$ 30,00\npor pedido válido\nAGUARDANDO AÇÃO\n→\n2\n2 há +10 min 🔴 — toque p/ atender\nENTREGAS EM ANDAMENTO\n→\n0\nnenhuma no momento\nTAXA DE CANCELAMENTO\n0%\n0 de 2 pedidos\nRECEITA PERDIDA\nR$ 0,00\nnenhum cancelamento ✓\nDELIVERY · RETIRADA · MESA\n0\nEntrega\n0%\n2\nRetirada\n100%\n0\nMesa\n0%\npedidos válidos no período\nMeta de faturamento\nDia\nMês\nR$ 60,00 de R$ 1.000,00\n6%\n6%\nda meta\nEntregadores em rota\n0 ativos\n🏪\n+\n−\n Leaflet | © OpenStreetMap\n\nNenhum entregador em rota agora.\n\nÚltimos pedidos\n\no movimento agora mesmo\n\nVer kanban →\nQ\nQA Playwright 2\nNovo\n#KXN3 · há 11 min · precisa de você 🔴 · Retirada · Pix\nR$ 30,00\n›\nQ\nQA Playwright\nNovo\n#PNKH · há 13 min · precisa de você 🔴 · Retirada · Pix\nR$ 30,00\n›"
+  },
+  {
+    "label": "adm-pedidos-tablet",
+    "url": "/painel/pedidos",
+    "status": 200,
+    "ms": 8396,
+    "console": [],
+    "net": [
+      {
+        "page": "adm-pedidos-tablet",
+        "url": "http://localhost:3000/painel/pedidos",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-pedidos-tablet",
+        "url": "http://localhost:3000/painel/pedidos",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-pedidos-tablet",
+        "url": "http://localhost:3000/painel/pedidos",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-pedidos-tablet",
+        "url": "http://localhost:3000/painel/pedidos",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-pedidos-tablet",
+        "url": "http://localhost:3000/painel/pedidos",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "api": [],
+    "overflowX": false,
+    "over": [
+      {
+        "tag": "SECTION",
+        "cls": "anim-rise snap-start shrink-0 w-[280px] rounded-[var(--radiu",
+        "right": 876,
+        "text": "EM PREPARO\n0\n\ncoluna zerada ✓"
+      },
+      {
+        "tag": "HEADER",
+        "cls": "flex items-center gap-2 px-1.5 py-1.5",
+        "right": 865,
+        "text": "EM PREPARO\n0"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "ml-auto text-[11px] font-extrabold tabular-nums text-[var(--",
+        "right": 859,
+        "text": "0"
+      },
+      {
+        "tag": "DIV",
+        "cls": "space-y-2",
+        "right": 865,
+        "text": "coluna zerada ✓"
+      },
+      {
+        "tag": "P",
+        "cls": "text-center text-xs text-[var(--pill-ink)] py-6",
+        "right": 865,
+        "text": "coluna zerada ✓"
+      },
+      {
+        "tag": "SECTION",
+        "cls": "anim-rise snap-start shrink-0 w-[280px] rounded-[var(--radiu",
+        "right": 1168,
+        "text": "PRONTO / EM ROTA\n0\n\ncoluna zerada ✓"
+      },
+      {
+        "tag": "HEADER",
+        "cls": "flex items-center gap-2 px-1.5 py-1.5",
+        "right": 1157,
+        "text": "PRONTO / EM ROTA\n0"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "w-2 h-2 rounded-full bg-[var(--green)]",
+        "right": 913,
+        "text": ""
+      },
+      {
+        "tag": "H2",
+        "cls": "text-[11px] font-extrabold uppercase tracking-[0.14em] text-",
+        "right": 1050,
+        "text": "PRONTO / EM ROTA"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "ml-auto text-[11px] font-extrabold tabular-nums text-[var(--",
+        "right": 1151,
+        "text": "0"
+      },
+      {
+        "tag": "DIV",
+        "cls": "space-y-2",
+        "right": 1157,
+        "text": "coluna zerada ✓"
+      },
+      {
+        "tag": "P",
+        "cls": "text-center text-xs text-[var(--pill-ink)] py-6",
+        "right": 1157,
+        "text": "coluna zerada ✓"
+      }
+    ],
+    "tiny": [],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Hoje",
+      "7 dias",
+      "30 dias",
+      "90 dias",
+      "Personalizado",
+      "Todos",
+      "Entrega",
+      "Retirada",
+      "Confirmar →",
+      "✕",
+      "Confirmar →",
+      "✕"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [],
+    "tables": [],
+    "text": "K\n☰\nKero.\n🍕 Pizzaria do kabeça\n2\nHoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\n\ntempo real · não finalizados + hoje\n· 2 aguardando ação\n\nHoje\n7 dias\n30 dias\n90 dias\nPersonalizado\nTodos\nEntrega\nRetirada\nNOVOS\n2\n#PNKH\nhá 13 min 🔴\n\nQA Playwright\n\nRetirada\nPix\n\nR$ 30,00\n\nAguardando 13 min\n\nConfirmar →\n✕\n#KXN3\nhá 11 min 🔴\n\nQA Playwright 2\n\nRetirada\nPix\n\nR$ 30,00\n\nAguardando 11 min\n\nConfirmar →\n✕\nCONFIRMADOS\n0\n\ncoluna zerada ✓\n\nEM PREPARO\n0\n\ncoluna zerada ✓\n\nPRONTO / EM ROTA\n0\n\ncoluna zerada ✓\n\nENTREGUES\n0\n\ncoluna zerada ✓\n\nANTERIORES\n3\n#SU7V\n\nHELLEN FRANCE DE SOUZA ROZENO\n\nEntrega\nPix\n\nR$ 65,00\n\n#44D5\n\nProbe Playwright\n\nRetirada\nPix\n\nR$ 50,00\n\n#U5VD\n\nHELLEN FRANCE DE SOUZA ROZENO\n\nEntrega\nPix\n\nR$ 65,00\n\nCANCELADOS · HOJE\n0"
+  },
+  {
+    "label": "adm-pdv-tablet",
+    "url": "/painel/pdv",
+    "status": 200,
+    "ms": 7980,
+    "console": [],
+    "net": [
+      {
+        "page": "adm-pdv-tablet",
+        "url": "http://localhost:3000/painel/pdv",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-pdv-tablet",
+        "url": "http://localhost:3000/painel/pdv",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-pdv-tablet",
+        "url": "http://localhost:3000/painel/pdv",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "api": [],
+    "overflowX": false,
+    "over": [],
+    "tiny": [],
+    "noLabel": [
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "",
+        "ph": "Nome do cliente"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "",
+        "ph": "Telefone (só dígitos)"
+      }
+    ],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Mesa",
+      "Retirada",
+      "pizzas tradicionais / /R$ 60,00",
+      "x-salada / /R$ 10,00",
+      "Dinheiro",
+      "Pix",
+      "Maquininha",
+      "Criar pedido"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": null,
+        "id": null,
+        "ph": "Nome do cliente",
+        "label": null,
+        "aria": null,
+        "required": false,
+        "value": null
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": null,
+        "id": null,
+        "ph": "Telefone (só dígitos)",
+        "label": null,
+        "aria": null,
+        "required": false,
+        "value": null
+      }
+    ],
+    "tables": [],
+    "text": "K\n☰\nKero.\n🍕 Pizzaria do kabeça\n2\nHoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\nPDV\nMesa\nRetirada\n\nMesa\n\nProdutos\n\npizzas tradicionais\n\nR$ 60,00\n\nx-salada\n\nR$ 10,00\n\nTotal: R$ 0,00\n\nDinheiro\nPix\nMaquininha\nCriar pedido"
+  },
+  {
+    "label": "adm-entregas-tablet",
+    "url": "/painel/entregas",
+    "status": 200,
+    "ms": 8138,
+    "console": [],
+    "net": [
+      {
+        "page": "adm-entregas-tablet",
+        "url": "http://localhost:3000/painel/entregas",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-entregas-tablet",
+        "url": "http://localhost:3000/painel/entregas",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-entregas-tablet",
+        "url": "http://localhost:3000/painel/entregas",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-entregas-tablet",
+        "url": "http://localhost:3000/painel/entregas",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-entregas-tablet",
+        "url": "http://localhost:3000/painel/entregas",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-entregas-tablet",
+        "url": "http://localhost:3000/painel/entregas",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "api": [],
+    "overflowX": false,
+    "over": [
+      {
+        "tag": "SECTION",
+        "cls": "anim-rise shrink-0 w-[280px] rounded-[var(--radius-card)] bo",
+        "right": 876,
+        "text": "CONCLUÍDAS\n0\n\ncoluna zerada ✓"
+      },
+      {
+        "tag": "HEADER",
+        "cls": "flex items-center gap-2 px-1.5 py-1.5",
+        "right": 865,
+        "text": "CONCLUÍDAS\n0"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "ml-auto text-[11px] font-extrabold tabular-nums text-[var(--",
+        "right": 859,
+        "text": "0"
+      },
+      {
+        "tag": "DIV",
+        "cls": "space-y-2",
+        "right": 865,
+        "text": "coluna zerada ✓"
+      },
+      {
+        "tag": "P",
+        "cls": "text-center text-xs text-[var(--pill-ink)] py-6",
+        "right": 865,
+        "text": "coluna zerada ✓"
+      }
+    ],
+    "tiny": [
+      {
+        "tag": "BUTTON",
+        "label": "Novo motoboy",
+        "w": 120,
+        "h": 22
+      },
+      {
+        "tag": "BUTTON",
+        "label": "Desativar",
+        "w": 85,
+        "h": 22
+      }
+    ],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Novo motoboy",
+      "Desativar"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [],
+    "tables": [],
+    "text": "K\n☰\nKero.\n🍕 Pizzaria do kabeça\n2\nHoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\nEntregas\n\nProntas e em rota: não finalizadas, qualquer dia · concluídas: hoje.\n\nNovo motoboy\n\n🗺️\n\nNenhuma entrega no mapa agora\n\nPedidos em rota aparecem aqui automaticamente.\n\nPRONTAS\n0\n\ncoluna zerada ✓\n\nEM ROTA\n0\n\ncoluna zerada ✓\n\nCONCLUÍDAS\n0\n\ncoluna zerada ✓\n\nMotoboys cadastrados\n\n1 cadastrado(s) · 1 ativo(s)\n\ndavi\n\n92991532662 · ativo\n\nDesativar"
+  },
+  {
+    "label": "adm-cardapio-tablet",
+    "url": "/painel/cardapio",
+    "status": 200,
+    "ms": 8322,
+    "console": [],
+    "net": [
+      {
+        "page": "adm-cardapio-tablet",
+        "url": "http://localhost:3000/painel/cardapio",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-cardapio-tablet",
+        "url": "http://localhost:3000/painel/cardapio",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-cardapio-tablet",
+        "url": "http://localhost:3000/painel/cardapio",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "api": [],
+    "overflowX": false,
+    "over": [],
+    "tiny": [],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Categorias /2",
+      "Produtos /2",
+      "Complementos /2",
+      "Combos /0",
+      "Mover para cima",
+      "Mover para baixo",
+      "Editar",
+      "Desativar",
+      "Remover",
+      "Mover para cima",
+      "Mover para baixo",
+      "Editar",
+      "Desativar",
+      "Remover",
+      "Nova Categoria"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [],
+    "tables": [],
+    "text": "K\n☰\nKero.\n🍕 Pizzaria do kabeça\n2\nHoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\nCategorias\n2\nProdutos\n2\nComplementos\n2\nCombos\n0\nCategorias\n\nOrganize as categorias e a ordem de exibição no cardápio.\n\npromoções\n1 item\nDesativar\nPizzas\n1 item\nDesativar\nNova Categoria"
+  },
+  {
+    "label": "adm-clientes-tablet",
+    "url": "/painel/clientes",
+    "status": 200,
+    "ms": 8194,
+    "console": [],
+    "net": [],
+    "api": [],
+    "overflowX": false,
+    "over": [],
+    "tiny": [],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/clientes?telefone=92991532662",
+      "/painel/clientes?telefone=92999999999"
+    ],
+    "inputs": [],
+    "tables": [],
+    "text": "K\n☰\nKero.\n🍕 Pizzaria do kabeça\nHoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\nClientes\n\nperfil de consumo gerado a partir dos pedidos\n\nTODOS\n\n2\n\nclientes com pedido\n\nVIP\n\n0\n\n>5 pedidos ou ≥ R$ 500\n\nRECORRENTES\n\n1\n\n2+ pedidos\n\nNOVOS\n\n1\n\n1 pedido válido\n\nClientes\n\nordenado por gasto · toque p/ ver o histórico\n\nQ\nQA Playwright 2\nRecorrente\n(92) 99153-2662 · 4 pedidos · último: hoje\nR$ 190,00\ntotal gasto\nP\nProbe Playwright\nNovo\n(92) 99999-9999 · 1 pedido · último há 2 dias\nR$ 50,00\ntotal gasto"
+  },
+  {
+    "label": "adm-config-tablet",
+    "url": "/painel/configuracoes",
+    "status": 200,
+    "ms": 8005,
+    "console": [],
+    "net": [
+      {
+        "page": "adm-config-tablet",
+        "url": "http://localhost:3000/painel/configuracoes",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-config-tablet",
+        "url": "http://localhost:3000/painel/configuracoes",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-config-tablet",
+        "url": "http://localhost:3000/painel/configuracoes",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-config-tablet",
+        "url": "http://localhost:3000/painel/configuracoes",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "api": [],
+    "overflowX": false,
+    "over": [],
+    "tiny": [
+      {
+        "tag": "INPUT",
+        "label": "?",
+        "w": 1,
+        "h": 1
+      },
+      {
+        "tag": "INPUT",
+        "label": "?",
+        "w": 1,
+        "h": 1
+      }
+    ],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Loja",
+      "Horários",
+      "Entrega",
+      "Salão",
+      "Rastreamento",
+      "Conta",
+      "Salvar loja"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": null,
+        "id": "c-nome",
+        "ph": null,
+        "label": "Nome da loja",
+        "aria": null,
+        "required": false,
+        "value": "Pizzaria do kabeça"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": null,
+        "id": "c-zap",
+        "ph": null,
+        "label": "WhatsApp (só dígitos)",
+        "aria": null,
+        "required": false,
+        "value": "0000000000"
+      },
+      {
+        "tag": "TEXTAREA",
+        "type": "textarea",
+        "name": null,
+        "id": "c-desc",
+        "ph": null,
+        "label": "Descrição",
+        "aria": null,
+        "required": false,
+        "value": null
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": null,
+        "id": "c-pix",
+        "ph": "CPF, e-mail ou aleatória",
+        "label": "Chave Pix",
+        "aria": null,
+        "required": false,
+        "value": null
+      },
+      {
+        "tag": "INPUT",
+        "type": "file",
+        "name": null,
+        "id": null,
+        "ph": null,
+        "label": "🏪\nenviar foto",
+        "aria": null,
+        "required": false,
+        "value": null
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": null,
+        "id": "c-marquee",
+        "ph": "Ex: 🔥 saindo do forno agora · entrega grátis",
+        "label": "Texto do letreiro",
+        "aria": null,
+        "required": false,
+        "value": null
+      },
+      {
+        "tag": "INPUT",
+        "type": "file",
+        "name": null,
+        "id": null,
+        "ph": null,
+        "label": "🖼️\nenviar foto",
+        "aria": null,
+        "required": false,
+        "value": null
+      }
+    ],
+    "tables": [],
+    "text": "K\n☰\nKero.\n🍕 Pizzaria do kabeça\n2\nHoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\n\nconfigurações da vitrine e do checkout\n\nLoja\nHorários\nEntrega\nSalão\nRastreamento\nConta\nNome da loja\nWhatsApp (só dígitos)\nDescrição\nChave Pix\nLogo\n🏪\nenviar foto\nTrocar logo · WebP ≤1MB\nTexto do letreiro\n\nDeixe vazio para esconder a barra.\n\nCapa da loja\n🖼️\nenviar foto\nFoto da capa · WebP ≤1MB\nSalvar loja"
+  },
+  {
+    "label": "adm-whatsapp-tablet",
+    "url": "/painel/whatsapp",
+    "status": 200,
+    "ms": 8058,
+    "console": [],
+    "net": [
+      {
+        "page": "adm-whatsapp-tablet",
+        "url": "http://localhost:3000/painel/whatsapp",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-whatsapp-tablet",
+        "url": "http://localhost:3000/painel/whatsapp",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-whatsapp-tablet",
+        "url": "http://localhost:3000/painel/whatsapp",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-whatsapp-tablet",
+        "url": "http://localhost:3000/painel/whatsapp",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "api": [
+      {
+        "page": "adm-whatsapp-tablet",
+        "method": "GET",
+        "url": "http://localhost:3000/api/whatsapp/status",
+        "status": 200
+      },
+      {
+        "page": "adm-whatsapp-tablet",
+        "method": "GET",
+        "url": "http://localhost:3000/api/whatsapp/status",
+        "status": 200
+      }
+    ],
+    "overflowX": false,
+    "over": [],
+    "tiny": [],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Conectar WhatsApp"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [],
+    "tables": [],
+    "text": "K\n☰\nKero.\n🍕 Pizzaria do kabeça\n2\nHoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\n\nassistente de WhatsApp com IA (pt-BR)\n\nDesconectado\n\nConecte o WhatsApp da sua loja e a atendente de IA responde seus clientes no zap — 24h por dia, em português. Você escaneia o QR uma vez e pronto.\n\nA conexão falhou. Tente conectar de novo.\n\nConectar WhatsApp"
+  },
+  {
+    "label": "adm-financeiro-tablet",
+    "url": "/painel/financeiro",
+    "status": 200,
+    "ms": 8095,
+    "console": [],
+    "net": [
+      {
+        "page": "adm-financeiro-tablet",
+        "url": "http://localhost:3000/painel/financeiro",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "api": [],
+    "overflowX": false,
+    "over": [],
+    "tiny": [],
+    "noLabel": [
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "target",
+        "ph": "R$ 0,00"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "target",
+        "ph": "R$ 0,00"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "target",
+        "ph": "R$ 0,00"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "opening",
+        "ph": "0,00"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "",
+        "ph": "ex.: fornecedor, aluguel…"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "amount",
+        "ph": "0,00"
+      },
+      {
+        "tag": "INPUT",
+        "type": "date",
+        "name": "due",
+        "ph": ""
+      }
+    ],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Hoje",
+      "7 dias",
+      "30 dias",
+      "90 dias",
+      "Personalizado",
+      "Alterar",
+      "Alterar",
+      "Alterar",
+      "Abrir caixa",
+      "Adicionar"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "target",
+        "id": null,
+        "ph": "R$ 0,00",
+        "label": null,
+        "aria": null,
+        "required": false,
+        "value": "1000,00"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "target",
+        "id": null,
+        "ph": "R$ 0,00",
+        "label": null,
+        "aria": null,
+        "required": false,
+        "value": "7000,00"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "target",
+        "id": null,
+        "ph": "R$ 0,00",
+        "label": null,
+        "aria": null,
+        "required": false,
+        "value": "21000,00"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "opening",
+        "id": null,
+        "ph": "0,00",
+        "label": null,
+        "aria": null,
+        "required": false,
+        "value": null
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": null,
+        "id": null,
+        "ph": "ex.: fornecedor, aluguel…",
+        "label": null,
+        "aria": null,
+        "required": false,
+        "value": null
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "amount",
+        "id": null,
+        "ph": "0,00",
+        "label": null,
+        "aria": null,
+        "required": false,
+        "value": null
+      },
+      {
+        "tag": "INPUT",
+        "type": "date",
+        "name": "due",
+        "id": null,
+        "ph": null,
+        "label": null,
+        "aria": null,
+        "required": false,
+        "value": null
+      }
+    ],
+    "tables": [],
+    "text": "K\n☰\nKero.\n🍕 …\nHoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\nFinanceiro\n\ncaixa, contas a pagar e resultado\n\nHoje\n7 dias\n30 dias\n90 dias\nPersonalizado\n\nFATURAMENTO · 7 DIAS\n\nR$ 240,00\n\n08/11/2026 — 14/11/2026\n\nDESPESAS PAGAS · 7 DIAS\n\nR$ 0,00\n\ncontas a pagar quitadas no período\n\nLÍQUIDO · 7 DIAS\n\nR$ 240,00\n\nfaturamento − despesas pagas\n\nPEDIDOS · 7 DIAS\n\n5\n\npedidos válidos no período\n\nTICKET MÉDIO · 7 DIAS\n\nR$ 48,00\n\nfaturamento ÷ pedidos\n\nMetas de faturamento\n\ndefina o alvo — a janela é calculada automaticamente\n\nMeta do dia\n6%\nR$ 60,00 / R$ 1.000,00\nAlterar\nMeta da semana\n3%\nR$ 240,00 / R$ 7.000,00\nAlterar\nMeta do mês\n1%\nR$ 240,00 / R$ 21.000,00\nAlterar\nMais vendidos\n\ntop 10 por faturamento no período\n\n1\npizzas tradicionais\n2×\nR$ 120,00\n2\nx-salada\n11×\nR$ 110,00\nCaixa\n\nabra o caixa para começar o dia\n\nFundo inicial (R$)\nAbrir caixa\nContas a pagar\n\ncadastre, edite e quite contas\n\nDescrição\nValor (R$)\nVencimento\nAdicionar\nnenhuma conta cadastrada"
+  },
+  {
+    "label": "adm-hoje-mobile",
+    "url": "/painel",
+    "status": 200,
+    "ms": 8060,
+    "console": [],
+    "net": [
+      {
+        "page": "adm-hoje-mobile",
+        "url": "http://localhost:3000/painel",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-mobile",
+        "url": "https://a.tile.openstreetmap.org/15/10924/16664.png",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-mobile",
+        "url": "https://c.tile.openstreetmap.org/15/10923/16664.png",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-mobile",
+        "url": "https://b.tile.openstreetmap.org/15/10925/16664.png",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-mobile",
+        "url": "https://a.tile.openstreetmap.org/15/10923/16665.png",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-mobile",
+        "url": "https://c.tile.openstreetmap.org/15/10925/16665.png",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-hoje-mobile",
+        "url": "http://localhost:3000/painel",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "api": [],
+    "overflowX": true,
+    "over": [
+      {
+        "tag": "DIV",
+        "cls": "inline-flex bg-[var(--surface)] border rounded-2xl p-1.5 gap",
+        "right": 459,
+        "text": "Hoje\n7 dias\n30 dias\n90 dias\nPersonalizad"
+      },
+      {
+        "tag": "BUTTON",
+        "cls": "px-5 sm:px-8 py-2.5 rounded-xl text-sm font-extrabold transi",
+        "right": 452,
+        "text": "Personalizado"
+      }
+    ],
+    "tiny": [
+      {
+        "tag": "A",
+        "label": "Leaflet",
+        "w": 51,
+        "h": 14
+      },
+      {
+        "tag": "A",
+        "label": "OpenStreetMap",
+        "w": 85,
+        "h": 14
+      },
+      {
+        "tag": "A",
+        "label": "Ver kanban →",
+        "w": 89,
+        "h": 20
+      }
+    ],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Fechar agora",
+      "Hoje",
+      "7 dias",
+      "30 dias",
+      "90 dias",
+      "Personalizado",
+      "Dia",
+      "Mês"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel/pedidos",
+      "#",
+      "#",
+      "https://leafletjs.com",
+      "https://www.openstreetmap.org/copyright",
+      "/painel/pedidos",
+      "/painel/pedidos/848d35e6-9eb3-41c2-bb62-d4b0674a77c8",
+      "/painel/pedidos/a673aec4-8681-4f6c-aef8-965a8bbc7c13"
+    ],
+    "inputs": [],
+    "tables": [],
+    "text": "K\n☰\nKero.\n🍕 Pizzaria do kabeça\n2\nHoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\n\nSábado, 14 de novembro\n\nBoa tarde, Pizzaria do kabeça 👋\n\nloja aberta · operação em tempo real\n\nFechar agora\nHoje\n7 dias\n30 dias\n90 dias\nPersonalizado\nPEDIDOS · HOJE\n2\nválidos · exc. cancelados\nFATURAMENTO · HOJE\nR$ 60,00\nexc. cancelados\nTICKET MÉDIO · HOJE\nR$ 30,00\npor pedido válido\nAGUARDANDO AÇÃO\n→\n2\n2 há +10 min 🔴 — toque p/ atender\nENTREGAS EM ANDAMENTO\n→\n0\nnenhuma no momento\nTAXA DE CANCELAMENTO\n0%\n0 de 2 pedidos\nRECEITA PERDIDA\nR$ 0,00\nnenhum cancelamento ✓\nDELIVERY · RETIRADA · MESA\n0\nEntrega\n0%\n2\nRetirada\n100%\n0\nMesa\n0%\npedidos válidos no período\nMeta de faturamento\nDia\nMês\nR$ 60,00 de R$ 1.000,00\n6%\n6%\nda meta\nEntregadores em rota\n0 ativos\n🏪\n+\n−\n Leaflet | © OpenStreetMap\n\nNenhum entregador em rota agora.\n\nÚltimos pedidos\n\no movimento agora mesmo\n\nVer kanban →\nQ\nQA Playwright 2\nNovo\n#KXN3 · há 12 min · precisa de você 🔴 · Retirada · Pix\nR$ 30,00\n›\nQ\nQA Playwright\nNovo\n#PNKH · há 14 min · precisa de você 🔴 · Retirada · Pix\nR$ 30,00\n›"
+  },
+  {
+    "label": "adm-pedidos-mobile",
+    "url": "/painel/pedidos",
+    "status": 200,
+    "ms": 7944,
+    "console": [],
+    "net": [
+      {
+        "page": "adm-pedidos-mobile",
+        "url": "http://localhost:3000/painel/pedidos",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-pedidos-mobile",
+        "url": "http://localhost:3000/painel/pedidos",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-pedidos-mobile",
+        "url": "http://localhost:3000/painel/pedidos",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-pedidos-mobile",
+        "url": "http://localhost:3000/painel/pedidos",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-pedidos-mobile",
+        "url": "http://localhost:3000/painel/pedidos",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "api": [],
+    "overflowX": false,
+    "over": [
+      {
+        "tag": "SECTION",
+        "cls": "anim-rise snap-start shrink-0 w-[280px] rounded-[var(--radiu",
+        "right": 584,
+        "text": "CONFIRMADOS\n0\n\ncoluna zerada ✓"
+      },
+      {
+        "tag": "HEADER",
+        "cls": "flex items-center gap-2 px-1.5 py-1.5",
+        "right": 573,
+        "text": "CONFIRMADOS\n0"
+      },
+      {
+        "tag": "H2",
+        "cls": "text-[11px] font-extrabold uppercase tracking-[0.14em] text-",
+        "right": 437,
+        "text": "CONFIRMADOS"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "ml-auto text-[11px] font-extrabold tabular-nums text-[var(--",
+        "right": 567,
+        "text": "0"
+      },
+      {
+        "tag": "DIV",
+        "cls": "space-y-2",
+        "right": 573,
+        "text": "coluna zerada ✓"
+      },
+      {
+        "tag": "P",
+        "cls": "text-center text-xs text-[var(--pill-ink)] py-6",
+        "right": 573,
+        "text": "coluna zerada ✓"
+      },
+      {
+        "tag": "SECTION",
+        "cls": "anim-rise snap-start shrink-0 w-[280px] rounded-[var(--radiu",
+        "right": 876,
+        "text": "EM PREPARO\n0\n\ncoluna zerada ✓"
+      },
+      {
+        "tag": "HEADER",
+        "cls": "flex items-center gap-2 px-1.5 py-1.5",
+        "right": 865,
+        "text": "EM PREPARO\n0"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "w-2 h-2 rounded-full bg-[var(--info)]",
+        "right": 621,
+        "text": ""
+      },
+      {
+        "tag": "H2",
+        "cls": "text-[11px] font-extrabold uppercase tracking-[0.14em] text-",
+        "right": 714,
+        "text": "EM PREPARO"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "ml-auto text-[11px] font-extrabold tabular-nums text-[var(--",
+        "right": 859,
+        "text": "0"
+      },
+      {
+        "tag": "DIV",
+        "cls": "space-y-2",
+        "right": 865,
+        "text": "coluna zerada ✓"
+      }
+    ],
+    "tiny": [],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Hoje",
+      "7 dias",
+      "30 dias",
+      "90 dias",
+      "Personalizado",
+      "Todos",
+      "Entrega",
+      "Retirada",
+      "Confirmar →",
+      "✕",
+      "Confirmar →",
+      "✕"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [],
+    "tables": [],
+    "text": "K\n☰\nKero.\n🍕 Pizzaria do kabeça\n2\nHoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\n\ntempo real · não finalizados + hoje\n· 2 aguardando ação\n\nHoje\n7 dias\n30 dias\n90 dias\nPersonalizado\nTodos\nEntrega\nRetirada\nNOVOS\n2\n#PNKH\nhá 14 min 🔴\n\nQA Playwright\n\nRetirada\nPix\n\nR$ 30,00\n\nAguardando 14 min\n\nConfirmar →\n✕\n#KXN3\nhá 12 min 🔴\n\nQA Playwright 2\n\nRetirada\nPix\n\nR$ 30,00\n\nAguardando 12 min\n\nConfirmar →\n✕\nCONFIRMADOS\n0\n\ncoluna zerada ✓\n\nEM PREPARO\n0\n\ncoluna zerada ✓\n\nPRONTO / EM ROTA\n0\n\ncoluna zerada ✓\n\nENTREGUES\n0\n\ncoluna zerada ✓\n\nANTERIORES\n3\n#SU7V\n\nHELLEN FRANCE DE SOUZA ROZENO\n\nEntrega\nPix\n\nR$ 65,00\n\n#44D5\n\nProbe Playwright\n\nRetirada\nPix\n\nR$ 50,00\n\n#U5VD\n\nHELLEN FRANCE DE SOUZA ROZENO\n\nEntrega\nPix\n\nR$ 65,00\n\nCANCELADOS · HOJE\n0"
+  },
+  {
+    "label": "adm-pdv-mobile",
+    "url": "/painel/pdv",
+    "status": 200,
+    "ms": 13203,
+    "console": [],
+    "net": [
+      {
+        "page": "adm-pdv-mobile",
+        "url": "http://localhost:3000/painel/pdv",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-pdv-mobile",
+        "url": "http://localhost:3000/painel/pdv",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-pdv-mobile",
+        "url": "http://localhost:3000/painel/pdv",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "api": [],
+    "overflowX": false,
+    "over": [],
+    "tiny": [],
+    "noLabel": [
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "",
+        "ph": "Nome do cliente"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": "",
+        "ph": "Telefone (só dígitos)"
+      }
+    ],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Mesa",
+      "Retirada",
+      "pizzas tradicionais / /R$ 60,00",
+      "x-salada / /R$ 10,00",
+      "Dinheiro",
+      "Pix",
+      "Maquininha",
+      "Criar pedido"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": null,
+        "id": null,
+        "ph": "Nome do cliente",
+        "label": null,
+        "aria": null,
+        "required": false,
+        "value": null
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": null,
+        "id": null,
+        "ph": "Telefone (só dígitos)",
+        "label": null,
+        "aria": null,
+        "required": false,
+        "value": null
+      }
+    ],
+    "tables": [],
+    "text": "K\n☰\nKero.\n🍕 Pizzaria do kabeça\n2\nHoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\nPDV\nMesa\nRetirada\n\nMesa\n\nProdutos\n\npizzas tradicionais\n\nR$ 60,00\n\nx-salada\n\nR$ 10,00\n\nTotal: R$ 0,00\n\nDinheiro\nPix\nMaquininha\nCriar pedido"
+  },
+  {
+    "label": "adm-entregas-mobile",
+    "url": "/painel/entregas",
+    "status": 200,
+    "ms": 8249,
+    "console": [],
+    "net": [],
+    "api": [],
+    "overflowX": false,
+    "over": [],
+    "tiny": [],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [],
+    "tables": [],
+    "text": "K\n☰\nKero.\n🍕 …\nHoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\n\nCarregando entregas…"
+  },
+  {
+    "label": "adm-cardapio-mobile",
+    "url": "/painel/cardapio",
+    "status": 200,
+    "ms": 8270,
+    "console": [],
+    "net": [
+      {
+        "page": "adm-cardapio-mobile",
+        "url": "http://localhost:3000/painel/cardapio",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "api": [],
+    "overflowX": false,
+    "over": [
+      {
+        "tag": "BUTTON",
+        "cls": "cfg-subnav-item ",
+        "right": 516,
+        "text": "Complementos\n2"
+      },
+      {
+        "tag": "SPAN",
+        "cls": "cfg-subnav-count",
+        "right": 504,
+        "text": "2"
+      },
+      {
+        "tag": "BUTTON",
+        "cls": "cfg-subnav-item ",
+        "right": 660,
+        "text": "Combos\n0"
+      },
+      {
+        "tag": "svg",
+        "cls": "[object SVGAnimatedString]",
+        "right": 546,
+        "text": ""
+      },
+      {
+        "tag": "path",
+        "cls": "[object SVGAnimatedString]",
+        "right": 538,
+        "text": ""
+      },
+      {
+        "tag": "path",
+        "cls": "[object SVGAnimatedString]",
+        "right": 535,
+        "text": ""
+      },
+      {
+        "tag": "path",
+        "cls": "[object SVGAnimatedString]",
+        "right": 538,
+        "text": ""
+      },
+      {
+        "tag": "path",
+        "cls": "[object SVGAnimatedString]",
+        "right": 545,
+        "text": ""
+      },
+      {
+        "tag": "path",
+        "cls": "[object SVGAnimatedString]",
+        "right": 541,
+        "text": ""
+      },
+      {
+        "tag": "path",
+        "cls": "[object SVGAnimatedString]",
+        "right": 544,
+        "text": ""
+      },
+      {
+        "tag": "path",
+        "cls": "[object SVGAnimatedString]",
+        "right": 541,
+        "text": ""
+      },
+      {
+        "tag": "path",
+        "cls": "[object SVGAnimatedString]",
+        "right": 538,
+        "text": ""
+      }
+    ],
+    "tiny": [],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Categorias /2",
+      "Produtos /2",
+      "Complementos /2",
+      "Combos /0",
+      "Mover para cima",
+      "Mover para baixo",
+      "Editar",
+      "Desativar",
+      "Remover",
+      "Mover para cima",
+      "Mover para baixo",
+      "Editar",
+      "Desativar",
+      "Remover",
+      "Nova Categoria"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [],
+    "tables": [],
+    "text": "K\n☰\nKero.\n🍕 Pizzaria do kabeça\n2\nHoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\nCategorias\n2\nProdutos\n2\nComplementos\n2\nCombos\n0\nCategorias\n\nOrganize as categorias e a ordem de exibição no cardápio.\n\npromoções\n1 item\nDesativar\nPizzas\n1 item\nDesativar\nNova Categoria"
+  },
+  {
+    "label": "adm-clientes-mobile",
+    "url": "/painel/clientes",
+    "status": 200,
+    "ms": 16391,
+    "console": [],
+    "net": [
+      {
+        "page": "adm-clientes-mobile",
+        "url": "http://localhost:3000/painel/clientes",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      },
+      {
+        "page": "adm-clientes-mobile",
+        "url": "http://localhost:3000/painel/clientes",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "api": [],
+    "overflowX": false,
+    "over": [],
+    "tiny": [],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/clientes?telefone=92991532662",
+      "/painel/clientes?telefone=92999999999"
+    ],
+    "inputs": [],
+    "tables": [],
+    "text": "K\n☰\nKero.\n🍕 Pizzaria do kabeça\n2\nHoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\nClientes\n\nperfil de consumo gerado a partir dos pedidos\n\nTODOS\n\n2\n\nclientes com pedido\n\nVIP\n\n0\n\n>5 pedidos ou ≥ R$ 500\n\nRECORRENTES\n\n1\n\n2+ pedidos\n\nNOVOS\n\n1\n\n1 pedido válido\n\nClientes\n\nordenado por gasto · toque p/ ver o histórico\n\nQ\nQA Playwright 2\nRecorrente\n(92) 99153-2662 · 4 pedidos · último: hoje\nR$ 190,00\ntotal gasto\nP\nProbe Playwright\nNovo\n(92) 99999-9999 · 1 pedido · último há 2 dias\nR$ 50,00\ntotal gasto"
+  },
+  {
+    "label": "adm-config-mobile",
+    "url": "/painel/configuracoes",
+    "status": 200,
+    "ms": 9273,
+    "console": [],
+    "net": [],
+    "api": [],
+    "overflowX": true,
+    "over": [
+      {
+        "tag": "BUTTON",
+        "cls": "px-5 sm:px-8 py-2.5 rounded-xl text-sm font-extrabold transi",
+        "right": 512,
+        "text": "Rastreamento"
+      },
+      {
+        "tag": "BUTTON",
+        "cls": "px-5 sm:px-8 py-2.5 rounded-xl text-sm font-extrabold transi",
+        "right": 597,
+        "text": "Conta"
+      }
+    ],
+    "tiny": [
+      {
+        "tag": "INPUT",
+        "label": "?",
+        "w": 1,
+        "h": 1
+      },
+      {
+        "tag": "INPUT",
+        "label": "?",
+        "w": 1,
+        "h": 1
+      }
+    ],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Loja",
+      "Horários",
+      "Entrega",
+      "Salão",
+      "Rastreamento",
+      "Conta",
+      "Salvar loja"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": null,
+        "id": "c-nome",
+        "ph": null,
+        "label": "Nome da loja",
+        "aria": null,
+        "required": false,
+        "value": "Pizzaria do kabeça"
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": null,
+        "id": "c-zap",
+        "ph": null,
+        "label": "WhatsApp (só dígitos)",
+        "aria": null,
+        "required": false,
+        "value": "0000000000"
+      },
+      {
+        "tag": "TEXTAREA",
+        "type": "textarea",
+        "name": null,
+        "id": "c-desc",
+        "ph": null,
+        "label": "Descrição",
+        "aria": null,
+        "required": false,
+        "value": null
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": null,
+        "id": "c-pix",
+        "ph": "CPF, e-mail ou aleatória",
+        "label": "Chave Pix",
+        "aria": null,
+        "required": false,
+        "value": null
+      },
+      {
+        "tag": "INPUT",
+        "type": "file",
+        "name": null,
+        "id": null,
+        "ph": null,
+        "label": "🏪\nenviar foto",
+        "aria": null,
+        "required": false,
+        "value": null
+      },
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "name": null,
+        "id": "c-marquee",
+        "ph": "Ex: 🔥 saindo do forno agora · entrega grátis",
+        "label": "Texto do letreiro",
+        "aria": null,
+        "required": false,
+        "value": null
+      },
+      {
+        "tag": "INPUT",
+        "type": "file",
+        "name": null,
+        "id": null,
+        "ph": null,
+        "label": "🖼️\nenviar foto",
+        "aria": null,
+        "required": false,
+        "value": null
+      }
+    ],
+    "tables": [],
+    "text": "K\n☰\nKero.\n🍕 Pizzaria do kabeça\nHoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\n\nconfigurações da vitrine e do checkout\n\nLoja\nHorários\nEntrega\nSalão\nRastreamento\nConta\nNome da loja\nWhatsApp (só dígitos)\nDescrição\nChave Pix\nLogo\n🏪\nenviar foto\nTrocar logo · WebP ≤1MB\nTexto do letreiro\n\nDeixe vazio para esconder a barra.\n\nCapa da loja\n🖼️\nenviar foto\nFoto da capa · WebP ≤1MB\nSalvar loja"
+  },
+  {
+    "label": "adm-whatsapp-mobile",
+    "url": "/painel/whatsapp",
+    "status": 200,
+    "ms": 7987,
+    "console": [],
+    "net": [
+      {
+        "page": "adm-whatsapp-mobile",
+        "url": "http://localhost:3000/painel/whatsapp",
+        "status": "FAILED",
+        "err": "net::ERR_ABORTED"
+      }
+    ],
+    "api": [
+      {
+        "page": "adm-whatsapp-mobile",
+        "method": "GET",
+        "url": "http://localhost:3000/api/whatsapp/status",
+        "status": 200
+      },
+      {
+        "page": "adm-whatsapp-mobile",
+        "method": "GET",
+        "url": "http://localhost:3000/api/whatsapp/status",
+        "status": 200
+      }
+    ],
+    "overflowX": false,
+    "over": [],
+    "tiny": [],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Conectar WhatsApp"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel/pedidos",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [],
+    "tables": [],
+    "text": "K\n☰\nKero.\n🍕 Pizzaria do kabeça\n2\nHoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\n\nassistente de WhatsApp com IA (pt-BR)\n\nDesconectado\n\nConecte o WhatsApp da sua loja e a atendente de IA responde seus clientes no zap — 24h por dia, em português. Você escaneia o QR uma vez e pronto.\n\nA conexão falhou. Tente conectar de novo.\n\nConectar WhatsApp"
+  },
+  {
+    "label": "adm-financeiro-mobile",
+    "url": "/painel/financeiro",
+    "status": 200,
+    "ms": 8479,
+    "console": [],
+    "net": [],
+    "api": [],
+    "overflowX": false,
+    "over": [],
+    "tiny": [],
+    "noLabel": [],
+    "btns": [
+      "Usar tema escuro",
+      "☰",
+      "Hoje",
+      "7 dias",
+      "30 dias",
+      "90 dias",
+      "Personalizado"
+    ],
+    "links": [
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro",
+      "/painel",
+      "/painel/pedidos",
+      "/painel/pdv",
+      "/painel/entregas",
+      "/painel/cardapio",
+      "/painel/clientes",
+      "/painel/configuracoes",
+      "/painel/whatsapp",
+      "/painel/financeiro"
+    ],
+    "inputs": [],
+    "tables": [],
+    "text": "K\n☰\nKero.\n🍕 …\nHoje\nPedidos\nPDV\nEntregas\nCardápio\nClientes\nConfig\nWhatsApp\nFinanceiro\nFinanceiro\n\ncaixa, contas a pagar e resultado\n\nHoje\n7 dias\n30 dias\n90 dias\nPersonalizado\ncarregando…"
+  }
+]

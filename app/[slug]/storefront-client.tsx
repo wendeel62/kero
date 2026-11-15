@@ -26,6 +26,7 @@ export default function StorefrontClient({ menu, isOpen, neighborhoods, storeId 
   const [notes, setNotes] = useState("");
   const [edicaoIndex, setEdicaoIndex] = useState<number | null>(null);
   const [emCheckout, setEmCheckout] = useState(false);
+  const [maxChoicesAviso, setMaxChoicesAviso] = useState<{ grupo: string; max: number } | null>(null);
 
   // Deep-link legado ?pedido=<token> (links antigos impressos/WhatsApp) —
   // redireciona para a página própria do pedido.
@@ -36,6 +37,26 @@ export default function StorefrontClient({ menu, isOpen, neighborhoods, storeId 
       router.replace(`/${menu.business.slug}/pedido/${pedidoParam}`);
     }
   }, [router, menu.business.slug]);
+
+  // Fecha modais (produto/combo e sacola) com a tecla Esc.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (produtoAberto) setProdutoAberto(null);
+        if (comboAberto) setComboAberto(null);
+        if (carrinhoAberto) setCarrinhoAberto(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [produtoAberto, comboAberto, carrinhoAberto]);
+
+  // Some o aviso de máximo de escolhas após 5s.
+  useEffect(() => {
+    if (!maxChoicesAviso) return;
+    const t = setTimeout(() => setMaxChoicesAviso(null), 5000);
+    return () => clearTimeout(t);
+  }, [maxChoicesAviso]);
 
   // Persistência do carrinho no localStorage (por slug da loja).
   // Chave: kero:carrinho:{slug}
@@ -120,6 +141,9 @@ export default function StorefrontClient({ menu, isOpen, neighborhoods, storeId 
     const item = carrinho[index];
     const produto = menu.business.categories.flatMap((c) => c.products).find((p) => p.id === item.productId);
     if (!produto) return;
+    // Fecha a sacola para não sobrepor o modal de edição (ambos são sheet-overlay com o
+    // mesmo z-index: a sacola, renderizada depois, pintava por cima e travava o CTA).
+    setCarrinhoAberto(false);
     const rec: SfEscolha = {};
     for (const o of item.opcoes) {
       rec[o.groupId] = [...(rec[o.groupId] ?? []), o.optionId];
@@ -132,12 +156,14 @@ export default function StorefrontClient({ menu, isOpen, neighborhoods, storeId 
       const atual = prev[groupId] ?? [];
       const grupo = produtoAberto?.optionGroups.find((g) => g.id === groupId);
       const max = grupo?.maxEscolhas ?? 1;
-      const novo = atual.includes(optionId)
-        ? atual.filter((id) => id !== optionId)
-        : atual.length >= max && max > 0
-          ? [optionId]
-          : [...atual, optionId];
-      return { ...prev, [groupId]: novo };
+      if (atual.includes(optionId)) {
+        return { ...prev, [groupId]: atual.filter((id) => id !== optionId) };
+      }
+      if (atual.length >= max && max > 0) {
+        setMaxChoicesAviso({ grupo: grupo?.nome ?? "este grupo", max });
+        return { ...prev, [groupId]: [optionId] };
+      }
+      return { ...prev, [groupId]: [...atual, optionId] };
     });
   }
 
@@ -154,10 +180,12 @@ export default function StorefrontClient({ menu, isOpen, neighborhoods, storeId 
     return true;
   }
 
-  function descricaoEscolha(g: { obrigatorio: boolean; maxEscolhas: number | null; options: { id: string }[] }): string {
+  function descricaoEscolha(g: { obrigatorio: boolean; maxEscolhas: number | null; minChoices?: number | null; options: { id: string }[] }): string {
     const n = g.maxEscolhas && g.maxEscolhas > 0 ? g.maxEscolhas : g.options.length;
+    const min = g.minChoices != null && g.minChoices > 0 ? g.minChoices : 1;
     const plural = n === 1 ? "1 opção" : `${n} opções`;
-    return g.obrigatorio ? `Escolha ${plural}.` : `Escolha até ${plural}.`;
+    const pluralMin = min === 1 ? "1 opção" : `${min} opções`;
+    return g.obrigatorio ? `Escolha ${pluralMin} a ${plural}.` : `Escolha até ${plural}.`;
   }
 
   function adicionarAoCarrinho() {
@@ -390,6 +418,11 @@ export default function StorefrontClient({ menu, isOpen, neighborhoods, storeId 
                       +
                     </button>
                   </div>
+                  {maxChoicesAviso && (
+                    <p className="pdetail-hint" role="alert">
+                      Você já escolheu o máximo de {maxChoicesAviso.max} opções em “{maxChoicesAviso.grupo}”. A última escolha substituiu a anterior.
+                    </p>
+                  )}
                   <button className="pdetail-cta" disabled={!validarEscolhas() || !isOpen} onClick={adicionarAoCarrinho}>
                     <span>{edicaoIndex !== null ? "Salvar" : "Adicionar"}</span>
                     <span>{formatarMoeda(precoTotal * qtd)}</span>
@@ -512,13 +545,13 @@ export default function StorefrontClient({ menu, isOpen, neighborhoods, storeId 
                 <p className="cart-total">Total: {formatarMoeda(totalCarrinho)}</p>
                 <button
                   className="btn-finalizar-carrinho"
-                  disabled={!isOpen}
+                  disabled={!isOpen || qtdCarrinho === 0}
                   onClick={() => {
                     setCarrinhoAberto(false);
                     setEmCheckout(true);
                   }}
                 >
-                  {isOpen ? "Finalizar pedido" : "Loja fechada"}
+                  {qtdCarrinho === 0 ? "Carrinho vazio" : isOpen ? "Finalizar pedido" : "Loja fechada"}
                 </button>
               </div>
             </div>

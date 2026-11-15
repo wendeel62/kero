@@ -1,0 +1,17 @@
+import { createClient } from "@supabase/supabase-js";
+import fs from "fs";
+const env = Object.fromEntries(fs.readFileSync(".env.local","utf8").split("\n").filter(l=>l.includes("=")&&!l.startsWith("#")).map(l=>[l.slice(0,l.indexOf("=")), l.slice(l.indexOf("=")+1)]));
+const sb = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, { auth:{persistSession:false} });
+const SID = "5751a74b-5feb-41be-be14-6c3967ca1383";
+const { data: s } = await sb.from("stores").select("*").eq("id", SID).single();
+console.log("STORE:", JSON.stringify(s, null, 1));
+const { data: cats } = await sb.from("categories").select("id,name,active,sort_order").eq("store_id", SID);
+console.log("CATS:", JSON.stringify(cats));
+const { data: prods } = await sb.from("products").select("id,name,price_cents,active,category_id,image_url").eq("store_id", SID);
+console.log("PRODS:", JSON.stringify(prods, null, 1));
+const { data: nb } = await sb.from("neighborhoods").select("*").eq("store_id", SID);
+console.log("BAIRROS:", JSON.stringify(nb));
+const { data: ord } = await sb.from("orders").select("id,status,total_cents,created_at,tracking_token,customer_name,delivery_method").eq("store_id", SID).order("created_at",{ascending:false});
+console.log("ORDERS:", JSON.stringify(ord, null, 1));
+const { data: cour } = await sb.from("couriers").select("id,name,status,store_id").eq("store_id", SID);
+console.log("COURIERS:", JSON.stringify(cour));

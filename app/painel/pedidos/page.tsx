@@ -45,12 +45,14 @@ export default function Kanban() {
   const [period, setPeriod] = useState<PeriodKind>("today");
   const [range, setRange] = useState<CustomRange>({});
   const [type, setType] = useState<TypeFilter>("all");
+  const [carregandoKanban, setCarregandoKanban] = useState(false);
   useEffect(() => {
+    setCarregandoKanban(true);
     getKanban(period, type, range).then((k) => {
       setOrders(k.orders);
       setAnteriores(k.anteriores);
       updateFaviconBadge(k.orders.filter((o) => o.status === "new").length);
-    }).catch(() => setOrders([]));
+    }).catch(() => setOrders([])).finally(() => setCarregandoKanban(false));
     getRealtimeContext().then((c) => setStoreId(c.storeId)).catch(() => {});
   }, [period, type]);
 
@@ -217,7 +219,13 @@ export default function Kanban() {
                 <span className="ml-auto text-[11px] font-extrabold tabular-nums text-[var(--muted)] bg-[var(--surface)] rounded-full px-2 py-0.5">{list.length}</span>
               </header>
               <div className="space-y-2">
-                {list.map((o) => {
+                {carregandoKanban ? (
+                  <div className="animate-pulse space-y-2">
+                    <div className="h-8 w-3/4 bg-[var(--surface-2)] rounded" />
+                    <div className="h-4 w-1/2 bg-[var(--surface-2)] rounded" />
+                    <div className="h-4 w-1/3 bg-[var(--surface-2)] rounded" />
+                  </div>
+                ) : list.map((o) => {
                   const late = o.status === "new" ? o.statusMinutes > 10 : o.statusMinutes > 30;
                   const next = nextStatus(o);
                   return (
