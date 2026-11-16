@@ -21,3 +21,4 @@ restaurar-lojista.js
 test-login.js
 .vercel
 .env*
+.worktrees/
